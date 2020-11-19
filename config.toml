@@ -2,7 +2,7 @@ baseurl = "https://example.com"
 languageCode = "en-us"
 theme = "hugo-theme-stack"
 paginate = 5
-title = "I Love Kitten"
+title = "Rabbit Hole"
 disqusShortname = "hugo-theme-stack"            # Change it to your Disqus shortname before using
 DefaultContentLanguage = "en"                   # Theme i18n support
 
