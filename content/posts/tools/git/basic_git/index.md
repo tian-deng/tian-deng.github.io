@@ -2,6 +2,7 @@
 title: Git操作指北
 date: 2020-09-26T21:34:18+08:00
 slug: basic_git
+image: cover.png
 categories:
     - Git
 tags:
