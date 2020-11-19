@@ -21,7 +21,7 @@ jobs:
         hugo-version: '0.78.2'
 
     - name: 4. build...
-      run: hugo --minify
+      run: hugo --minify -D
     
     # 提交到我们的存放静态资源的仓库
 
