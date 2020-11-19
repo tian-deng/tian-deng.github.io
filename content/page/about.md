@@ -1,27 +1,54 @@
 +++
 title = "About"
-description = "Hugo, the world's fastest framework for building websites"
-date = "2019-02-28"
-aliases = ["about-us", "about-hugo", "contact"]
-author = "Hugo Authors"
+description = "码农的自我修养"
+date = "2020-11-19"
+aliases = ["about-me", "contact"]
+author = "tiandeng"
 license = "CC BY-NC-ND"
-lastmod = "2020-10-09"
+lastmod = "2020-11-19T21:14:00+08:00"
 +++
 
-Written in Go, Hugo is an open source static site generator available under the [Apache Licence 2.0.](https://github.com/gohugoio/hugo/blob/master/LICENSE) Hugo supports TOML, YAML and JSON data file types, Markdown and HTML content files and uses shortcodes to add rich content. Other notable features are taxonomies, multilingual mode, image processing, custom output formats, HTML/CSS/JS minification and support for Sass SCSS workflows.
+大学荒废摸鱼了四年, 乱七八糟什么都学了点...
 
-Hugo makes use of a variety of open source projects including:
+大一学了点 `Python`, 大二学了点前端, 大三大四为了找工作学了后端...
 
-* https://github.com/yuin/goldmark
-* https://github.com/alecthomas/chroma
-* https://github.com/muesli/smartcrop
-* https://github.com/spf13/cobra
-* https://github.com/spf13/viper
+结果工作调岗到项目经理...
 
-Hugo is ideal for blogs, corporate websites, creative portfolios, online magazines, single page applications or even a website with thousands of pages.
+不过对子自己杂七杂八的所学也不是很讨厌, 什么都多多少少懂一些...现在一段时间在学习 `Rust`, 很大的原因是 `Rust` 比较难吧, 但是又没有 `C++` 那么厚重的包袱.
 
-Hugo is for people who want to hand code their own website without worrying about setting up complicated runtimes, dependencies and databases.
+之前使用的是 `Hexo`, 不过对图片管理的方式不是很喜欢, 所以改用了 `Hugo`, 对该主题的作者很是佩服, 大二学妹就能设计实现这么好看的前端了~而我在学了前端后对繁琐的布局产生了生理性厌恶, 总是提不起兴趣...后续提起兴趣的时候希望能自己写个博客前端出来, 或是用 `Angular` 或是用 `React` 又或者是 `Vue`.
 
-Websites built with Hugo are extremelly fast, secure and can be deployed anywhere including, AWS, GitHub Pages, Heroku, Netlify and any other hosting provider.
+总是在浅尝辄止, 目前学习最深的可能反而是 `Git`, 不得不说 `Git权威指南` 虽然写得很厚, 但是内容上还是没什么问题的.
 
-Learn more and contribute on [GitHub](https://github.com/gohugoio).
+目前能够拿出来看看的技能. 
+
+PS: Sort
+- 双拼
+- Git
+- C
+- Java
+- Rust
+- JavaScript
+- Python
+- Vim
+- Emacs
+
+学了但是拿不出来的技能:
+- CSS
+- C++
+
+不过说到底语言不过是工具罢了...学的还是围绕语言搭建的生态吧, Java的生态学会的最多吧, 比如说 `Spring`, 毕竟当初想拿来吃饭的东西. 其次就是 `JavaScript` 的生态三大框架, 还有 `Node` 以及异步等等...
+
+现在想学 `Rust` 写个简单的操作系统, 面向硬件编程试试. 毕竟一直以来都是在调用 `API`, 或许能做些好玩的事情出来...
+
+高中大学都没能做出什么成果出来. 还是希望能做出些好玩的东西~
+
+如果对 `Rust` 有兴趣的或者有可以指教我的东西, 可以mail或者QQ一起探讨~
+
+如果觉得文章对你有帮助的话, 可以点个小星星~或者请我喝杯可乐我也不会拒绝的~
+
+>mail: ragdoll_kitten@outlook.com
+>
+>QQ: 651770315
+
+以上
