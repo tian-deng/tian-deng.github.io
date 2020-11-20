@@ -25,7 +25,7 @@ tags:
 
 ![image-20200926095214192](./image-20200926095214192.png)
 
-如果想让`Github`然后在下面让`Github`帮我们初始化, 选择Add a README file. README file一般是对当前仓库所做的事情的一个简介. 相当于使用说明书.
+如果想让 `Github` 帮我们初始化仓库, 那么就选择Add a README file选项. README file一般是对当前仓库所做的事情的一个简介. 相当于使用说明书.
 
 让`Github`帮我们初始化, 就相当于运行了如下命令:
 
@@ -68,25 +68,25 @@ git remote add origin git@github.com:tian-deng/Cooperation.git //先不管这行
 
 ![image-20200926100933948](./image-20200926100933948.png)
 
-这里我用两个文件夹来表示我跟`wuhongyu`. 首先`tiandeng`把代码从远程复制到本地
+这里我用两个文件夹来表示我跟`david`. 首先`bob`把代码从远程复制到本地
 
 ![image-20200926101126473](./image-20200926101126473.png)
 
 `git clone`命令相当于把代码拷贝了一份, 就跟你直接`download`是一个效果.
 
-同样的, `wuhongyu`也`clone`了一份.
+同样的, `david`也`clone`了一份.
 
-以下是`tiandeng`的操作:
+以下是`bob`的操作:
 
-## `tiandeng`
+## `bob`
 
 ### 提交代码
 
-`tiandeng`现在想给我们的项目先增加两个功能, 一个功能是排序, 另一个功能是二分查找.
+`bob`现在想给我们的项目先增加两个功能, 一个功能是排序, 另一个功能是二分查找.
 
-1. `tiandeng`创建目录`src`用来放源代码.
+1. `bob`创建目录`src`用来放源代码.
 
-2. `tiandeng`创建文件`utils.h`用来规定函数签名.
+2. `bob`创建文件`utils.h`用来规定函数签名.
 
 3. `utils.h`内容如下
 
@@ -101,7 +101,7 @@ git remote add origin git@github.com:tian-deng/Cooperation.git //先不管这行
 
 ![image-20200926102612601](./image-20200926102612601.png)
 
-相信大部分人英语都是比`tiandeng`好的, 翻译过来就是
+相信大部分人英语都是比我好的, 翻译过来就是
 
 > 当前在主分支上
 >
@@ -121,17 +121,17 @@ git remote add origin git@github.com:tian-deng/Cooperation.git //先不管这行
 git remote add origin git@github.com:tian-deng/Cooperation.git
 ```
 
-这个命令就是用来给本地和远程服务器中的仓库建立连接的. 这样我们`push`或者说`upload`代码的时候就知道上传到哪个地方了, 解决了上面一开始的问题.
+这个命令就是用来在本地和远程服务器的仓库之间建立联系的. 这样 `Git` `push` 或者说 `上传` 代码的时候就知道上传到哪个地方了, 解决了上面一开始的问题.
 
-此时查看`git log`, 可以发现`origin/master`和`origin/HEAD`也存在, 意思是远程的分支和远程的最新提交在哪个地方.
+此时查看 `git log`, 可以发现 `origin/master` 和 `origin/HEAD` 也存在, 意思是远程的分支和远程的最新提交在哪个地方.
 
-我们可以使用`git remote get-url`来查看某个远程服务器别名的实际地址.
+我们可以使用 `git remote get-url`来查看某个远程服务器别名的实际地址.
 
 ![image-20200926103442795](./image-20200926103442795.png)
 
-好了继续解释`git status`的信息.
+好了继续解释 `git status` 的信息.
 
-接下来是`untracked files`. 未追踪的文件就是说是我们在工作区新添加的文件, 工作区就是我们目前文件夹中的所有内容. 在他的状态还是未追踪的时候, 我们对这个`Git`仓库进行的大部分操作和命令, 都不会影响到未追踪文件, 包括但不限于`git reset`, `git checkout`, `git commit`, `git push`. 这些操作都不会对未追踪文件有任何的影响.
+接下来是 `untracked files`. 未追踪的文件就是说是我们在工作区新添加的文件, 工作区就是我们目前文件夹中的所有内容. 在他的状态还是未追踪的时候, 我们对这个 `Git` 仓库进行的大部分操作和命令, 都不会影响到未追踪文件, 包括但不限于`git reset`, `git checkout`, `git commit`, `git push`. 这些操作都不会对未追踪文件有任何的影响.
 
 未追踪文件就是个**局外人**, 但我们的`src`文件夹显然不是局外人, 所以我们使用`git add`命令来让它加入到我们的圈子, 加入到我们的`Git`仓库中.
 
@@ -153,7 +153,7 @@ git remote add origin git@github.com:tian-deng/Cooperation.git
 
 ![image-20200926104951468](./image-20200926104951468.png)
 
-我们增加了`search`函数的签名.
+显示我们增加了 `search` 函数的签名.
 
 `git diff`不加任何参数默认对比的是暂存区与工作区之间的区别(不包括未追踪文件这个**局外人**).
 
@@ -161,7 +161,7 @@ git remote add origin git@github.com:tian-deng/Cooperation.git
 
 如果我们想对比暂存区与版本库的区别呢?
 
-`git diff --cached`或者`git diff --staged`
+`git diff --cached` 或者 `git diff --staged`
 
 ![image-20200926105631978](./image-20200926105631978.png)
 
@@ -171,7 +171,7 @@ git remote add origin git@github.com:tian-deng/Cooperation.git
 
 ![image-20200926105947500](./image-20200926105947500.png)
 
-使用`git log`看到的是版本库的记录.
+使用 `git log` 看到的是版本库的记录.
 
 我们可以看到除了`Github`帮我们初始化的提交以外, 又多了一笔新的提交, 同时, 也体现出了远程服务器上的代码还处在第一个提交的状态.
 
@@ -203,7 +203,7 @@ git remote add origin git@github.com:tian-deng/Cooperation.git
 
 这时我突然发现我两个函数签名写错了好吧?但我又不想重新用提交来修复我这两个签名, 那么应该怎么做?
 
-`git reset HEAD^^`来回退两个提交, 这就相当于同时撤销了我的`commit`操作和`add`操作, 但是不修改我们目前工作区的文件内容.
+`git reset HEAD^^` 来回退两个提交, 这就相当于同时撤销了我的`commit`操作和`add`操作, 但是不修改我们目前工作区的文件内容.
 
 ![image-20200926160030593](./image-20200926160030593.png)
 
@@ -217,7 +217,7 @@ void search(int arrays[], int length);
 #endif
 ```
 
-然后重新`add commit`, 把之前的两笔合并到一起吧.
+然后重新 `add commit`, 把之前的两笔合并到一起吧.
 
 ![image-20200926160412401](./image-20200926160412401.png)
 
@@ -225,7 +225,7 @@ void search(int arrays[], int length);
 
 ![image-20200926160442209](./image-20200926160442209.png)
 
-提示我们远程分支要比我们本地的分支领先(本地两个提交, 远程有三个, 因为我们把两笔提交合并到一起了), 提示我们要用`git pull`更新代码. 
+提示我们远程分支要比我们本地的分支领先(本地两个提交, 远程有三个, 因为我们把两笔提交合并到一起了), 提示我们要用 `git pull` 更新代码. 
 
 ![image-20200926160637984](./image-20200926160637984.png)
 
@@ -253,13 +253,13 @@ void search(int arrays[], int length);
 
 ![image-20200926162110736](./image-20200926162110736.png)
 
-好了, 现在`tiandeng`把`sort`函数的实现交给`wuhongyu`去做了, 此时`wuhongyu`更新了代码, 快排如火如荼的进行着......
+好了, 现在`bob`把`sort`函数的实现交给`david`去做了, 此时`david`更新了代码, 快排如火如荼的进行着......
 
-然后`tiandeng`开始写`search`二分查找的实现(此时`wuhongyu`在查快排是什么).
+然后`bob`开始写`search`二分查找的实现(此时`david`在查快排是什么).
 
-但是二分查找法是建立在数组有序的情况下的, 所以`tiandeng`就先简单实现了一个冒泡算法来应付一下排序.
+但是二分查找法是建立在数组有序的情况下的, 所以`bob`就先简单实现了一个冒泡算法来应付一下排序.
 
-这时, `tiandeng`发现他的函数签名又错了, 忘了给二分查找加一个`target`, 所以`tiandeng`又改了改上传了...然后又又又发现函数应该返回一个索引而不是`void`, 然后又又又改了改上传了.......最后`tiandeng`生气了, 直接回退到最初版本把函数签名改对, 然后`--force`了..................
+这时, `bob`发现他的函数签名又错了, 忘了给二分查找加一个`target`, 所以`bob`又改了改上传了...然后又又又发现函数应该返回一个索引而不是`void`, 然后又又又改了改上传了.......最后`bob`生气了, 直接回退到最初版本把函数签名改对, 然后`--force`了..................
 
 ### 解放
 
@@ -297,17 +297,17 @@ int search(int arrays[], int length, int target) {
 }
 ```
 
-随后他`add commit push`三连, `tiandeng`解放了...
+随后他 `add commit push` 三连, `bob`解放了...
 
-等等...`tiandeng` `push`上传代码出问题了
+等等...`bob` `push`上传代码出问题了
 
 ![image-20200926174746192](./image-20200926174746192.png)
 
-`tiandeng`的解放之路还遥遥无期......
+接下来是 `david` 在 `bob` 编写代码的同时所做的操作.
 
-## `wuhongyu`
+## `david`
 
-`wuhongyu`明显就比`tiandeng`厉害多了, 他修改代码前先创建了一个`work`分支.
+`david`明显就比`bob`厉害多了, 他修改代码前先创建了一个`work`分支.
 
 `git branch work`, 然后使用`git checkout work`切换到了该分支. 然后才开始修改代码......
 
@@ -319,7 +319,7 @@ int search(int arrays[], int length, int target) {
 
 ![image-20200926170205823](./image-20200926170205823.png)
 
-怎么写个接口还能有这么多提交的? `tiandeng`是`sb`吗?
+怎么写个接口还能有这么多提交的? `bob`是`sb`吗?
 
 然后他想看看为什么, 于是输入了如下命令.
 
@@ -367,7 +367,7 @@ void sort(int arrays[], int length) {
 
 ### 图形化`log`分析分支信息
 
-然后`wuhongyu`切换到主分支, 开始同步到最新的代码.
+然后`david`切换到主分支, 开始同步到最新的代码.
 
 ![image-20200926172043377](./image-20200926172043377.png)
 
@@ -389,11 +389,11 @@ void sort(int arrays[], int length) {
 
 为什么会这么乱?为什么远程又只有三笔提交?
 
-原因就是`tiandeng`这个`sb`强行进行提交, 以为可以瞒天过海.
+原因就是`bob`这个`sb`强行进行提交, 以为可以瞒天过海.
 
 但实际上他所有的操作, 都是有被记录下来的. 即使使用了`--force`, 也是有蛛丝马迹可以查看到他的`sb`操作的.
 
-不过`wuhongyu`宽宏大量好吧, 直接把本地主分支重制到远程服务器最新的.
+不过`david`宽宏大量好吧, 直接把本地主分支重制到远程服务器最新的.
 
 `git reset c284bca --hard`
 
@@ -407,15 +407,15 @@ void sort(int arrays[], int length) {
 
 ### 合并指定提交
 
-`wuhongyu`怎么把他的工作成果合并到主分支呢? 难道要对比着重写吗?
+`david`怎么把他的工作成果合并到主分支呢? 难道要对比着重写吗?
 
 正常情况下使用
 
 `git merge work` 可以将整个`work`分支合并到当前分支, 也就是当前干净的主分支.这里较于简单就不细说了. 处理冲突的方法上面也有提到. 
 
-然而此时`wuhongyu`那边的`work`分支又是没有回滚前的. 我们不想使用`merge`把整个分支`merge`过来好吧, 那样的话`tiandeng`的昏头操作记录岂不是又回来了.
+然而此时`david`那边的`work`分支又是没有回滚前的. 我们不想使用`merge`把整个分支`merge`过来好吧, 那样的话`bob`的昏头操作记录岂不是又回来了.
 
-可不可以只挑`wuhongyu`提交代码的那个合并过来?
+可不可以只挑`david`提交代码的那个合并过来?
 
 使用`git cherry-pick`可以指定要合并的提交, 然后只合并需要的部分就可以了.
 
@@ -433,37 +433,37 @@ void sort(int arrays[], int length) {
 
 完美好吧, 干净整齐.
 
-突然想起来, 刚才好像在一个文件里骂过`tiandeng`, 怎么办呢.
+突然想起来, 刚才好像在一个文件里骂过`bob`, 怎么办呢.
 
 `git reset --soft HEAD^`软回退到提交前, 软回退是只撤销`commit`, 不撤销`add`, 也不会把版本库或者暂存库的文件覆盖到工作区中.
 
 ![image-20200926175450629](./image-20200926175450629.png)
 
-可以看到我们的暂存区也没有被回退, 省去我们重新添加`utils.c`文件了. 我们把那行骂`tiandeng`的话删掉. 然后`add commit push`三连.
+可以看到我们的暂存区也没有被回退, 省去我们重新添加`utils.c`文件了. 我们把那行骂`bob`的话删掉. 然后`add commit push`三连.
 
 `git push origin master`
 
 工作`over`
 
-## `tiandeng`
+## `bob`
 
 ### 同步出错
 
-回到`tiandeng`这里, 再看看错误原因.
+回到`bob`这里, 再看看错误原因.
 
 ![image-20200926174818194](./image-20200926174818194.png)
 
-这里提示我们本地分支不是最新的版本, 需要先同步代码才可以. 因为`wuhongyu`在我们提交代码前就已经把他的快排写完上传到服务器上了, 那我们同步一下试试.
+这里提示我们本地分支不是最新的版本, 需要先同步代码才可以. 因为`david`在我们提交代码前就已经把他的快排写完上传到服务器上了, 那我们同步一下试试.
 
 ![image-20200926174913005](./image-20200926174913005.png)
 
-怎么又有冲突啊, `tiandeng`崩溃了...
+怎么又有冲突啊, `bob`崩溃了...
 
 再看看状态.
 
 ![image-20200926175901016](./image-20200926175901016.png)
 
-我们又有个冲突的文件`src/utils.c`, 这是因为`wuhongyu`和`tiandeng`都有修改文件, 合并的时候`Git`不知道该保留哪些部分.
+我们又有个冲突的文件`src/utils.c`, 这是因为`david`和`bob`都有修改文件, 合并的时候`Git`不知道该保留哪些部分.
 
 这里说明一下, `git pull`相当于`git fetch`与`git merge origin/master`两个操作的结合版, 输入`git branch --all`查看所有分支.
 
@@ -489,7 +489,7 @@ void sort(int arrays[], int length) {
 
 ![image-20200926181024548](./image-20200926181024548.png)
 
-然后我们保留`wuhongyu`更加高效的排序算法和`tiandeng`的二分查找算法, 文件最终为这样
+然后我们保留`david`更加高效的排序算法和`bob`的二分查找算法, 文件最终为这样
 
 ```c
 #include "utils.h"
