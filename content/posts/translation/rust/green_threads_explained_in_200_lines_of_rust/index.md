@@ -456,10 +456,106 @@ I LOVE WAKING UP ON A NEW STACK!
 
 OK, 现在我们已经学习了栈长什么样子, 是如何工作的, 我们已经准备好去实现我们的绿色线程了. 你已经做完了艰难的工作所以我保证我们可以写更多的代码了.
 
-## 怎么设置栈
+## 如何设置栈
 
-`Windows x64-86` 的栈设置与 `x64-86 psABI` 的调用约定有一些不同. 我将在附录 [Windows支持](https://cfsamson.gitbook.io/green-threads-explained-in-200-lines-of-rust/supporting-windows) 中更多的讲关于 `Windows` 的栈. 不过有件重要的事要说, 用简单不带参数的函数来设置堆栈就像我们做的那样, 在这方面不会有太多的不同.
+`Windows x64-86` 的栈设置与 `x64-86 psABI` 的调用约定有一些不同. 我将在附录 [Windows支持](https://cfsamson.gitbook.io/green-threads-explained-in-200-lines-of-rust/supporting-windows) 中更多的讲关于 `Windows` 的栈. 不过有件重要的事要说, 如果像我们这样只是用简单不带参数的函数来设置堆栈, 那么它们不会有太多的不同.
 
 **psABI 栈布局长这样:**
 
 ![Stack Frame with Base Pointer](./bilde.png)
+
+如你所看到的 `%rsp` 是我们的栈指针. 我们需要把栈指针放在从基地址开始16的倍数的地方. 返回的地址位于相邻的8个字节中, 其上还有一个存储内存参数的房间. 当我们想要做更复杂的事情的时候我们必须牢记这点.
+
+你会注意到我们通常把函数地址写入到 `stack_ptr + SSIZE - 16` 而没有进行说明. 顺便说一下 `SSIZE` 是栈的字节大小.
+
+这么说吧, 我们知道一个指针(在例子里是函数指针)的大小是8字节. 我们也知道我们需要把 `rsp` 写入到16字节的边界中.
+
+我们除了把函数指针写入到 `stack_ptr + SSIZE - 16` 以外没有其它的选择. 因为我们从低到高写入我们的地址:
+
+* 不能将它写入到 `stack_ptr + SSIZE`(也是16字节的倍数) 因为这可能导致写入的字节超出我们分配的内存, 那是不被允许的(因为我们为了16字节对齐而进行了四舍五入).
+* 不能写入到 `stack_ptr + SSIZE - 8`, 虽然它也是一个有效的内存空间, 但是它没有对齐16字节的边界.
+
+由于这些原因因此 `stack_ptr + SSIZE - 16` 是第一个合适的位置. 在我们的代码中, 我们写入了8个字节在位置: -16,-15,...,-10,-9 从我们栈的高地址开始(这通常称为栈的底部, 因为栈是向下增长, 这可能有些令人困惑).
+
+## 幕后花絮
+
+如果你足够好奇, 你可能会思考在我们切换栈之后发生了什么?
+
+答案是我们在 `Rust` 写的代码编译为 `CPU` 指令, 然后它接管并像使用其它栈一样使用我们的栈.
+
+然而不幸的是如果想证明这一点那我不得不把栈大小增加到1024字节来允许代码有足够的空间打印出栈本身. 所以我们不会在这打印它来证明这点.
+
+## 看一眼栈
+
+我又做了一个我们代码例子的修改版本, 你可以打印内容到两个文本文件中, `BEFORE.txt` 打印我们的在切换之前的栈, `AFTER.txt` 打印切换后的栈. 然后你就可以自己看看栈是如何被我们的代码激活和使用.
+
+> 如果你发现里面有些你看不懂的东西, 放松, 我们会很快彻底的进行解释.
+
+```rust
+#![feature(llvm_asm)]
+#![feature(naked_functions)]
+use std::io::Write;
+
+const SSIZE: isize = 1024;
+static mut S_PTR: *const u8 = 0 as *const u8;
+
+#[derive(Debug, Default)]
+#[repr(C)]
+struct ThreadContext {
+    rsp: u64,
+    r15: u64,
+    r14: u64,
+    r13: u64,
+    r12: u64,
+    rbx: u64,
+    rbp: u64,
+}
+
+fn print_stack(filename: &str) {
+    let mut f = std::fs::File::create(filename).unwrap();
+    unsafe {
+        for i in (0..SSIZE).rev() {
+            writeln!(
+                f,
+                "mem: {}, val: {}",
+                S_PTR.offset(i as isize) as usize,
+                *S_PTR.offset(i as isize)
+            )
+            .expect("Error writing to file.");
+        }
+    }
+}
+
+fn hello() {
+    println!("I LOVE WAKING UP ON A NEW STACK!");
+    print_stack("AFTER.txt");
+
+    loop {}
+}
+
+unsafe fn gt_switch(new: *const ThreadContext) {
+    llvm_asm!("
+        mov     0x00($0), %rsp
+        ret
+       "
+    :
+    : "r"(new)
+    :
+    : "alignstack"
+    );
+}
+
+fn main() {
+    let mut ctx = ThreadContext::default();
+    let mut stack = vec![0_u8; SSIZE as usize];
+    let stack_ptr = stack.as_mut_ptr();
+
+    unsafe {
+        S_PTR = stack_ptr;
+        std::ptr::write(stack_ptr.offset(SSIZE - 16) as *mut u64, hello as u64);
+        print_stack("BEFORE.txt");
+        ctx.rsp = stack_ptr.offset(SSIZE - 16) as u64;
+        gt_switch(&mut ctx);
+    }
+}
+```
