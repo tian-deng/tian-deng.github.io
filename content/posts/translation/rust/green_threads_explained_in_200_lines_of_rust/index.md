@@ -559,3 +559,100 @@ fn main() {
     }
 }
 ```
+
+
+# 一个绿色线程的实现
+
+在开始之前, 我先说明我们编写的代码非常不安全并且也不是最佳实践, 我希望尽可能编写安全代码的同时不引入额外的复杂度, 所以我鼓励亲爱的读者们如果你们有更好的方案来让代码变得更加安全并且也不会太复杂的话, [欢迎给我的仓库提PR](https://github.com/cfsamson/example-greenthreads).
+
+## 让我们开始吧
+
+首先我们把 `main.rs` 文件中的内容替换如下:
+
+```rust
+#![feature(llvm_asm)]
+#![feature(naked_functions)]
+use std::ptr;
+
+const DEFAULT_STACK_SIZE: usize = 1024 * 1024 * 2;
+const MAX_THREADS: usize = 4;
+static mut RUNTIME: usize = 0;
+```
+
+我们启用了两个特性, `asm` 在之前有讲到, 接下来我们需要解释下 `naked_functions` 特性.
+
+# naked_functions
+
+当 `Rust` 编译一个函数的时候, 可能会给每个函数添加开场白和后记, 而这可能会导致没有对齐栈以至于我们在切换上下文的时候出现问题. 在我们的第一个简单示例中可能没出现什么问题, 但是一旦我们需要再次切换到相同的栈, 就会遇到麻烦. 将函数标记为 `#[naked]` 可以移除开场白和后记. 此属性主要用于内联汇编.
+
+> 如果你对该属性感兴趣, 想了解更多, 可以参照 [RFC #1201](https://github.com/rust-lang/rfcs/blob/master/text/1201-naked-fns.md).
+
+我们将 `DEFAULT_STACK_SIZE` 设置为2MB, `MAX_THREADS` 设置为4, 这已经足够我们并且远超我们编写的绿色线程所需了.
+
+最后一个常量 `RUNTIME` 是我们运行时的指针(是的我知道使用可变全局变量不是很好, 但是我们需要这样并且仅仅在运行时初始化的时候设置该变量).
+
+> 译者: `Rust` 新特性const function是不是可以解决这个问题?
+
+让我们开始充实我们的代码:
+
+```rust
+pub struct Runtime {
+    threads: Vec<Thread>,
+    current: usize,
+}
+
+#[derive(PartialEq, Eq, Debug)]
+enum State {
+    Available,
+    Running,
+    Ready,
+}
+
+struct Thread {
+    id: usize,
+    stack: Vec<u8>,
+    ctx: ThreadContext,
+    state: State,
+}
+
+#[derive(Debug, Default)]
+#[repr(C)]
+struct ThreadContext {
+    rsp: u64,
+    r15: u64,
+    r14: u64
+    r13: u64
+    r12: u64
+    rbx: u64
+    rbp: u64
+}
+```
+
+`Runtime` 将会成为我们主要的入口点. 基本上, 我们将会创建一个非常小的运行时来调度切换我们的线程. 这个运行时持有一个 `Threads` 的数组和一个 `current` 属性来表明当前运行的线程.
+
+`Thread` 持有了一个线程应有的数据. 每个线程有一个 `id` 来让我们分辨它们. `stack` 和我们在第一个例子中看到的类似. `ctx` 域是一个表示我们 `CPU` 所需要恢复的数据在堆栈上位置的上下文, 这些数据要在调度的时候得以恢复. `state` 表示我们线程的状态.
+
+`State` 是一个用来表示我们线程状态的枚举:
+
+* `Available` 意味着线程已经准备好被分配给一个任务如果需要的话.
+* `Running` 意味着该线程已经运行了.
+* `Ready` 意味着该线程准备好继续向前并恢复执行.
+
+`ThreadContext` 持有着 `CPU` 恢复在栈上执行所需的寄存器数据.
+
+> 如果你不记得寄存器了, 返回 [Background Information](https://cfsamson.gitbook.io/green-threads-explained-in-200-lines-of-rust/background-information) 章节来阅读寄存器相关. 那里有一些在 `x86-64` 架构上标记为 `callee saved` 的寄存器.
+
+让我们继续:
+
+```rust
+impl Thread {
+    fn new(id: usize) -> Self {
+        Thread {
+            id,
+            stack: vec![0_u8; DEFAULT_STACK_SIZE],
+            ctx: ThreadContext::default(),
+            state: State:Available,
+        }
+    }
+}
+```
