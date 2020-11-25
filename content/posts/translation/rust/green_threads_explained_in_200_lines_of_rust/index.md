@@ -634,7 +634,7 @@ struct ThreadContext {
 
 `State` 是一个用来表示我们线程状态的枚举:
 
-* `Available` 意味着线程已经准备好被分配给一个任务如果需要的话.
+* `Available` 意味着线程已经准备好被分配一个任务如果需要的话.
 * `Running` 意味着该线程已经运行了.
 * `Ready` 意味着该线程准备好继续向前并恢复执行.
 
@@ -655,4 +655,56 @@ impl Thread {
         }
     }
 }
+```
+
+这相当简单. 一个新的线程从 `Available` 状态开始表明它已经准备好被分配一个任务.
+
+需要注意的点, 我们在这里分配栈. 这并不必要而且也不是资源使用的好方法, 我们应该在线程需要的时候分配而不是第一次使用 `new` 时就分配. 然而这降低了我们这部分代码的复杂度, 这更加重要比起去关注如何给我们的栈分配内存.
+
+> 重要的一点, 一旦给栈分配了内存就不能再移动它! 不能使用 `push()` 或其它可能触发 `vector` 重分配内存的方法. 在该代码更好的版本中, 我们可以包装 `vector` 并且仅公开我们认为可以安全使用的方法.
+>
+> 值得一提的是, `Vec<T>` 有一个 `into_boxed_slice()` 方法, 该方法返回一个堆分配的切片 `Box<T>`. 切片不能增长, 所以我们如果用它代替的话可以解决重分配问题.
+
+## 实现运行时
+
+该部分中所有的代码都是 `impl Runtime` 块中的, 这意味着它们都是 `Runtime` 结构体的方法.
+
+```rust
+impl Runtime {
+    pub fn new() -> Self{
+        // This will be our base thread, which will be initialized in
+        // the `running` state
+        let base_thread = Thread {
+            id: 0,
+            stack: vec![0_u8; DEFAULT_STACK_SIZE],
+            ctx: ThreadContext::default(),
+            state: State::Running,
+        };
+
+        let mut threads = vec![base_thread];
+        let mut available_threads: Vec<Thread> = (1..MAX_THREADS).map(|i| Thread::new(i)).collect();
+        threads.append(&mut available_threads);
+
+        Runtime {
+            threads,
+            current: 0,
+        }
+    }
+}
+```
+
+当我们实例化 `Runtime` 的时候我们设置了一个基线程. 这个线程被设置为 `Running` 状态并且确保在所有任务完成之前保持运行时持续地运行.
+
+然后我们实例化其它线程, 并将当前线程设置为0 , 这是我们的基线程.
+
+```rust
+    /// This is cheating a bit, but we need a pointer to our Runtime
+    /// stored so we can call yield on it even if we don't have a
+    /// reference to it
+    pub fn init(&self) {
+        unsafe {
+            let r_ptr: *const Runtime = self;
+            RUNTIME = r_ptr as usize;
+        }
+    }
 ```
