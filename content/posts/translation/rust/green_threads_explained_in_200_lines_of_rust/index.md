@@ -708,3 +708,27 @@ impl Runtime {
         }
     }
 ```
+
+现在我们需要这个, 就像我提到过的当我们遍历我们的常量的时候我们需要能够在后续调用 `yield`, 它并不漂亮, 但是我们知道只要有任何线程 `yield` 我们的运行时就会存活着, 只要我们不滥用它那就是安全的.
+
+```rust
+    pub fn run(&mut self) -> ! {
+        while self.t_yield() {}
+        std::process::exit(0);
+    }
+```
+
+这是我们开始运行时的地方, 它将持续调用 `t_yield()` 直到返回 `false`, 那时候意味着没有更多的任务需要再做了, 所以我们可以退出程序了.
+
+```rust
+    fn t_return(&mut self) {
+        if self.current != 0 {
+            self.threads[self.current].state = Stete::Available;
+            self.t_yield();
+        }
+    }
+```
+
+这是当我们线程运行完成后调用的返回函数. `return` 是 `rust` 中的保留字所以我们改为了 `t_return()`. 注意我们线程的用户不能调用它, 当任务完成后我们在我们设置的栈中调用它.
+
+如果正在调用的线程是 `base_thread` 那么将什么都不做.
