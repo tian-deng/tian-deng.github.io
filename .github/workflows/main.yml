@@ -11,7 +11,9 @@ jobs:
 
     - name: 1. git checkout...
 
-      uses: actions/checkout@v1
+      uses: actions/checkout@v2
+      with:
+        submodules: recursive
 
     - name: 2. setup hugo...
 
@@ -20,12 +22,12 @@ jobs:
         extended: true
         hugo-version: '0.78.2'
 
-    - name: 4. build...
+    - name: 3. build...
       run: hugo --minify -D
     
     # 提交到我们的存放静态资源的仓库
 
-    - name: 5. deploy...
+    - name: 4. deploy...
       uses: peaceiris/actions-gh-pages@v3
       with:
         github_token: ${{ secrets.ACCESS_TOKEN }}
