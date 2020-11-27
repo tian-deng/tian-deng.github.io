@@ -731,4 +731,76 @@ impl Runtime {
 
 这是当我们线程运行完成后调用的返回函数. `return` 是 `rust` 中的保留字所以我们改为了 `t_return()`. 注意我们线程的用户不能调用它, 当任务完成后我们在我们设置的栈中调用它.
 
-如果正在调用的线程是 `base_thread` 那么将什么都不做.
+如果正在调用的线程是 `base_thread` 那么将什么都不做. 我们的运行时将会在基线程中调用 `yield`. 如果从一个分发的线程中调用了 `t_return()` 我们可以知道这个线程已经完成任务了, 我们只会在 `guard` (后续展示)函数中调用 `t_return()`, 并且 `guard`已经在栈顶了.
+
+我们设置状态为 `Available` 让运行时知道这个线程已经准备好被分配一个新的任务然后立即调用 `t_yield` 来调度要运行的新线程.
+
+Next: 我们的 `yield` 函数:
+
+```rust
+    fn t_yield(&mut self) -> bool {
+        let mut pos = self.current;
+        while self.threads[pos].state != State::Ready {
+            pos += 1;
+            if pos == self.threads.len() {
+                pos = 0;
+            }
+            if pos == self.current {
+                return false;
+            }
+        }
+
+        if self.threads[self.current].state != State::Available {
+            self.threads[self.current].state = State::Ready;
+        }
+
+        self.threads[pos].state = State::Running;
+        let old_pos = self.current;
+        self.current = pos;
+
+        unsafe {
+            switch(&mut self.threads[old_pos].ctx, &self.threads[pos].ctx);
+        }
+        // Prevents compiler from optimizing our code away on Windows.
+        self.threads.len() > 0
+    }
+```
+
+这是我们运行时的核心. 我们使用 `t_yield()` 而不是 `yield` 因为这是一个 `Rust` 的保留字.
+
+我们遍历所有线程来查看是否有人处于 `Ready` 状态, 这表明该线程已准备就绪可以继续进行.
+
+如果没有线程是就绪状态的, 我们就运行结束. 这是一个使用循环算法的简单调度器, 真正的调度程序可能具有更复杂的方式来决定下一步要执行的任务.
+
+> 这是定制给我们的粒子的非常幼稚的实现. 想想当我们的线程没有准备好继续(没有在准备状态) 并且在等待一个响应例如数据库.
+>
+> 解决这个问题并不难, 比起在线程 `Ready` 时直接运行我们的代码, 我们可以改为轮询它的状态. 举个例子, 如果真的准备好了它可以返回一个 `IsReady` 或者等待一些其它操作完成那么就 `Pending`. 在第二种情况, 我们可以将其保持在 `Ready` 状态以便稍后再次轮询. 它听起来是不是有些熟悉? 如果你读过 [Futures](https://rust-lang-nursery.github.io/futures-api-docs/0.3.0-alpha.16/futures/task/enum.Poll.html#variant.Pending) 如何在 `Rust` 中工作, 我们将所有这些点组合串联起来.
+
+如果我们发现有一个线程准备就绪, 那么我们就把当前线程的状态从 `Running` 设置为 `Ready` 以便后续继续运行它.
+
+然后我们调用 `switch` 来保存当前线程的上下文, 然后将新的上下文加载到 `CPU` 中. 这个新的上下文可以是一个新的任务, 也可能是恢复一个已有任务工作所需的上下文信息.
+
+最后一行只是我们阻止编译器优化代码的一种方法. 我在 `Windows` 上会需要这行, 但在 `Linux` 上不会, 而在基准测试的时候是一个常见问题. 因此我们使用 [std::hint::black_box](https://doc.rust-lang.org/std/hint/fn.black_box.html) 来阻止编译器为了执行更快而跳过了我们需要执行的一些代码. 我使用了另外一种方法同样OK. 代码无论如何不会运行到这个地方.
+
+下一个是我们的 `spawn()` 函数:
+
+```rust
+pub fn spawn(&mut self, f: fn()){
+    let available = self
+        .threads
+        .iter_mut()
+        .find(|t| t.state == State::Available)
+        .expect("no available thread.");
+    
+    let size = available.stack.len();
+    unsafe {
+        let s_ptr = available.stack.as_mut_ptr().offset(size as isize);
+        let s_ptr = (s_ptr as usize & !15) as *mut u8;
+        std::ptr::write(s_ptr.offset(-16) as *mut u64, guard as u64);
+        std::ptr::write(s_ptr.offset(-24) as *mut u64, skip as u64);
+        std::ptr::write(s_ptr.offset(-32) as *mut u64, f as u64);
+        available.ctx.rsp = s_ptr.offset(-32) as u64;
+    }
+    available.state = State::Ready;
+}
+```
