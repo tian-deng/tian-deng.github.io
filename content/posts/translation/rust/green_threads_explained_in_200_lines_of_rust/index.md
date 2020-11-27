@@ -785,13 +785,13 @@ Next: 我们的 `yield` 函数:
 下一个是我们的 `spawn()` 函数:
 
 ```rust
-pub fn spawn(&mut self, f: fn()){
+pub fn spawn(&mut self, f: fn()) {
     let available = self
         .threads
         .iter_mut()
         .find(|t| t.state == State::Available)
         .expect("no available thread.");
-    
+
     let size = available.stack.len();
     unsafe {
         let s_ptr = available.stack.as_mut_ptr().offset(size as isize);
@@ -804,3 +804,31 @@ pub fn spawn(&mut self, f: fn()){
     available.state = State::Ready;
 }
 ```
+
+我认为 `t_yield` 是逻辑上有趣的函数同时也是技术上最有趣的.
+
+这是我们设置我们的栈的地方就像我们在上一章节中讲述的那样, 需要确保我们的栈与 `psABI` [栈布局](https://cfsamson.gitbook.io/green-threads-explained-in-200-lines-of-rust/the-stack#how-to-set-up-the-stack) 类似.
+
+当我们 `spawn` 一个新县城我们首先检查是否有线程是 `available` 状态. 在这个场景如果我们超出了线程数就会 `panic`, 虽然有一些更好的操作不过我们目前保持我们的例子.
+
+当我们找到一个 `available` 线程我们获取它的栈长度和 `u8` 字节数组的指针.
+
+在下一部分我们会使用一些 `unsafe` 函数. 首先我们应该确保我们使用的内存块是16字节对齐的. 然后把 `guard` 函数的地址写入栈顶, 这是在任务完成函数返回的时候调用的地方. 其次我们写入 `skip` 函数的地址, 它只是用来填充 `f` 和 `guard` 之间的空隙来满足16字节对齐. 然后把 `f` 地址写到16字节边界处.
+
+> 记住我们在 [The Stack](https://cfsamson.gitbook.io/green-threads-explained-in-200-lines-of-rust/the-stack) 章节解释的栈是如何工作的. 我们需要让 `f` 函数第一个运行, 所以我们设置基指针指向 `f` 并且确保16字节对齐, 然后我们把 `skip` 的地址压入, 最后是 `guard`. 这样做可以确保我们遵守 `ABI` 要求满足 `guard` 是16字节对齐的.
+
+最后我们将状态设置为 `Ready` 这意味着我们有工作并且也准备好去做了. 记住, 这实际上取决于我们的调度器来启动该线程.
+
+我们现在完成了我们运行时的实现, 如果你掌握了这些知识, 那么你基本上了解绿色线程是如何工作的. 然而依然有一些细节部分需要实现.
+
+## Guard, skip and switch functions
+
+```rust
+fn guard() {
+    unsafe {
+        let rt_ptr = RUNTIME as *mut RUNTIME;
+        (*rt_ptr).t_return();
+    };
+}
+```
+
