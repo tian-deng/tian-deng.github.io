@@ -639,7 +639,7 @@ struct ThreadContext {
 
 `ThreadContext` 持有着 `CPU` 恢复在栈上执行所需的寄存器数据.
 
-> 如果你不记得寄存器了, 返回 [Background Information](https://cfsamson.gitbook.io/green-threads-explained-in-200-lines-of-rust/background-information) 章节来阅读寄存器相关. 那里有一些在 `x86-64` 架构上标记为 `callee saved` 的寄存器.
+> 如果你不记得寄存器了, 返回 [Background Information](#背景知识) 章节来阅读寄存器相关. 那里有一些在 `x86-64` 架构上标记为 `callee saved` 的寄存器.
 
 让我们继续:
 
@@ -806,7 +806,7 @@ pub fn spawn(&mut self, f: fn()) {
 
 我认为 `t_yield` 是逻辑上有趣的函数同时也是技术上最有趣的.
 
-这是我们设置我们的栈的地方就像我们在上一章节中讲述的那样, 需要确保我们的栈与 `psABI` [栈布局](https://cfsamson.gitbook.io/green-threads-explained-in-200-lines-of-rust/the-stack#how-to-set-up-the-stack) 类似.
+这是我们设置我们的栈的地方就像我们在上一章节中讲述的那样, 需要确保我们的栈与 `psABI` [栈布局](#如何设置栈) 类似.
 
 当我们 `spawn` 一个新县城我们首先检查是否有线程是 `available` 状态. 在这个场景如果我们超出了线程数就会 `panic`, 虽然有一些更好的操作不过我们目前保持我们的例子.
 
@@ -814,7 +814,7 @@ pub fn spawn(&mut self, f: fn()) {
 
 在下一部分我们会使用一些 `unsafe` 函数. 首先我们应该确保我们使用的内存块是16字节对齐的. 然后把 `guard` 函数的地址写入栈顶, 这是在任务完成函数返回的时候调用的地方. 其次我们写入 `skip` 函数的地址, 它只是用来填充 `f` 和 `guard` 之间的空隙来满足16字节对齐. 然后把 `f` 地址写到16字节边界处.
 
-> 记住我们在 [The Stack](https://cfsamson.gitbook.io/green-threads-explained-in-200-lines-of-rust/the-stack) 章节解释的栈是如何工作的. 我们需要让 `f` 函数第一个运行, 所以我们设置基指针指向 `f` 并且确保16字节对齐, 然后我们把 `skip` 的地址压入, 最后是 `guard`. 这样做可以确保我们遵守 `ABI` 要求满足 `guard` 是16字节对齐的.
+> 记住我们在 [The Stack](#栈) 章节解释的栈是如何工作的. 我们需要让 `f` 函数第一个运行, 所以我们设置基指针指向 `f` 并且确保16字节对齐, 然后我们把 `skip` 的地址压入, 最后是 `guard`. 这样做可以确保我们遵守 `ABI` 要求满足 `guard` 是16字节对齐的.
 
 最后我们将状态设置为 `Ready` 这意味着我们有工作并且也准备好去做了. 记住, 这实际上取决于我们的调度器来启动该线程.
 
@@ -891,7 +891,7 @@ unsafe fn switch(old: *mut ThreadContext, new: *const ThreadContext) {
 
 我们再一次看见了 `#[naked]` 属性. 通常函数都是有开场白和尾声, 但是我们不想要那些因为我们用的都是汇编, 并且我们想要自己掌控一切. 如果我们不使用这个属性我们可能会在第二次切换回我们的栈的时候失败.
 
-> 更多的内联汇编的解释请参考[这一章节](https://cfsamson.gitbook.io/green-threads-explained-in-200-lines-of-rust/an-example-we-can-build-upon)的结尾部分. 如果这些看起来像火星文那么建议你返回读一下这部分.
+> 更多的内联汇编的解释请参考[这一章节](#一个建立于可编译基础上的例子)的结尾部分. 如果这些看起来像火星文那么建议你返回读一下这部分.
 
 有两件事情做的与我们的第一个例子不同.
 
@@ -1186,3 +1186,5 @@ fn main() {
 ```
 
 > 译者: 下一个章节是对 `Windows` 的额外支持, 有兴趣的可以自行[阅读](https://cfsamson.gitbook.io/green-threads-explained-in-200-lines-of-rust/supporting-windows).
+>
+> 如果翻译有任何问题, 欢迎给我提 [issue](https://github.com/tian-deng/tian-deng.github.io/issues).
