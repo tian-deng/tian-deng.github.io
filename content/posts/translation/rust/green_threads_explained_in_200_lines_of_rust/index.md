@@ -1,8 +1,7 @@
 ---
 title: 200行Rust代码解释绿色线程
 date: 2020-11-18T13:28:44+08:00
-lastmod: 2020-11-26T17:41:00+08:00
-draft: true
+lastmod: 2020-11-30T11:00:00+08:00
 slug: green_threads_explained_in_200_lines_of_rust
 image: cover.png
 categories:
@@ -832,3 +831,358 @@ fn guard() {
 }
 ```
 
+这个函数表示着我们传进来的函数已经返回意味着我们的线程已经完成了运行它的任务, 所以我们解引用我们的 `Runtime` 并且调用 `t_return`. 当一个线程完成的时候我们可能需要做一些额外的工作但现在 `t_return` 就够了. 这使得我们的线程 `Available` (如果它不是我们的基线程) 并且 `yield` 以让我们可以恢复其它线程的工作.
+
+```rust
+#[naked]
+fn skip() {}
+```
+
+在 `skip` 函数里什么也没做. 我们使用 `#[naked]` 属性, 所以这个函数基本上只是编译为 `ret` 命令. `ret` 将会从栈中弹出下一个值并且跳到那个地址指向的任何命令. 在我们的例子中它是 `guard` 函数. 就像你上一章节看到的那样, 这个函数为了确保我们遵从 `ABI` 的要求.
+
+```rust
+pub fn yield_thread() {
+    unsafe {
+        let rt_ptr = RUNTIME as *mut RUNTIME;
+        (*rt_ptr).t_yield();
+    };
+}
+```
+
+这只是一个帮助函数为了我们可以在任何地方调用 `yield`. 这很不安全, 如果我们的 `Runtime` 还没有初始化完成或者运行时已经被释放, 它将会有一个 `undefined behavior`. 然而我们仅仅是想让我们的示例正常运行, 安全性不是我们优先考虑的.
+
+我们很快到了最后一部分, 最后一个函数了. 如果你理解了前面的部分那你应该不需要注释也可以理解这个函数:
+
+```rust
+#[naked]
+#[inline(never)]
+unsafe fn switch(old: *mut ThreadContext, new: *const ThreadContext) {
+    llvm_asm!("
+        mov %rsp, 0x00($0) 
+        mov %r15, 0x08($0)
+        mov %r14, 0x10($0)
+        mov %r13, 0x18($0)
+        mov %r12, 0x20($0)
+        mov %rbx, 0x28($0)
+        mov %rbp, 0x30($0)
+
+        mov 0x00($1), %rsp
+        mov 0x08($1), %r15
+        mov 0x10($1), %r14
+        mov 0x18($1), %r13
+        mov 0x20($1), %r12
+        mov 0x28($1), %rbx
+        mov 0x30($1), %rbp
+        ret
+        "
+    :
+    :"r"(old), "r"(new)
+    :
+    : "volatile", "alignstack"
+    );
+}
+```
+
+> 译者: 0x10是16进制, 为10进制的16, 所以上面的内联函数是每8个字节交换old和new.
+
+这是我们的内联汇编, 就像你在第一个例子中记得的那样只是更复杂一点, 我们首先读取寄存器中的所有我们需要的值然后将所有寄存器中的值设置为 `new` 线程中挂起执行时保存的值.
+
+本质上, 这是我们保存和恢复执行所需的全部工作.
+
+我们再一次看见了 `#[naked]` 属性. 通常函数都是有开场白和尾声, 但是我们不想要那些因为我们用的都是汇编, 并且我们想要自己掌控一切. 如果我们不使用这个属性我们可能会在第二次切换回我们的栈的时候失败.
+
+> 更多的内联汇编的解释请参考[这一章节](https://cfsamson.gitbook.io/green-threads-explained-in-200-lines-of-rust/an-example-we-can-build-upon)的结尾部分. 如果这些看起来像火星文那么建议你返回读一下这部分.
+
+有两件事情做的与我们的第一个例子不同.
+
+首先是 `#[inline(never)]`, 这个属性阻止编译器内联这个函数, 我试了很多次, 如果我们不加这个属性那么在 `--release` 模式编译的话会运行失败.
+
+`"volatile"` 选项是另一个. 就像我先前警告的那样, 内联汇编有点啰嗦, 这表明了我们的汇编有副作用. 就是说当我们传入输入参数的时候我们需要确保编译器知道我们改变了传入的参数而不仅仅是读取它们.
+
+```
+0x00($1) # 0
+0x08($1) # 8
+0x10($1) # 16
+0x18($1) # 24
+```
+
+我之前有简单提到过, 但是我们再看一次. 这些都是 `hex` 数字表明我们想要从内存指针偏移多少来读写. 我们每次仅仅偏移8个字节这与我们 `ThreadContext` 结构体中的 `u64` 属性是相同大小的.
+
+同样重要的一点需要说明的是 `ThreadContext` 被 `#[repr(C)]` 标记着, 所以我们知道数据在内存中表示的方法并且写入正确的字段. `Rust ABI` 不保证我们的结构体的属性在内存中是按顺序表示的, 而 `C-ABI` 有保证.
+
+## main函数
+
+```rust
+fn main() {
+    let mut runtime = Runtime::new();
+    runtime.init();
+    runtime.spawn(|| {
+        println!("THREAD 1 STARTING");
+        let id = 1;
+        for i in 0..10 {
+            println!("thread: {} counter: {}", id, i);
+            yield_thread();
+        }
+        println!("THREAD 1 FINISHED");
+    });
+    runtime.spawn(|| {
+        println!("THREAD 2 STARTING");
+        let id = 2;
+        for i in 0..15 {
+            println!("thread: {} counter: {}", id, i);
+            yield_thread();
+        }
+        println!("THREAD 2 FINISHED");
+    });
+    runtime.run();
+}
+```
+
+正如你看到的那样, 我们初始化运行时并且发放了两个线程, 一个从1计数到10, 在每次计数之间让出控制权/`yield`, 而另一个计数到15. 我们可以使用 `cargo run` 来运行我们的项目, 我们可以看到以下输出:
+
+```
+Finished dev [unoptimized + debuginfo] target(s) in 2.17s
+Running `target/debug/green_threads`
+THREAD 1 STARTING
+thread: 1 counter: 0
+THREAD 2 STARTING
+thread: 2 counter: 0
+thread: 1 counter: 1
+thread: 2 counter: 1
+thread: 1 counter: 2
+thread: 2 counter: 2
+thread: 1 counter: 3
+thread: 2 counter: 3
+thread: 1 counter: 4
+thread: 2 counter: 4
+thread: 1 counter: 5
+thread: 2 counter: 5
+thread: 1 counter: 6
+thread: 2 counter: 6
+thread: 1 counter: 7
+thread: 2 counter: 7
+thread: 1 counter: 8
+thread: 2 counter: 8
+thread: 1 counter: 9
+thread: 2 counter: 9
+THREAD 1 FINISHED.
+thread: 2 counter: 10
+thread: 2 counter: 11
+thread: 2 counter: 12
+thread: 2 counter: 13
+thread: 2 counter: 14
+THREAD 2 FINISHED.
+```
+
+漂亮, 我们的线程是交替的, 因为我们在每个计数之间让出控制权直到线程1完成, 线程2在完成任务之前继续剩下的计数.
+
+## 恭喜
+
+你现在已经实现了一个超级简单但是能运行的绿色线程例子. 这是我们必须经历的一段旅程, 如果你已经读了很久完全理解了这些, 现在你应该休息一会了. 谢谢阅读!
+
+# 完成的200行代码
+
+```rust
+#![feature(llvm_asm, naked_functions)]
+
+const DEFAULT_STACK_SIZE: usize = 1024 * 1024 * 2;
+const MAX_THREADS: usize = 4;
+static mut RUNTIME: usize = 0;
+
+pub struct Runtime {
+    threads: Vec<Thread>,
+    current: usize,
+}
+
+#[derive(PartialEq, Eq, Debug)]
+enum State {
+    Available,
+    Running,
+    Ready,
+}
+
+struct Thread {
+    id: usize,
+    stack: Vec<u8>,
+    ctx: ThreadContext,
+    state: State,
+}
+
+#[derive(Debug, Default)]
+#[repr(C)]
+struct ThreadContext {
+    rsp: u64,
+    r15: u64,
+    r14: u64,
+    r13: u64,
+    r12: u64,
+    rbx: u64,
+    rbp: u64,
+}
+
+impl Thread {
+    fn new(id: usize) -> Self {
+        Thread {
+            id,
+            stack: vec![0_u8; DEFAULT_STACK_SIZE],
+            ctx: ThreadContext::default(),
+            state: State::Available,
+        }
+    }
+}
+
+impl Runtime {
+    pub fn new() -> Self {
+        let base_thread = Thread {
+            id: 0,
+            stack: vec![0_u8; DEFAULT_STACK_SIZE],
+            ctx: ThreadContext::default(),
+            state: State::Running,
+        };
+
+        let mut threads = vec![base_thread];
+        let mut available_threads: Vec<Thread> = (1..MAX_THREADS).map(|i| Thread::new(i)).collect();
+        threads.append(&mut available_threads);
+
+        Runtime {
+            threads,
+            current: 0,
+        }
+    }
+
+    pub fn init(&self) {
+        unsafe {
+            let r_ptr: *const Runtime = self;
+            RUNTIME = r_ptr as usize;
+        }
+    }
+
+    pub fn run(&mut self) -> ! {
+        while self.t_yield() {}
+        std::process::exit(0);
+    }
+
+    fn t_return(&mut self) {
+        if self.current != 0 {
+            self.threads[self.current].state = State::Available;
+            self.t_yield();
+        }
+    }
+
+    fn t_yield(&mut self) -> bool {
+        let mut pos = self.current;
+        while self.threads[pos].state != State::Ready {
+            pos += 1;
+            if pos == self.threads.len() {
+                pos = 0;
+            }
+            if pos == self.current {
+                return false;
+            }
+        }
+
+        if self.threads[self.current].state != State::Available {
+            self.threads[self.current].state = State::Ready;
+        }
+
+        self.threads[pos].state = State::Running;
+        let old_pos = self.current;
+        self.current = pos;
+
+        unsafe {
+            switch(&mut self.threads[old_pos].ctx, &self.threads[pos].ctx);
+        }
+
+        self.threads.len() > 0
+    }
+
+    pub fn spawn(&mut self, f: fn()) {
+        let available = self
+            .threads
+            .iter_mut()
+            .find(|t| t.state == State::Available)
+            .expect("no available thread.");
+
+        let size = available.stack.len();
+        unsafe {
+            let s_ptr = available.stack.as_mut_ptr().offset(size as isize);
+            let s_ptr = (s_ptr as usize & !15) as *mut u8;
+            std::ptr::write(s_ptr.offset(-16) as *mut u64, guard as u64);
+            std::ptr::write(s_ptr.offset(-24) as *mut u64, skip as u64);
+            std::ptr::write(s_ptr.offset(-32) as *mut u64, f as u64);
+            available.ctx.rsp = s_ptr.offset(-32) as u64;
+        }
+        available.state = State::Ready;
+    }
+}
+
+#[naked]
+fn skip() { }
+
+fn guard() {
+    unsafe {
+        let rt_ptr = RUNTIME as *mut Runtime;
+        (*rt_ptr).t_return();
+    };
+}
+
+pub fn yield_thread() {
+    unsafe {
+        let rt_ptr = RUNTIME as *mut Runtime;
+        (*rt_ptr).t_yield();
+    };
+}
+
+#[naked]
+#[inline(never)]
+unsafe fn switch(old: *mut ThreadContext, new: *const ThreadContext) {
+    llvm_asm!("
+        mov     %rsp, 0x00($0)
+        mov     %r15, 0x08($0)
+        mov     %r14, 0x10($0)
+        mov     %r13, 0x18($0)
+        mov     %r12, 0x20($0)
+        mov     %rbx, 0x28($0)
+        mov     %rbp, 0x30($0)
+   
+        mov     0x00($1), %rsp
+        mov     0x08($1), %r15
+        mov     0x10($1), %r14
+        mov     0x18($1), %r13
+        mov     0x20($1), %r12
+        mov     0x28($1), %rbx
+        mov     0x30($1), %rbp
+        ret
+        "
+    :
+    :"r"(old), "r"(new)
+    :
+    : "volatile", "alignstack"
+    );
+}
+fn main() {
+    let mut runtime = Runtime::new();
+    runtime.init();
+    runtime.spawn(|| {
+        println!("THREAD 1 STARTING");
+        let id = 1;
+        for i in 0..10 {
+            println!("thread: {} counter: {}", id, i);
+            yield_thread();
+        }
+        println!("THREAD 1 FINISHED");
+    });
+    runtime.spawn(|| {
+        println!("THREAD 2 STARTING");
+        let id = 2;
+        for i in 0..15 {
+            println!("thread: {} counter: {}", id, i);
+            yield_thread();
+        }
+        println!("THREAD 2 FINISHED");
+    });
+    runtime.run();
+}
+```
+
+> 译者: 下一个章节是对 `Windows` 的额外支持, 有兴趣的可以自行[阅读](https://cfsamson.gitbook.io/green-threads-explained-in-200-lines-of-rust/supporting-windows).
