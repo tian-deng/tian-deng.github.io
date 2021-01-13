@@ -44,6 +44,10 @@ tags:
     padding: 0.4rem 0.8rem;
     overflow: hidden
 }
+.dialog.amos .dialog-text {
+    background-color: #f6f9ff;
+    border: 1px solid #cce3f9;
+}
 </style>
 # 前言
 
@@ -197,3 +201,99 @@ $ cargo run -q
 
 ...然后我们就可以看到这两个类型的内容现在都放在堆上了.
 
+<div class="dialog">
+    <img src="./bear.svg" class="dialog-head">
+    <div class="dialog-text">
+        <p>这样, 那 <code>SmartString</code> 是否意味着买一送一的处理方式? 这和他的类型有关?</p>
+        <br/>
+        <p>它是怎么工作的?</p>
+    </div>
+</div>
+
+<div class="dialog amos">
+    <img src="./author.svg" class="dialog-head">
+    <div class="dialog-text">
+        <p>多么好的一个问题. 让我们谈谈枚举</p>
+    </div>
+</div>
+
+
+## 一个单词, 多种意义
+
+如果你有着 `C/C++/Java/C#` 的语言背景, 一个 `enum` 仅仅意味着一个 `Integer` 类型, 只是它的值有着自己的意义.
+
+让我们看一个 `C` 的例子:
+
+```c
+#include <stdio.h>
+
+enum Drink {
+    Water,
+    Soda,
+    Juice,
+};
+
+int main() {
+    enum Drink dri = Soda;
+    printf("dri = %d\n", dri);
+    printf("sizeof(dri) = %ld\n", sizeof(dri));
+    printf("sizeof(int) = %ld\n", sizeof(int));
+}
+```
+
+这里, 我们声明了一个枚举类型 `enum Drink`, 有三个变体, 不过仅仅是从0开始的数字, 所以我们有 `Water = 0`, `Soda = 1`, `Juice = 2`:
+
+```shell
+$ clang -Wall main.c -o main && ./main
+dri = 1
+sizeof(dri) = 4
+sizeof(int) = 4
+```
+
+然而我不是很喜欢这个代码, 我不想要额外的限定词, 并且想要我的变量有着自己的命名空间, 但在 `C` 里面我们需要自己做这些事:
+
+```rust
+#include <stdio.h>
+
+// this could also be done in two separate declarations
+typedef enum Drink {
+    Drink_Water,
+    Drink_Soda,
+    Drink_Juice,
+} Drink;
+
+int main() {
+    Drink dri = Drink_Soda;
+    printf("dri = %d\n", dri);
+    printf("sizeof(dri) = %ld\n", sizeof(dri));
+    printf("sizeof(int) = %ld\n", sizeof(int));
+}
+```
+
+Ahhh, 好多了. 但是这里仍然有其它的东西我不是特别喜欢, 像是 `C` 的 `switch`. 下面的代码是错误的:
+```c
+#include <stdio.h>
+
+typedef enum Drink {
+    Drink_Water,
+    Drink_Soda,
+    Drink_Juice,
+} Drink;
+
+void print_drink(Drink dri) {
+    switch (dri) {
+        case Drink_Water:
+            printf("It's water!\n");
+        case Drink_Soda:
+            printf("It's soda!\n");
+        case Drink_Juice:
+            printf("It's juice!\n");
+    }
+}
+
+int main() {
+    print_drink(Drink_Soda);
+}
+```
+
+正确的代码是在每个 `case` 语句的结尾都使用 `break`. 这是刚起步的开发人员很早就应该了解的事情之一.
