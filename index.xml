@@ -34,6 +34,26 @@ overflow: hidden
 background-color: #f6f9ff;
 border: 1px solid #cce3f9;
 }
+.tip {
+line-height: 1.6;
+border-radius: 4px;
+padding: 0.4rem 0.8rem;
+background-color: #fefdf6;
+border: 1px solid #ffeb81;
+}
+.tip .tip-header {
+display: flex;
+align-items: center;
+justify-content: center;
+font-weight: bold;
+margin-top: 0.2em;
+margin-bottom:0.6em;
+}
+.tip .tip-header img {
+transform: none;
+width: 3rem;
+height: 3rem;
+}
 &lt;/style>
 &lt;h1 id="前言">前言&lt;/h1>
 &lt;p>在我最近 &lt;code>Rust Q&amp;amp;A&lt;/code> &lt;code>twitch&lt;/code> 频道里, 有些人提出了一个看起来简单的问题: 为什么 &lt;code>small string&lt;/code> 类型, 像 &lt;code>SmartString&lt;/code> or &lt;code>SmolStr&lt;/code> 和 &lt;code>String&lt;/code> 有着一样的大小, 但是 &lt;code>small vec&lt;/code> 类型, 像 &lt;code>SmallVec&lt;/code> 却要比 &lt;code>Vec&lt;/code> 大?&lt;/p>
@@ -183,23 +203,22 @@ border: 1px solid #cce3f9;
 &lt;span class="nv">dri&lt;/span> &lt;span class="o">=&lt;/span> &lt;span class="m">1&lt;/span>
 sizeof&lt;span class="o">(&lt;/span>dri&lt;span class="o">)&lt;/span> &lt;span class="o">=&lt;/span> &lt;span class="m">4&lt;/span>
 sizeof&lt;span class="o">(&lt;/span>int&lt;span class="o">)&lt;/span> &lt;span class="o">=&lt;/span> &lt;span class="m">4&lt;/span>
-&lt;/code>&lt;/pre>&lt;/div>&lt;p>然而我不是很喜欢这个代码, 我不想要额外的限定词, 并且想要我的变量有着自己的命名空间, 但在 &lt;code>C&lt;/code> 里面我们需要自己做这些事:&lt;/p>
-&lt;div class="highlight">&lt;pre class="chroma">&lt;code class="language-rust" data-lang="rust">&lt;span class="err">#&lt;/span>&lt;span class="n">include&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="o">&amp;lt;&lt;/span>&lt;span class="n">stdio&lt;/span>&lt;span class="p">.&lt;/span>&lt;span class="n">h&lt;/span>&lt;span class="o">&amp;gt;&lt;/span>&lt;span class="w">
-&lt;/span>&lt;span class="w">
-&lt;/span>&lt;span class="w">&lt;/span>&lt;span class="c1">// this could also be done in two separate declarations
-&lt;/span>&lt;span class="c1">&lt;/span>&lt;span class="n">typedef&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="k">enum&lt;/span> &lt;span class="nc">Drink&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="p">{&lt;/span>&lt;span class="w">
-&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="n">Drink_Water&lt;/span>&lt;span class="p">,&lt;/span>&lt;span class="w">
-&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="n">Drink_Soda&lt;/span>&lt;span class="p">,&lt;/span>&lt;span class="w">
-&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="n">Drink_Juice&lt;/span>&lt;span class="p">,&lt;/span>&lt;span class="w">
-&lt;/span>&lt;span class="w">&lt;/span>&lt;span class="p">}&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="n">Drink&lt;/span>&lt;span class="p">;&lt;/span>&lt;span class="w">
-&lt;/span>&lt;span class="w">
-&lt;/span>&lt;span class="w">&lt;/span>&lt;span class="n">int&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="n">main&lt;/span>&lt;span class="p">()&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="p">{&lt;/span>&lt;span class="w">
-&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="n">Drink&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="n">dri&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="o">=&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="n">Drink_Soda&lt;/span>&lt;span class="p">;&lt;/span>&lt;span class="w">
-&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="n">printf&lt;/span>&lt;span class="p">(&lt;/span>&lt;span class="s">&amp;#34;dri = %d\n&amp;#34;&lt;/span>&lt;span class="p">,&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="n">dri&lt;/span>&lt;span class="p">);&lt;/span>&lt;span class="w">
-&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="n">printf&lt;/span>&lt;span class="p">(&lt;/span>&lt;span class="s">&amp;#34;sizeof(dri) = %ld\n&amp;#34;&lt;/span>&lt;span class="p">,&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="kr">sizeof&lt;/span>&lt;span class="p">(&lt;/span>&lt;span class="n">dri&lt;/span>&lt;span class="p">));&lt;/span>&lt;span class="w">
-&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="n">printf&lt;/span>&lt;span class="p">(&lt;/span>&lt;span class="s">&amp;#34;sizeof(int) = %ld\n&amp;#34;&lt;/span>&lt;span class="p">,&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="kr">sizeof&lt;/span>&lt;span class="p">(&lt;/span>&lt;span class="n">int&lt;/span>&lt;span class="p">));&lt;/span>&lt;span class="w">
-&lt;/span>&lt;span class="w">&lt;/span>&lt;span class="p">}&lt;/span>&lt;span class="w">
-&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;p>Ahhh, 好多了. 但是这里仍然有其它的东西我不是特别喜欢, 像是 &lt;code>C&lt;/code> 的 &lt;code>switch&lt;/code>. 下面的代码是错误的:&lt;/p>
+&lt;/code>&lt;/pre>&lt;/div>&lt;p>然而我不是很喜欢这个代码, 我不想要额外的限定词, 并且想要我的变体有着自己的命名空间, 但在 &lt;code>C&lt;/code> 里面我们需要自己做这些事:&lt;/p>
+&lt;div class="highlight">&lt;pre class="chroma">&lt;code class="language-c" data-lang="c">&lt;span class="cp">#include&lt;/span> &lt;span class="cpf">&amp;lt;stdio.h&amp;gt;&lt;/span>&lt;span class="cp">
+&lt;/span>&lt;span class="cp">&lt;/span>
+&lt;span class="c1">// this could also be done in two separate declarations
+&lt;/span>&lt;span class="c1">&lt;/span>&lt;span class="k">typedef&lt;/span> &lt;span class="k">enum&lt;/span> &lt;span class="n">Drink&lt;/span> &lt;span class="p">{&lt;/span>
+&lt;span class="n">Drink_Water&lt;/span>&lt;span class="p">,&lt;/span>
+&lt;span class="n">Drink_Soda&lt;/span>&lt;span class="p">,&lt;/span>
+&lt;span class="n">Drink_Juice&lt;/span>&lt;span class="p">,&lt;/span>
+&lt;span class="p">}&lt;/span> &lt;span class="n">Drink&lt;/span>&lt;span class="p">;&lt;/span>
+&lt;span class="kt">int&lt;/span> &lt;span class="nf">main&lt;/span>&lt;span class="p">()&lt;/span> &lt;span class="p">{&lt;/span>
+&lt;span class="n">Drink&lt;/span> &lt;span class="n">dri&lt;/span> &lt;span class="o">=&lt;/span> &lt;span class="n">Drink_Soda&lt;/span>&lt;span class="p">;&lt;/span>
+&lt;span class="n">printf&lt;/span>&lt;span class="p">(&lt;/span>&lt;span class="s">&amp;#34;dri = %d&lt;/span>&lt;span class="se">\n&lt;/span>&lt;span class="s">&amp;#34;&lt;/span>&lt;span class="p">,&lt;/span> &lt;span class="n">dri&lt;/span>&lt;span class="p">);&lt;/span>
+&lt;span class="n">printf&lt;/span>&lt;span class="p">(&lt;/span>&lt;span class="s">&amp;#34;sizeof(dri) = %ld&lt;/span>&lt;span class="se">\n&lt;/span>&lt;span class="s">&amp;#34;&lt;/span>&lt;span class="p">,&lt;/span> &lt;span class="k">sizeof&lt;/span>&lt;span class="p">(&lt;/span>&lt;span class="n">dri&lt;/span>&lt;span class="p">));&lt;/span>
+&lt;span class="n">printf&lt;/span>&lt;span class="p">(&lt;/span>&lt;span class="s">&amp;#34;sizeof(int) = %ld&lt;/span>&lt;span class="se">\n&lt;/span>&lt;span class="s">&amp;#34;&lt;/span>&lt;span class="p">,&lt;/span> &lt;span class="k">sizeof&lt;/span>&lt;span class="p">(&lt;/span>&lt;span class="kt">int&lt;/span>&lt;span class="p">));&lt;/span>
+&lt;span class="p">}&lt;/span>
+&lt;/code>&lt;/pre>&lt;/div>&lt;p>Ahhh, 好多了. 但是这里仍然有其它的东西我不是特别喜欢, 像是 &lt;code>C&lt;/code> 的 &lt;code>switch&lt;/code>. 下面的代码是错误的:&lt;/p>
 &lt;div class="highlight">&lt;pre class="chroma">&lt;code class="language-c" data-lang="c">&lt;span class="cp">#include&lt;/span> &lt;span class="cpf">&amp;lt;stdio.h&amp;gt;&lt;/span>&lt;span class="cp">
 &lt;/span>&lt;span class="cp">&lt;/span>
 &lt;span class="k">typedef&lt;/span> &lt;span class="k">enum&lt;/span> &lt;span class="n">Drink&lt;/span> &lt;span class="p">{&lt;/span>
@@ -220,7 +239,251 @@ sizeof&lt;span class="o">(&lt;/span>int&lt;span class="o">)&lt;/span> &lt;span c
 &lt;span class="kt">int&lt;/span> &lt;span class="nf">main&lt;/span>&lt;span class="p">()&lt;/span> &lt;span class="p">{&lt;/span>
 &lt;span class="n">print_drink&lt;/span>&lt;span class="p">(&lt;/span>&lt;span class="n">Drink_Soda&lt;/span>&lt;span class="p">);&lt;/span>
 &lt;span class="p">}&lt;/span>
-&lt;/code>&lt;/pre>&lt;/div>&lt;p>正确的代码是在每个 &lt;code>case&lt;/code> 语句的结尾都使用 &lt;code>break&lt;/code>. 这是刚起步的开发人员很早就应该了解的事情之一.&lt;/p></description></item><item><title>200行Rust代码解释绿色线程</title><link>https://example.com/posts/translation/rust/green_threads_explained_in_200_lines_of_rust/</link><pubDate>Wed, 18 Nov 2020 13:28:44 +0800</pubDate><guid>https://example.com/posts/translation/rust/green_threads_explained_in_200_lines_of_rust/</guid><description>&lt;img src="https://example.com/posts/translation/rust/green_threads_explained_in_200_lines_of_rust/cover.png" alt="Featured image of post 200行Rust代码解释绿色线程" />&lt;blockquote>
+&lt;/code>&lt;/pre>&lt;/div>&lt;p>正确的代码是在每个 &lt;code>case&lt;/code> 语句的结尾都使用 &lt;code>break&lt;/code>. 这是刚起步的开发人员很早就应该了解的事情之一.&lt;/p>
+&lt;div class="tip">
+&lt;div class="tip-header">
+&lt;img src="./bear.svg">
+Cool bear's hot tip
+&lt;/div>
+鹅妹子嘤, 在 `C#` 中也是一样, 这除了防止你硬编码错误而导致的隐式跌落(意思是没有 &lt;code>break&lt;/code> 的情况就一个 &lt;code>case&lt;/code> 一个 &lt;code>case&lt;/code> 向下运行)以外, 如果喜欢的话你仍然可以实现一个 &lt;a href="https://stackoverflow.com/questions/174155/switch-statement-fallthrough-in-c/174223#174223">明确的跌落&lt;/a>.
+&lt;/div>
+&lt;p>即使我们修复了 &lt;code>switch&lt;/code> 的问题, 还有件我不喜欢 &lt;code>C&lt;/code> 枚举的事情, 那就是没什么可以阻止我传递一个无意义的值:&lt;/p>
+&lt;div class="highlight">&lt;pre class="chroma">&lt;code class="language-c" data-lang="c">&lt;span class="cp">#include&lt;/span> &lt;span class="cpf">&amp;lt;stdio.h&amp;gt;&lt;/span>&lt;span class="cp">
+&lt;/span>&lt;span class="cp">&lt;/span>
+&lt;span class="k">typedef&lt;/span> &lt;span class="k">enum&lt;/span> &lt;span class="n">Drink&lt;/span> &lt;span class="p">{&lt;/span>
+&lt;span class="n">Drink_Water&lt;/span>&lt;span class="p">,&lt;/span>
+&lt;span class="n">Drink_Soda&lt;/span>&lt;span class="p">,&lt;/span>
+&lt;span class="n">Drink_Juice&lt;/span>&lt;span class="p">,&lt;/span>
+&lt;span class="p">}&lt;/span> &lt;span class="n">Drink&lt;/span>&lt;span class="p">;&lt;/span>
+&lt;span class="kt">void&lt;/span> &lt;span class="nf">print_drink&lt;/span>&lt;span class="p">(&lt;/span>&lt;span class="n">Drink&lt;/span> &lt;span class="n">dri&lt;/span>&lt;span class="p">)&lt;/span> &lt;span class="p">{&lt;/span>
+&lt;span class="k">switch&lt;/span> &lt;span class="p">(&lt;/span>&lt;span class="n">dri&lt;/span>&lt;span class="p">)&lt;/span> &lt;span class="p">{&lt;/span>
+&lt;span class="k">case&lt;/span> &lt;span class="nl">Drink_Water&lt;/span>&lt;span class="p">:&lt;/span>
+&lt;span class="n">printf&lt;/span>&lt;span class="p">(&lt;/span>&lt;span class="s">&amp;#34;It&amp;#39;s water!&lt;/span>&lt;span class="se">\n&lt;/span>&lt;span class="s">&amp;#34;&lt;/span>&lt;span class="p">);&lt;/span>
+&lt;span class="k">break&lt;/span>&lt;span class="p">;&lt;/span>
+&lt;span class="k">case&lt;/span> &lt;span class="nl">Drink_Soda&lt;/span>&lt;span class="p">:&lt;/span>
+&lt;span class="n">printf&lt;/span>&lt;span class="p">(&lt;/span>&lt;span class="s">&amp;#34;It&amp;#39;s soda!&lt;/span>&lt;span class="se">\n&lt;/span>&lt;span class="s">&amp;#34;&lt;/span>&lt;span class="p">);&lt;/span>
+&lt;span class="k">break&lt;/span>&lt;span class="p">;&lt;/span>
+&lt;span class="k">case&lt;/span> &lt;span class="nl">Drink_Juice&lt;/span>&lt;span class="p">:&lt;/span>
+&lt;span class="n">printf&lt;/span>&lt;span class="p">(&lt;/span>&lt;span class="s">&amp;#34;It&amp;#39;s juice!&lt;/span>&lt;span class="se">\n&lt;/span>&lt;span class="s">&amp;#34;&lt;/span>&lt;span class="p">);&lt;/span>
+&lt;span class="k">break&lt;/span>&lt;span class="p">;&lt;/span>
+&lt;span class="p">}&lt;/span>
+&lt;span class="p">}&lt;/span>
+&lt;span class="kt">int&lt;/span> &lt;span class="nf">main&lt;/span>&lt;span class="p">()&lt;/span> &lt;span class="p">{&lt;/span>
+&lt;span class="n">print_drink&lt;/span>&lt;span class="p">(&lt;/span>&lt;span class="mi">47&lt;/span>&lt;span class="p">);&lt;/span>
+&lt;span class="p">}&lt;/span>
+&lt;/code>&lt;/pre>&lt;/div>&lt;div class="highlight">&lt;pre class="chroma">&lt;code class="language-shell" data-lang="shell">$ clang -Wall main.c -o main &lt;span class="o">&amp;amp;&amp;amp;&lt;/span> ./main
+&lt;/code>&lt;/pre>&lt;/div>&lt;p>现在, 如果我们看看 &lt;code>Rust&lt;/code> 的枚举&amp;hellip; 这是个完全不同的事情.&lt;/p>
+&lt;p>让我们尽量写一个相同的程序.&lt;/p>
+&lt;div class="highlight">&lt;pre class="chroma">&lt;code class="language-rust" data-lang="rust">&lt;span class="k">use&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="n">std&lt;/span>::&lt;span class="n">mem&lt;/span>::&lt;span class="n">size_of_val&lt;/span>&lt;span class="p">;&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w">&lt;/span>&lt;span class="k">enum&lt;/span> &lt;span class="nc">Drink&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="p">{&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="n">Water&lt;/span>&lt;span class="p">,&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="n">Soda&lt;/span>&lt;span class="p">,&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="n">Juice&lt;/span>&lt;span class="p">,&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w">&lt;/span>&lt;span class="p">}&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w">&lt;/span>&lt;span class="k">fn&lt;/span> &lt;span class="nf">main&lt;/span>&lt;span class="p">()&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="p">{&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="kd">let&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="n">dri&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="o">=&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="n">Drink&lt;/span>::&lt;span class="n">Water&lt;/span>&lt;span class="p">;&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="n">dbg&lt;/span>&lt;span class="o">!&lt;/span>&lt;span class="p">(&lt;/span>&lt;span class="n">size_of_val&lt;/span>&lt;span class="p">(&lt;/span>&lt;span class="o">&amp;amp;&lt;/span>&lt;span class="n">dri&lt;/span>&lt;span class="p">));&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="n">dbg&lt;/span>&lt;span class="o">!&lt;/span>&lt;span class="p">(&lt;/span>&lt;span class="n">dri&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="k">as&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="kt">u32&lt;/span>&lt;span class="p">);&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w">&lt;/span>&lt;span class="p">}&lt;/span>&lt;span class="w">
+&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;div class="highlight">&lt;pre class="chroma">&lt;code class="language-shell" data-lang="shell">$ cargo run -q
+warning: variant is never constructed: &lt;span class="sb">`&lt;/span>Soda&lt;span class="sb">`&lt;/span>
+--&amp;gt; src/main.rs:5:5
+&lt;span class="p">|&lt;/span>
+&lt;span class="m">5&lt;/span> &lt;span class="p">|&lt;/span> Soda,
+&lt;span class="p">|&lt;/span> ^^^^
+&lt;span class="p">|&lt;/span>
+&lt;span class="o">=&lt;/span> note: &lt;span class="sb">`&lt;/span>&lt;span class="c1">#[warn(dead_code)]` on by default&lt;/span>
+warning: variant is never constructed: &lt;span class="sb">`&lt;/span>Juice&lt;span class="sb">`&lt;/span>
+--&amp;gt; src/main.rs:6:5
+&lt;span class="p">|&lt;/span>
+&lt;span class="m">6&lt;/span> &lt;span class="p">|&lt;/span> Juice,
+&lt;span class="p">|&lt;/span> ^^^^^
+warning: &lt;span class="m">2&lt;/span> warnings emitted
+&lt;span class="o">[&lt;/span>src/main.rs:11&lt;span class="o">]&lt;/span> size_of_val&lt;span class="o">(&lt;/span>&lt;span class="p">&amp;amp;&lt;/span>dri&lt;span class="o">)&lt;/span> &lt;span class="o">=&lt;/span> &lt;span class="m">1&lt;/span>
+&lt;span class="o">[&lt;/span>src/main.rs:12&lt;span class="o">]&lt;/span> dri as &lt;span class="nv">u32&lt;/span> &lt;span class="o">=&lt;/span> &lt;span class="m">0&lt;/span>
+&lt;/code>&lt;/pre>&lt;/div>&lt;p>那么我们明显地得到了什么好处呢?&lt;/p>
+&lt;div class="dialog">
+&lt;img src="./bear.svg" class="dialog-head">
+&lt;div class="dialog-text">
+&lt;p>让我看看, 这看起来像是一个 &lt;code>Integer&lt;/code> 类型 - 至少, 我能把它转型为一个 &lt;code>u32&lt;/code>. 但是它默认就有命名空间?&lt;/p>
+&lt;/div>
+&lt;/div>
+&lt;p>对的, 但那并不是全部! 编译器警告我们有没有使用的变体, 并且我们可以简单地给这个枚举派生一个 &lt;code>Debug&lt;/code> trait 的实现:&lt;/p>
+&lt;div class="highlight">&lt;pre class="chroma">&lt;code class="language-rust" data-lang="rust">&lt;span class="cp">#[derive(Debug)]&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w">&lt;/span>&lt;span class="k">enum&lt;/span> &lt;span class="nc">Drink&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="p">{&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="n">Water&lt;/span>&lt;span class="p">,&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="n">Soda&lt;/span>&lt;span class="p">,&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="n">Juice&lt;/span>&lt;span class="p">,&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w">&lt;/span>&lt;span class="p">}&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w">&lt;/span>&lt;span class="k">fn&lt;/span> &lt;span class="nf">main&lt;/span>&lt;span class="p">()&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="p">{&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="n">print_drink&lt;/span>&lt;span class="p">(&lt;/span>&lt;span class="o">&amp;amp;&lt;/span>&lt;span class="n">Drink&lt;/span>::&lt;span class="n">Water&lt;/span>&lt;span class="p">);&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="n">print_drink&lt;/span>&lt;span class="p">(&lt;/span>&lt;span class="o">&amp;amp;&lt;/span>&lt;span class="n">Drink&lt;/span>::&lt;span class="n">Juice&lt;/span>&lt;span class="p">);&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="n">print_drink&lt;/span>&lt;span class="p">(&lt;/span>&lt;span class="o">&amp;amp;&lt;/span>&lt;span class="n">Drink&lt;/span>::&lt;span class="n">Soda&lt;/span>&lt;span class="p">);&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w">&lt;/span>&lt;span class="p">}&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w">&lt;/span>&lt;span class="k">fn&lt;/span> &lt;span class="nf">print_drink&lt;/span>&lt;span class="p">(&lt;/span>&lt;span class="n">dri&lt;/span>: &lt;span class="kp">&amp;amp;&lt;/span>&lt;span class="nc">Drink&lt;/span>&lt;span class="p">)&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="p">{&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="n">println&lt;/span>&lt;span class="o">!&lt;/span>&lt;span class="p">(&lt;/span>&lt;span class="s">&amp;#34;{:?}&amp;#34;&lt;/span>&lt;span class="p">,&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="n">dri&lt;/span>&lt;span class="p">);&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w">&lt;/span>&lt;span class="p">}&lt;/span>&lt;span class="w">
+&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;div class="highlight">&lt;pre class="chroma">&lt;code class="language-shell" data-lang="shell">$ cargo run -q
+Water
+Juice
+Soda
+&lt;/code>&lt;/pre>&lt;/div>&lt;p>&amp;hellip;并且假如我们不那么做, 我们也能使用 &lt;code>match&lt;/code> 而不是 &lt;code>switch&lt;/code>, &lt;code>match&lt;/code> 会检查是否匹配了枚举的所有变体, 举个例子, 下面的代码不能通过编译:&lt;/p>
+&lt;div class="highlight">&lt;pre class="chroma">&lt;code class="language-rust" data-lang="rust">&lt;span class="k">fn&lt;/span> &lt;span class="nf">print_drink&lt;/span>&lt;span class="p">(&lt;/span>&lt;span class="n">dri&lt;/span>: &lt;span class="kp">&amp;amp;&lt;/span>&lt;span class="nc">Drink&lt;/span>&lt;span class="p">)&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="p">{&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="k">match&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="n">dri&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="p">{&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="n">Drink&lt;/span>::&lt;span class="n">Water&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="o">=&amp;gt;&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="n">println&lt;/span>&lt;span class="o">!&lt;/span>&lt;span class="p">(&lt;/span>&lt;span class="s">&amp;#34;it&amp;#39;s water!&amp;#34;&lt;/span>&lt;span class="p">),&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="n">Drink&lt;/span>::&lt;span class="n">Soda&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="o">=&amp;gt;&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="n">println&lt;/span>&lt;span class="o">!&lt;/span>&lt;span class="p">(&lt;/span>&lt;span class="s">&amp;#34;it&amp;#39;s soda!&amp;#34;&lt;/span>&lt;span class="p">),&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="p">}&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w">&lt;/span>&lt;span class="p">}&lt;/span>&lt;span class="w">
+&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;div class="highlight">&lt;pre class="chroma">&lt;code class="language-shell" data-lang="shell">$ cargo run -q
+error&lt;span class="o">[&lt;/span>E0004&lt;span class="o">]&lt;/span>: non-exhaustive patterns: &lt;span class="sb">`&lt;/span>&lt;span class="p">&amp;amp;&lt;/span>Juice&lt;span class="sb">`&lt;/span> not covered
+--&amp;gt; src/main.rs:15:11
+&lt;span class="p">|&lt;/span>
+&lt;span class="m">2&lt;/span> &lt;span class="p">|&lt;/span> / enum Drink &lt;span class="o">{&lt;/span>
+&lt;span class="m">3&lt;/span> &lt;span class="p">|&lt;/span> &lt;span class="p">|&lt;/span> Water,
+&lt;span class="m">4&lt;/span> &lt;span class="p">|&lt;/span> &lt;span class="p">|&lt;/span> Soda,
+&lt;span class="m">5&lt;/span> &lt;span class="p">|&lt;/span> &lt;span class="p">|&lt;/span> Juice,
+&lt;span class="p">|&lt;/span> &lt;span class="p">|&lt;/span> ----- not covered
+&lt;span class="m">6&lt;/span> &lt;span class="p">|&lt;/span> &lt;span class="p">|&lt;/span> &lt;span class="o">}&lt;/span>
+&lt;span class="p">|&lt;/span> &lt;span class="p">|&lt;/span>_- &lt;span class="sb">`&lt;/span>Drink&lt;span class="sb">`&lt;/span> defined here
+...
+&lt;span class="m">15&lt;/span> &lt;span class="p">|&lt;/span> match dri &lt;span class="o">{&lt;/span>
+&lt;span class="p">|&lt;/span> ^^^ pattern &lt;span class="sb">`&lt;/span>&lt;span class="p">&amp;amp;&lt;/span>Juice&lt;span class="sb">`&lt;/span> not covered
+&lt;span class="p">|&lt;/span>
+&lt;span class="o">=&lt;/span> help: ensure that all possible cases are being handled, possibly by adding wildcards or more match &lt;span class="nv">arms&lt;/span>
+&lt;span class="o">=&lt;/span> note: the matched value is of &lt;span class="nb">type&lt;/span> &lt;span class="sb">`&lt;/span>&lt;span class="p">&amp;amp;&lt;/span>Drink&lt;span class="sb">`&lt;/span>
+&lt;/code>&lt;/pre>&lt;/div>&lt;p>编译器给出了两种可能的方法来修复这个问题, 或是添加一个通配符:&lt;/p>
+&lt;div class="highlight">&lt;pre class="chroma">&lt;code class="language-rust" data-lang="rust">&lt;span class="k">fn&lt;/span> &lt;span class="nf">print_drink&lt;/span>&lt;span class="p">(&lt;/span>&lt;span class="n">dri&lt;/span>: &lt;span class="kp">&amp;amp;&lt;/span>&lt;span class="nc">Drink&lt;/span>&lt;span class="p">)&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="p">{&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="k">match&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="n">dri&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="p">{&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="n">Drink&lt;/span>::&lt;span class="n">Water&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="o">=&amp;gt;&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="n">println&lt;/span>&lt;span class="o">!&lt;/span>&lt;span class="p">(&lt;/span>&lt;span class="s">&amp;#34;it&amp;#39;s water!&amp;#34;&lt;/span>&lt;span class="p">),&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="n">Drink&lt;/span>::&lt;span class="n">Soda&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="o">=&amp;gt;&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="n">println&lt;/span>&lt;span class="o">!&lt;/span>&lt;span class="p">(&lt;/span>&lt;span class="s">&amp;#34;it&amp;#39;s soda!&amp;#34;&lt;/span>&lt;span class="p">),&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="n">_&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="o">=&amp;gt;&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="n">println&lt;/span>&lt;span class="o">!&lt;/span>&lt;span class="p">(&lt;/span>&lt;span class="s">&amp;#34;it&amp;#39;s something we don&amp;#39;t know about!&amp;#34;&lt;/span>&lt;span class="p">),&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="p">}&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w">&lt;/span>&lt;span class="p">}&lt;/span>&lt;span class="w">
+&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;p>或者是覆盖到所有的情况:&lt;/p>
+&lt;div class="highlight">&lt;pre class="chroma">&lt;code class="language-rust" data-lang="rust">&lt;span class="k">fn&lt;/span> &lt;span class="nf">print_drink&lt;/span>&lt;span class="p">(&lt;/span>&lt;span class="n">dri&lt;/span>: &lt;span class="kp">&amp;amp;&lt;/span>&lt;span class="nc">Drink&lt;/span>&lt;span class="p">)&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="p">{&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="k">match&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="n">dri&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="p">{&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="n">Drink&lt;/span>::&lt;span class="n">Water&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="o">=&amp;gt;&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="n">println&lt;/span>&lt;span class="o">!&lt;/span>&lt;span class="p">(&lt;/span>&lt;span class="s">&amp;#34;it&amp;#39;s water!&amp;#34;&lt;/span>&lt;span class="p">),&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="n">Drink&lt;/span>::&lt;span class="n">Soda&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="o">=&amp;gt;&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="n">println&lt;/span>&lt;span class="o">!&lt;/span>&lt;span class="p">(&lt;/span>&lt;span class="s">&amp;#34;it&amp;#39;s soda!&amp;#34;&lt;/span>&lt;span class="p">),&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="n">Drink&lt;/span>::&lt;span class="n">Juice&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="o">=&amp;gt;&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="n">println&lt;/span>&lt;span class="o">!&lt;/span>&lt;span class="p">(&lt;/span>&lt;span class="s">&amp;#34;it&amp;#39;s juice!&amp;#34;&lt;/span>&lt;span class="p">),&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="p">}&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w">&lt;/span>&lt;span class="p">}&lt;/span>&lt;span class="w">
+&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;div class="tip">
+&lt;div class="tip-header">
+&lt;img src="./bear.svg">
+Cool bear's hot tip
+&lt;/div>
+这听起来是不是要敲很多代码? 幸运的是, &lt;code>rust-analyzer&lt;/code> 可以帮忙补全 &lt;code>case&lt;/code>, 这帮我们自动生成的很大一部分代码.
+&lt;/div>
+&lt;p>讲到 &lt;code>match&lt;/code>, 它也是一个表达式, 所以我们也可以这么做:&lt;/p>
+&lt;div class="highlight">&lt;pre class="chroma">&lt;code class="language-rust" data-lang="rust">&lt;span class="k">fn&lt;/span> &lt;span class="nf">print_drink&lt;/span>&lt;span class="p">(&lt;/span>&lt;span class="n">dri&lt;/span>: &lt;span class="kp">&amp;amp;&lt;/span>&lt;span class="nc">Drink&lt;/span>&lt;span class="p">)&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="p">{&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="n">println&lt;/span>&lt;span class="o">!&lt;/span>&lt;span class="p">(&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="s">&amp;#34;{}&amp;#34;&lt;/span>&lt;span class="p">,&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="k">match&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="n">dri&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="p">{&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="n">Drink&lt;/span>::&lt;span class="n">Water&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="o">=&amp;gt;&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="s">&amp;#34;it&amp;#39;s water!&amp;#34;&lt;/span>&lt;span class="p">,&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="n">Drink&lt;/span>::&lt;span class="n">Soda&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="o">=&amp;gt;&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="s">&amp;#34;it&amp;#39;s soda!&amp;#34;&lt;/span>&lt;span class="p">,&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="n">Drink&lt;/span>::&lt;span class="n">Juice&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="o">=&amp;gt;&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="s">&amp;#34;it&amp;#39;s juice!&amp;#34;&lt;/span>&lt;span class="p">,&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="p">}&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="p">)&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w">&lt;/span>&lt;span class="p">}&lt;/span>&lt;span class="w">
+&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;p>尽管就我个人而言, 我可能更倾向于这样写:&lt;/p>
+&lt;div class="highlight">&lt;pre class="chroma">&lt;code class="language-rust" data-lang="rust">&lt;span class="k">fn&lt;/span> &lt;span class="nf">print_drink&lt;/span>&lt;span class="p">(&lt;/span>&lt;span class="n">dri&lt;/span>: &lt;span class="kp">&amp;amp;&lt;/span>&lt;span class="nc">Drink&lt;/span>&lt;span class="p">)&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="p">{&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="kd">let&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="n">name&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="o">=&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="k">match&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="n">dri&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="p">{&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="n">Drink&lt;/span>::&lt;span class="n">Water&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="o">=&amp;gt;&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="s">&amp;#34;water&amp;#34;&lt;/span>&lt;span class="p">,&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="n">Drink&lt;/span>::&lt;span class="n">Soda&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="o">=&amp;gt;&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="s">&amp;#34;soda&amp;#34;&lt;/span>&lt;span class="p">,&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="n">Drink&lt;/span>::&lt;span class="n">Juice&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="o">=&amp;gt;&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="s">&amp;#34;juice&amp;#34;&lt;/span>&lt;span class="p">,&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="p">};&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="n">println&lt;/span>&lt;span class="o">!&lt;/span>&lt;span class="p">(&lt;/span>&lt;span class="s">&amp;#34;it&amp;#39;s {}!&amp;#34;&lt;/span>&lt;span class="p">,&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="n">name&lt;/span>&lt;span class="p">)&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w">&lt;/span>&lt;span class="p">}&lt;/span>&lt;span class="w">
+&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;p>让我们想想, 我们还抱怨了 &lt;code>C&lt;/code> 枚举的什么地方?&lt;/p>
+&lt;div class="dialog">
+&lt;img src="./bear.svg" class="dialog-head">
+&lt;div class="dialog-text">
+&lt;p>你可以传递无意义的值!&lt;/p>
+&lt;/div>
+&lt;/div>
+&lt;p>对! 让我们试试:&lt;/p>
+&lt;div class="highlight">&lt;pre class="chroma">&lt;code class="language-rust" data-lang="rust">&lt;span class="k">fn&lt;/span> &lt;span class="nf">main&lt;/span>&lt;span class="p">()&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="p">{&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="n">print_drink&lt;/span>&lt;span class="p">(&lt;/span>&lt;span class="o">&amp;amp;&lt;/span>&lt;span class="n">Drink&lt;/span>::&lt;span class="n">Water&lt;/span>&lt;span class="p">);&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="n">print_drink&lt;/span>&lt;span class="p">(&lt;/span>&lt;span class="o">&amp;amp;&lt;/span>&lt;span class="n">Drink&lt;/span>::&lt;span class="n">Juice&lt;/span>&lt;span class="p">);&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="n">print_drink&lt;/span>&lt;span class="p">(&lt;/span>&lt;span class="o">&amp;amp;&lt;/span>&lt;span class="n">Drink&lt;/span>::&lt;span class="n">Soda&lt;/span>&lt;span class="p">);&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="kd">let&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="n">val&lt;/span>: &lt;span class="nc">Drink&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="o">=&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="mi">4&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="k">as&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="n">Drink&lt;/span>&lt;span class="p">;&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="n">print_drink&lt;/span>&lt;span class="p">(&lt;/span>&lt;span class="o">&amp;amp;&lt;/span>&lt;span class="n">val&lt;/span>&lt;span class="p">);&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w">&lt;/span>&lt;span class="p">}&lt;/span>&lt;span class="w">
+&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;div class="highlight">&lt;pre class="chroma">&lt;code class="language-shell" data-lang="shell">$ cargo run -q
+error&lt;span class="o">[&lt;/span>E0605&lt;span class="o">]&lt;/span>: non-primitive cast: &lt;span class="sb">`&lt;/span>i32&lt;span class="sb">`&lt;/span> as &lt;span class="sb">`&lt;/span>Drink&lt;span class="sb">`&lt;/span>
+--&amp;gt; src/main.rs:13:22
+&lt;span class="p">|&lt;/span>
+&lt;span class="m">13&lt;/span> &lt;span class="p">|&lt;/span> &lt;span class="nb">let&lt;/span> val: &lt;span class="nv">Drink&lt;/span> &lt;span class="o">=&lt;/span> &lt;span class="m">4&lt;/span> as Drink&lt;span class="p">;&lt;/span>
+&lt;span class="p">|&lt;/span> ^^^^^^^^^^
+&lt;span class="p">|&lt;/span>
+&lt;span class="o">=&lt;/span> note: an &lt;span class="sb">`&lt;/span>as&lt;span class="sb">`&lt;/span> expression can only be used to convert between primitive types. Consider using the &lt;span class="sb">`&lt;/span>From&lt;span class="sb">`&lt;/span> traitt
+&lt;/code>&lt;/pre>&lt;/div>&lt;p>Ah, 这看起来并不能工作! 然而在某些情形中我们可能需要这么做, 我们可以解析一个二进制格式, 并且已经确保检查这个数字类型的值在这个枚举中是有意义的 - 那么我们可以使用 &lt;code>transmute&lt;/code>:&lt;/p>
+&lt;div class="highlight">&lt;pre class="chroma">&lt;code class="language-rust" data-lang="rust">&lt;span class="cp">#[allow(dead_code)]&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w">&lt;/span>&lt;span class="k">enum&lt;/span> &lt;span class="nc">Drink&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="p">{&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="n">Water&lt;/span>&lt;span class="p">,&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="n">Soda&lt;/span>&lt;span class="p">,&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="n">Juice&lt;/span>&lt;span class="p">,&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w">&lt;/span>&lt;span class="p">}&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w">&lt;/span>&lt;span class="k">fn&lt;/span> &lt;span class="nf">main&lt;/span>&lt;span class="p">()&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="p">{&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="kd">let&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="n">juice_from_binary_format&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="o">=&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="mi">2&lt;/span>&lt;span class="p">;&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="kd">let&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="n">val&lt;/span>: &lt;span class="nc">Drink&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="o">=&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="k">unsafe&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="p">{&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="n">std&lt;/span>::&lt;span class="n">mem&lt;/span>::&lt;span class="n">transmute&lt;/span>&lt;span class="p">(&lt;/span>&lt;span class="n">juice_from_binary_format&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="k">as&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="kt">u8&lt;/span>&lt;span class="p">)&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="p">};&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="n">print_drink&lt;/span>&lt;span class="p">(&lt;/span>&lt;span class="o">&amp;amp;&lt;/span>&lt;span class="n">val&lt;/span>&lt;span class="p">);&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w">&lt;/span>&lt;span class="p">}&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w">&lt;/span>&lt;span class="k">fn&lt;/span> &lt;span class="nf">print_drink&lt;/span>&lt;span class="p">(&lt;/span>&lt;span class="n">dri&lt;/span>: &lt;span class="kp">&amp;amp;&lt;/span>&lt;span class="nc">Drink&lt;/span>&lt;span class="p">)&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="p">{&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="kd">let&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="n">name&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="o">=&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="k">match&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="n">dri&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="p">{&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="n">Drink&lt;/span>::&lt;span class="n">Water&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="o">=&amp;gt;&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="s">&amp;#34;water&amp;#34;&lt;/span>&lt;span class="p">,&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="n">Drink&lt;/span>::&lt;span class="n">Soda&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="o">=&amp;gt;&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="s">&amp;#34;soda&amp;#34;&lt;/span>&lt;span class="p">,&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="n">Drink&lt;/span>::&lt;span class="n">Juice&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="o">=&amp;gt;&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="s">&amp;#34;juice&amp;#34;&lt;/span>&lt;span class="p">,&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="p">};&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="n">println&lt;/span>&lt;span class="o">!&lt;/span>&lt;span class="p">(&lt;/span>&lt;span class="s">&amp;#34;it&amp;#39;s {}!&amp;#34;&lt;/span>&lt;span class="p">,&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="n">name&lt;/span>&lt;span class="p">)&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w">&lt;/span>&lt;span class="p">}&lt;/span>&lt;span class="w">
+&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;div class="highlight">&lt;pre class="chroma">&lt;code class="language-shell" data-lang="shell">$ cargo run -q
+it&lt;span class="se">\&amp;#39;&lt;/span>s juice!
+&lt;/code>&lt;/pre>&lt;/div>&lt;p>当前, 通常我们希望给这个不安全操作提供一个安全的接口:&lt;/p>
+&lt;div class="highlight">&lt;pre class="chroma">&lt;code class="language-rust" data-lang="rust">&lt;span class="k">use&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="n">std&lt;/span>::&lt;span class="n">convert&lt;/span>::&lt;span class="p">{&lt;/span>&lt;span class="n">TryFrom&lt;/span>&lt;span class="p">,&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="n">TryInto&lt;/span>&lt;span class="p">};&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w">&lt;/span>&lt;span class="cp">#[allow(dead_code)]&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w">&lt;/span>&lt;span class="k">enum&lt;/span> &lt;span class="nc">Drink&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="p">{&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="n">Water&lt;/span>&lt;span class="p">,&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="n">Soda&lt;/span>&lt;span class="p">,&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="n">Juice&lt;/span>&lt;span class="p">,&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w">&lt;/span>&lt;span class="p">}&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w">&lt;/span>&lt;span class="k">impl&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="n">TryFrom&lt;/span>&lt;span class="o">&amp;lt;&lt;/span>&lt;span class="kt">i32&lt;/span>&lt;span class="o">&amp;gt;&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="k">for&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="n">Drink&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="p">{&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="k">type&lt;/span> &lt;span class="nc">Error&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="o">=&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="o">&amp;amp;&lt;/span>&lt;span class="nb">&amp;#39;static&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="kt">str&lt;/span>&lt;span class="p">;&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="k">fn&lt;/span> &lt;span class="nf">try_from&lt;/span>&lt;span class="p">(&lt;/span>&lt;span class="n">x&lt;/span>: &lt;span class="kt">i32&lt;/span>&lt;span class="p">)&lt;/span>&lt;span class="w"> &lt;/span>-&amp;gt; &lt;span class="nb">Result&lt;/span>&lt;span class="o">&amp;lt;&lt;/span>&lt;span class="n">Self&lt;/span>&lt;span class="p">,&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="n">Self&lt;/span>::&lt;span class="n">Error&lt;/span>&lt;span class="o">&amp;gt;&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="p">{&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="k">match&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="n">x&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="p">{&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="mi">0&lt;/span>&lt;span class="p">..&lt;/span>&lt;span class="o">=&lt;/span>&lt;span class="mi">2&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="o">=&amp;gt;&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="nb">Ok&lt;/span>&lt;span class="p">(&lt;/span>&lt;span class="k">unsafe&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="p">{&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="n">std&lt;/span>::&lt;span class="n">mem&lt;/span>::&lt;span class="n">transmute&lt;/span>&lt;span class="p">(&lt;/span>&lt;span class="n">x&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="k">as&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="kt">u8&lt;/span>&lt;span class="p">)&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="p">}),&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="n">_&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="o">=&amp;gt;&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="nb">Err&lt;/span>&lt;span class="p">(&lt;/span>&lt;span class="s">&amp;#34;invalid Drink value&amp;#34;&lt;/span>&lt;span class="p">),&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="p">}&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="p">}&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w">&lt;/span>&lt;span class="p">}&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w">&lt;/span>&lt;span class="k">fn&lt;/span> &lt;span class="nf">main&lt;/span>&lt;span class="p">()&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="p">{&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="kd">let&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="n">juice_from_binary_format&lt;/span>: &lt;span class="kt">i32&lt;/span> &lt;span class="o">=&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="mi">2&lt;/span>&lt;span class="p">;&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="kd">let&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="n">val&lt;/span>: &lt;span class="nc">Drink&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="o">=&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="n">juice_from_binary_format&lt;/span>&lt;span class="p">.&lt;/span>&lt;span class="n">try_into&lt;/span>&lt;span class="p">().&lt;/span>&lt;span class="n">unwrap&lt;/span>&lt;span class="p">();&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="n">print_drink&lt;/span>&lt;span class="p">(&lt;/span>&lt;span class="o">&amp;amp;&lt;/span>&lt;span class="n">val&lt;/span>&lt;span class="p">);&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="kd">let&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="n">invalid_value&lt;/span>: &lt;span class="kt">i32&lt;/span> &lt;span class="o">=&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="mi">4&lt;/span>&lt;span class="p">;&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="kd">let&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="n">val&lt;/span>: &lt;span class="nc">Drink&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="o">=&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="n">invalid_value&lt;/span>&lt;span class="p">.&lt;/span>&lt;span class="n">try_into&lt;/span>&lt;span class="p">().&lt;/span>&lt;span class="n">unwrap&lt;/span>&lt;span class="p">();&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="n">print_drink&lt;/span>&lt;span class="p">(&lt;/span>&lt;span class="o">&amp;amp;&lt;/span>&lt;span class="n">val&lt;/span>&lt;span class="p">);&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w">&lt;/span>&lt;span class="p">}&lt;/span>&lt;span class="w">
+&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;div class="highlight">&lt;pre class="chroma">&lt;code class="language-shell" data-lang="shell">$ cargo run -q
+it&lt;span class="se">\&amp;#39;&lt;/span>s juice!
+thread &lt;span class="s1">&amp;#39;main&amp;#39;&lt;/span> panicked at &lt;span class="s1">&amp;#39;called `Result::unwrap()` on an `Err` value: &amp;#34;invalid Drink value&amp;#34;&amp;#39;&lt;/span>, src/main.rs:27:22
+note: run with &lt;span class="sb">`&lt;/span>&lt;span class="nv">RUST_BACKTRACE&lt;/span>&lt;span class="o">=&lt;/span>1&lt;span class="sb">`&lt;/span> environment variable to display a backtrace
+&lt;/code>&lt;/pre>&lt;/div>&lt;p>并且我们的快乐还并不止步于此.&lt;/p>
+&lt;p>还记得我们之前打印我们的枚举大小么? 让我们来 &lt;a class="link" href="https://en.wikipedia.org/wiki/Memory_refresh" target="_blank" rel="noopener"
+>refresh out memory&lt;/a>:&lt;/p></description></item><item><title>200行Rust代码解释绿色线程</title><link>https://example.com/posts/translation/rust/green_threads_explained_in_200_lines_of_rust/</link><pubDate>Wed, 18 Nov 2020 13:28:44 +0800</pubDate><guid>https://example.com/posts/translation/rust/green_threads_explained_in_200_lines_of_rust/</guid><description>&lt;img src="https://example.com/posts/translation/rust/green_threads_explained_in_200_lines_of_rust/cover.png" alt="Featured image of post 200行Rust代码解释绿色线程" />&lt;blockquote>
 &lt;p>本译文译自 &lt;a class="link" href="https://cfsamson.gitbook.io/green-threads-explained-in-200-lines-of-rust/" target="_blank" rel="noopener"
 >Green Threads Explained in 200 Lines of Rust&lt;/a>&lt;/p>
 &lt;/blockquote>
