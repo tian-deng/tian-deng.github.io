@@ -48,6 +48,26 @@ tags:
     background-color: #f6f9ff;
     border: 1px solid #cce3f9;
 }
+.tip {
+    line-height: 1.6;
+    border-radius: 4px;
+    padding: 0.4rem 0.8rem;
+    background-color: #fefdf6;
+    border: 1px solid #ffeb81;
+}
+.tip .tip-header {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    margin-top: 0.2em;
+    margin-bottom:0.6em;
+}
+.tip .tip-header img {
+    transform: none;
+    width: 3rem;
+    height: 3rem;
+}
 </style>
 # 前言
 
@@ -250,9 +270,9 @@ sizeof(dri) = 4
 sizeof(int) = 4
 ```
 
-然而我不是很喜欢这个代码, 我不想要额外的限定词, 并且想要我的变量有着自己的命名空间, 但在 `C` 里面我们需要自己做这些事:
+然而我不是很喜欢这个代码, 我不想要额外的限定词, 并且想要我的变体有着自己的命名空间, 但在 `C` 里面我们需要自己做这些事:
 
-```rust
+```c
 #include <stdio.h>
 
 // this could also be done in two separate declarations
@@ -297,3 +317,326 @@ int main() {
 ```
 
 正确的代码是在每个 `case` 语句的结尾都使用 `break`. 这是刚起步的开发人员很早就应该了解的事情之一.
+
+<div class="tip">
+    <div class="tip-header">
+        <img src="./bear.svg">
+        Cool bear's hot tip
+    </div>
+    鹅妹子嘤, 在 `C#` 中也是一样, 这除了防止你硬编码错误而导致的隐式跌落(意思是没有 <code>break</code> 的情况就一个 <code>case</code> 一个 <code>case</code> 向下运行)以外, 如果喜欢的话你仍然可以实现一个 <a href="https://stackoverflow.com/questions/174155/switch-statement-fallthrough-in-c/174223#174223">明确的跌落</a>.
+</div>
+
+即使我们修复了 `switch` 的问题, 还有件我不喜欢 `C` 枚举的事情, 那就是没什么可以阻止我传递一个无意义的值:
+
+```c
+#include <stdio.h>
+
+typedef enum Drink {
+    Drink_Water,
+    Drink_Soda,
+    Drink_Juice,
+} Drink;
+
+void print_drink(Drink dri) {
+    switch (dri) {
+        case Drink_Water:
+            printf("It's water!\n");
+            break;
+        case Drink_Soda:
+            printf("It's soda!\n");
+            break;
+        case Drink_Juice:
+            printf("It's juice!\n");
+            break;
+    }
+}
+
+int main() {
+    print_drink(47);
+}
+```
+
+```shell
+$ clang -Wall main.c -o main && ./main
+```
+
+现在, 如果我们看看 `Rust` 的枚举... 这是个完全不同的事情.
+
+让我们尽量写一个相同的程序.
+
+```rust
+use std::mem::size_of_val;
+
+enum Drink {
+    Water,
+    Soda,
+    Juice,
+}
+
+fn main() {
+    let dri = Drink::Water;
+    dbg!(size_of_val(&dri));
+    dbg!(dri as u32);
+}
+```
+
+```shell
+$ cargo run -q
+warning: variant is never constructed: `Soda`
+ --> src/main.rs:5:5
+  |
+5 |     Soda,
+  |     ^^^^
+  |
+  = note: `#[warn(dead_code)]` on by default
+
+warning: variant is never constructed: `Juice`
+ --> src/main.rs:6:5
+  |
+6 |     Juice,
+  |     ^^^^^
+
+warning: 2 warnings emitted
+
+[src/main.rs:11] size_of_val(&dri) = 1
+[src/main.rs:12] dri as u32 = 0
+```
+
+那么我们明显地得到了什么好处呢?
+
+
+<div class="dialog">
+    <img src="./bear.svg" class="dialog-head">
+    <div class="dialog-text">
+        <p>让我看看, 这看起来像是一个 <code>Integer</code> 类型 - 至少, 我能把它转型为一个 <code>u32</code>. 但是它默认就有命名空间?</p>
+    </div>
+</div>
+
+对的, 但那并不是全部! 编译器警告我们有没有使用的变体, 并且我们可以简单地给这个枚举派生一个 `Debug` trait 的实现:
+
+```rust
+#[derive(Debug)]
+enum Drink {
+    Water,
+    Soda,
+    Juice,
+}
+
+fn main() {
+    print_drink(&Drink::Water);
+    print_drink(&Drink::Juice);
+    print_drink(&Drink::Soda);
+}
+
+fn print_drink(dri: &Drink) {
+    println!("{:?}", dri);
+}
+```
+
+```shell
+$ cargo run -q
+Water
+Juice
+Soda
+```
+
+...并且假如我们不那么做, 我们也能使用 `match` 而不是 `switch`, `match` 会检查是否匹配了枚举的所有变体, 举个例子, 下面的代码不能通过编译:
+
+```rust
+fn print_drink(dri: &Drink) {
+    match dri {
+        Drink::Water => println!("it's water!"),
+        Drink::Soda => println!("it's soda!"),
+    }
+}
+```
+
+```shell
+$ cargo run -q
+error[E0004]: non-exhaustive patterns: `&Juice` not covered
+  --> src/main.rs:15:11
+   |
+2  | / enum Drink {
+3  | |     Water,
+4  | |     Soda,
+5  | |     Juice,
+   | |     ----- not covered
+6  | | }
+   | |_- `Drink` defined here
+...
+15 |       match dri {
+   |             ^^^ pattern `&Juice` not covered
+   |
+   = help: ensure that all possible cases are being handled, possibly by adding wildcards or more match arms
+   = note: the matched value is of type `&Drink`
+```
+
+编译器给出了两种可能的方法来修复这个问题, 或是添加一个通配符:
+
+```rust
+fn print_drink(dri: &Drink) {
+    match dri {
+        Drink::Water => println!("it's water!"),
+        Drink::Soda => println!("it's soda!"),
+        _ => println!("it's something we don't know about!"),
+    }
+}
+```
+
+或者是覆盖到所有的情况:
+
+```rust
+fn print_drink(dri: &Drink) {
+    match dri {
+        Drink::Water => println!("it's water!"),
+        Drink::Soda => println!("it's soda!"),
+        Drink::Juice => println!("it's juice!"),
+    }
+}
+```
+
+<div class="tip">
+    <div class="tip-header">
+        <img src="./bear.svg">
+        Cool bear's hot tip
+    </div>
+    这听起来是不是要敲很多代码? 幸运的是, <code>rust-analyzer</code> 可以帮忙补全 <code>case</code>, 这帮我们自动生成的很大一部分代码.
+</div>
+
+讲到 `match`, 它也是一个表达式, 所以我们也可以这么做:
+
+```rust
+fn print_drink(dri: &Drink) {
+    println!(
+        "{}",
+        match dri {
+            Drink::Water => "it's water!",
+            Drink::Soda => "it's soda!",
+            Drink::Juice => "it's juice!",
+        }
+    )
+}
+```
+
+尽管就我个人而言, 我可能更倾向于这样写:
+
+```rust
+fn print_drink(dri: &Drink) {
+    let name = match dri {
+        Drink::Water => "water",
+        Drink::Soda => "soda",
+        Drink::Juice => "juice",
+    };
+    println!("it's {}!", name)
+}
+```
+
+让我们想想, 我们还抱怨了 `C` 枚举的什么地方?
+
+<div class="dialog">
+    <img src="./bear.svg" class="dialog-head">
+    <div class="dialog-text">
+        <p>你可以传递无意义的值!</p>
+    </div>
+</div>
+
+对! 让我们试试:
+
+```rust
+fn main() {
+    print_drink(&Drink::Water);
+    print_drink(&Drink::Juice);
+    print_drink(&Drink::Soda);
+
+    let val: Drink = 4 as Drink;
+    print_drink(&val);
+}
+```
+
+```shell
+$ cargo run -q
+error[E0605]: non-primitive cast: `i32` as `Drink`
+  --> src/main.rs:13:22
+   |
+13 |     let val: Drink = 4 as Drink;
+   |                      ^^^^^^^^^^
+   |
+   = note: an `as` expression can only be used to convert between primitive types. Consider using the `From` traitt
+```
+
+Ah, 这看起来并不能工作! 然而在某些情形中我们可能需要这么做, 我们可以解析一个二进制格式, 并且已经确保检查这个数字类型的值在这个枚举中是有意义的 - 那么我们可以使用 `transmute`:
+
+```rust
+#[allow(dead_code)]
+enum Drink {
+    Water,
+    Soda,
+    Juice,
+}
+
+fn main() {
+    let juice_from_binary_format = 2;
+
+    let val: Drink = unsafe { std::mem::transmute(juice_from_binary_format as u8) };
+    print_drink(&val);
+}
+
+fn print_drink(dri: &Drink) {
+    let name = match dri {
+        Drink::Water => "water",
+        Drink::Soda => "soda",
+        Drink::Juice => "juice",
+    };
+    println!("it's {}!", name)
+}
+```
+
+```shell
+$ cargo run -q
+it\'s juice!
+```
+
+当前, 通常我们希望给这个不安全操作提供一个安全的接口:
+
+```rust
+use std::convert::{TryFrom, TryInto};
+
+#[allow(dead_code)]
+enum Drink {
+    Water,
+    Soda,
+    Juice,
+}
+
+impl TryFrom<i32> for Drink {
+    type Error = &'static str;
+
+    fn try_from(x: i32) -> Result<Self, Self::Error> {
+        match x {
+            0..=2 => Ok(unsafe { std::mem::transmute(x as u8) }),
+            _ => Err("invalid Drink value"),
+        }
+    }
+}
+
+fn main() {
+    let juice_from_binary_format: i32 = 2;
+    let val: Drink = juice_from_binary_format.try_into().unwrap();
+    print_drink(&val);
+
+    let invalid_value: i32 = 4;
+    let val: Drink = invalid_value.try_into().unwrap();
+    print_drink(&val);
+}
+```
+
+```shell
+$ cargo run -q
+it\'s juice!
+thread 'main' panicked at 'called `Result::unwrap()` on an `Err` value: "invalid Drink value"', src/main.rs:27:22
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+```
+
+并且我们的快乐还并不止步于此.
+
+还记得我们之前打印我们的枚举大小么? 让我们来 [refresh out memory](https://en.wikipedia.org/wiki/Memory_refresh):
