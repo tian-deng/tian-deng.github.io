@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>Rust on Rabbit Hole</title><link>https://example.com/tags/rust/</link><description>Recent content in Rust on Rabbit Hole</description><generator>Hugo -- gohugo.io</generator><language>en-us</language><lastBuildDate>Wed, 13 Jan 2021 11:00:00 +0800</lastBuildDate><atom:link href="https://example.com/tags/rust/index.xml" rel="self" type="application/rss+xml"/><item><title>深入Rust枚举</title><link>https://example.com/posts/translation/rust/peeking_inside_a_rust_enum/</link><pubDate>Wed, 13 Jan 2021 11:00:00 +0800</pubDate><guid>https://example.com/posts/translation/rust/peeking_inside_a_rust_enum/</guid><description>本译文译自 Peeking inside a Rust enum
+.dialog { display: flex; flex-direction: row; padding-bottom: 1em; overflow: hidden; } .dialog.amos { flex-direction: row-reverse; } .dialog-head { align-self: flex-start; flex-basis: 48px; width: 48px; height: 48px; margin: 0.2em 0.4em; flex-shrink: 0; } .dialog-text { background-color: #fefdf6; border: 1px solid #ffeb81; max-width: 600px; align-self: flex-start; border-radius: 3px; padding: 0.4rem 0.8rem; overflow: hidden } 前言 在我最近 Rust Q&amp;amp;A twitch 频道里, 有些人提出了一个看起来简单的问题: 为什么 small string 类型, 像 SmartString or SmolStr 和 String 有着一样的大小, 但是 small vec 类型, 像 SmallVec 却要比 Vec 大?</description></item><item><title>200行Rust代码解释绿色线程</title><link>https://example.com/posts/translation/rust/green_threads_explained_in_200_lines_of_rust/</link><pubDate>Wed, 18 Nov 2020 13:28:44 +0800</pubDate><guid>https://example.com/posts/translation/rust/green_threads_explained_in_200_lines_of_rust/</guid><description>本译文译自 Green Threads Explained in 200 Lines of Rust
+介绍 这本书目标是通过我们自己编写实现的一个简单可用的绿色线程代码, 来解释绿色线程.
+所有代码可以在该 Git仓库 找到, 它有两个分支, main 分支仅仅包括代码, commented 分支包含解释我们做了什么的注释.
+绿色线程, 用户态线程, 协程(goroutines), 纤程(fibers), 它们有多种称谓, 但是简单起见我将会在后续统一称之为绿色线程.
+在这篇文章中我将通过实现一个200行 Rust 绿色线程代码的简单例子来解释它是如何工作的.
+我们不会使用任何的外部库来确保我们真正的理解发生了什么.
+谁适合阅读这篇文章 我们深陷在一个兔子坑中, 如果它听起来很可怕, 那么这篇文章可能不适合你, 像曾经一样去做点轻松愉悦的事情吧~
+如果你还是很好奇事情是如何工作的, 那么继续读下去. 你可能听说过 Go 的 goroutines, 或者 Ruby 和 Julia 中等价的那些, 你可能知道它们怎么使用但是又想知道它们是如何工作的, 请继续读下去.
+另外, 如果你是以下这类人的话那也可能比较有趣:
+你是 Rust 初学者并且想学习更多的特性. 你已经在 Rust社区 中了解讨论过 async/await, Pin, 和为什么需要生成器. 我们将试着把那些都整合在这篇文章中. 或许你想了解 Rust 内联汇编的基础知识.</description></item><item><title>优雅的Rust</title><link>https://example.com/posts/rust/elegent_rust/</link><pubDate>Tue, 15 Sep 2020 15:30:44 +0800</pubDate><guid>https://example.com/posts/rust/elegent_rust/</guid><description>小记自己为什么会学 Rust . Rust 有什么特性吸引到我了~
+如果说 C 语言是具备高灵活性, 信任着开发者, 将一切交给开发者来解决的话.
+那么 Rust 就是降低该灵活性, 毫不信任开发者, 将开发者的大部分错误都在编译期发掘出来, 强制要求开发者去了解可能存在的问题并解决掉它.
+C 语言可能条条大路通罗马, Rust 可能只有寥寥无几的道路.
+总之, Rust 拔高了开发者的下限, 如果水平不够是连编译器都不会通过的, 更不要说 commit 了.
+优雅的Rust 听说到 Rust 最多的自然是所谓的内存安全. 那么什么是内存安全？ 内存安全体现在哪里呢？
+比如说这段 C语言 代码.
+int a[5]; a[6] = 6; printf(&amp;#34;%d&amp;#34;, a[6]); 这段代码能正确输出 a[6] 吗?
+答案是可以的, 虽然它很明显的内存越界了, 但内存越界似乎在 C 里并不是什么大不了的事, 编写的代码随便越界, 只不过导致的后果需要自己承担而已.
+当然现今大部分的高级语言对指针越界都会有很明确的编译错误, 所以仅这点来看并不能体现出 Rust 的特点, 只不过是有了现代语言该有的东西——内存越界提示.
+那么有什么可以体现出 Rust 独有特性的地方呢?
+参考这一段结构体.
+typedef struct { struct Node *next; int val; }Node; typedef struct { Node *head; Node *tail; int size; }LinkedList; struct { void (*push)(struct LinkedList *self, Node val); Node *(*peek)(struct LinkedList *self); Node *(*pop)(struct LinkedList *self); }StackMethod; 这是一个简单的数据结构栈, 在栈方法中定义了三个函数指针, 不需要关注 push 方法, 来看看 peek 方法.</description></item></channel></rss>

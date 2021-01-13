@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>Git on Rabbit Hole</title><link>https://example.com/categories/git/</link><description>Recent content in Git on Rabbit Hole</description><generator>Hugo -- gohugo.io</generator><language>en-us</language><lastBuildDate>Sat, 26 Sep 2020 21:34:18 +0800</lastBuildDate><atom:link href="https://example.com/categories/git/index.xml" rel="self" type="application/rss+xml"/><item><title>Git操作指北</title><link>https://example.com/posts/tools/git/basic_git/</link><pubDate>Sat, 26 Sep 2020 21:34:18 +0800</pubDate><guid>https://example.com/posts/tools/git/basic_git/</guid><description>TODO: 对本版博文不是很满意, 后续重新更新~
+建立仓库 我跟同学A想合作写一个小工具库，然后选了了 Git 作为版本控制系统, Github 作为托管服务器.
+第一步首先是建立一个 Git 仓库, 哦不对, 是先下载 Git 工具, Git 是全平台的工具, 基本所有操作系统都支持. 我们直接百度找到官网从里面下载就可以了.
+然后建立 Git 仓库, 我们怎么建立仓库呢? 有两种方法, 一种是在Github上创建一个新仓库.
+登录Github后, 它长这样, 点击左边那个New来创建一个新的仓库.
+如果想让 Github 帮我们初始化仓库, 那么就选择Add a README file选项. README file一般是对当前仓库所做的事情的一个简介. 相当于使用说明书.
+让Github帮我们初始化, 就相当于运行了如下命令:
+git init git add README.md git commit -m &amp;#34;Initial commit&amp;#34; git remote add origin git@github.com:tian-deng/Cooperation.git //先不管这行 这样就算完成了. 还有一种方法就是在本地用git init命令创建, 然后回头push到Github托管服务器上就ok.
+我们要合作写项目, 那肯定要上传点东西到Github服务器, 服务器不能随便让别人直接上传到我们的项目对吧?服务器一般用的都是SSH协议来验证用户的, 所以需要先添加SSH key, 打开cmd, 在本地用ssh-keygen命令来创建公钥和密钥.一路回车就行</description></item></channel></rss>
