@@ -30,6 +30,10 @@ border-radius: 3px;
 padding: 0.4rem 0.8rem;
 overflow: hidden
 }
+.dialog.amos .dialog-text {
+background-color: #f6f9ff;
+border: 1px solid #cce3f9;
+}
 &lt;/style>
 &lt;h1 id="前言">前言&lt;/h1>
 &lt;p>在我最近 &lt;code>Rust Q&amp;amp;A&lt;/code> &lt;code>twitch&lt;/code> 频道里, 有些人提出了一个看起来简单的问题: 为什么 &lt;code>small string&lt;/code> 类型, 像 &lt;code>SmartString&lt;/code> or &lt;code>SmolStr&lt;/code> 和 &lt;code>String&lt;/code> 有着一样的大小, 但是 &lt;code>small vec&lt;/code> 类型, 像 &lt;code>SmallVec&lt;/code> 却要比 &lt;code>Vec&lt;/code> 大?&lt;/p>
@@ -143,7 +147,80 @@ overflow: hidden
 0x00007ffd460d0338,
 0x0000555f4636cac0,
 &lt;span class="o">)&lt;/span>
-&lt;/code>&lt;/pre>&lt;/div>&lt;p>&amp;hellip;然后我们就可以看到这两个类型的内容现在都放在堆上了.&lt;/p></description></item><item><title>200行Rust代码解释绿色线程</title><link>https://example.com/posts/translation/rust/green_threads_explained_in_200_lines_of_rust/</link><pubDate>Wed, 18 Nov 2020 13:28:44 +0800</pubDate><guid>https://example.com/posts/translation/rust/green_threads_explained_in_200_lines_of_rust/</guid><description>&lt;img src="https://example.com/posts/translation/rust/green_threads_explained_in_200_lines_of_rust/cover.png" alt="Featured image of post 200行Rust代码解释绿色线程" />&lt;blockquote>
+&lt;/code>&lt;/pre>&lt;/div>&lt;p>&amp;hellip;然后我们就可以看到这两个类型的内容现在都放在堆上了.&lt;/p>
+&lt;div class="dialog">
+&lt;img src="./bear.svg" class="dialog-head">
+&lt;div class="dialog-text">
+&lt;p>这样, 那 &lt;code>SmartString&lt;/code> 是否意味着买一送一的处理方式? 这和他的类型有关?&lt;/p>
+&lt;br/>
+&lt;p>它是怎么工作的?&lt;/p>
+&lt;/div>
+&lt;/div>
+&lt;div class="dialog amos">
+&lt;img src="./author.svg" class="dialog-head">
+&lt;div class="dialog-text">
+&lt;p>多么好的一个问题. 让我们谈谈枚举&lt;/p>
+&lt;/div>
+&lt;/div>
+&lt;h2 id="一个单词-多种意义">一个单词, 多种意义&lt;/h2>
+&lt;p>如果你有着 &lt;code>C/C++/Java/C#&lt;/code> 的语言背景, 一个 &lt;code>enum&lt;/code> 仅仅意味着一个 &lt;code>Integer&lt;/code> 类型, 只是它的值有着自己的意义.&lt;/p>
+&lt;p>让我们看一个 &lt;code>C&lt;/code> 的例子:&lt;/p>
+&lt;div class="highlight">&lt;pre class="chroma">&lt;code class="language-c" data-lang="c">&lt;span class="cp">#include&lt;/span> &lt;span class="cpf">&amp;lt;stdio.h&amp;gt;&lt;/span>&lt;span class="cp">
+&lt;/span>&lt;span class="cp">&lt;/span>
+&lt;span class="k">enum&lt;/span> &lt;span class="n">Drink&lt;/span> &lt;span class="p">{&lt;/span>
+&lt;span class="n">Water&lt;/span>&lt;span class="p">,&lt;/span>
+&lt;span class="n">Soda&lt;/span>&lt;span class="p">,&lt;/span>
+&lt;span class="n">Juice&lt;/span>&lt;span class="p">,&lt;/span>
+&lt;span class="p">};&lt;/span>
+&lt;span class="kt">int&lt;/span> &lt;span class="nf">main&lt;/span>&lt;span class="p">()&lt;/span> &lt;span class="p">{&lt;/span>
+&lt;span class="k">enum&lt;/span> &lt;span class="n">Drink&lt;/span> &lt;span class="n">dri&lt;/span> &lt;span class="o">=&lt;/span> &lt;span class="n">Soda&lt;/span>&lt;span class="p">;&lt;/span>
+&lt;span class="n">printf&lt;/span>&lt;span class="p">(&lt;/span>&lt;span class="s">&amp;#34;dri = %d&lt;/span>&lt;span class="se">\n&lt;/span>&lt;span class="s">&amp;#34;&lt;/span>&lt;span class="p">,&lt;/span> &lt;span class="n">dri&lt;/span>&lt;span class="p">);&lt;/span>
+&lt;span class="n">printf&lt;/span>&lt;span class="p">(&lt;/span>&lt;span class="s">&amp;#34;sizeof(dri) = %ld&lt;/span>&lt;span class="se">\n&lt;/span>&lt;span class="s">&amp;#34;&lt;/span>&lt;span class="p">,&lt;/span> &lt;span class="k">sizeof&lt;/span>&lt;span class="p">(&lt;/span>&lt;span class="n">dri&lt;/span>&lt;span class="p">));&lt;/span>
+&lt;span class="n">printf&lt;/span>&lt;span class="p">(&lt;/span>&lt;span class="s">&amp;#34;sizeof(int) = %ld&lt;/span>&lt;span class="se">\n&lt;/span>&lt;span class="s">&amp;#34;&lt;/span>&lt;span class="p">,&lt;/span> &lt;span class="k">sizeof&lt;/span>&lt;span class="p">(&lt;/span>&lt;span class="kt">int&lt;/span>&lt;span class="p">));&lt;/span>
+&lt;span class="p">}&lt;/span>
+&lt;/code>&lt;/pre>&lt;/div>&lt;p>这里, 我们声明了一个枚举类型 &lt;code>enum Drink&lt;/code>, 有三个变体, 不过仅仅是从0开始的数字, 所以我们有 &lt;code>Water = 0&lt;/code>, &lt;code>Soda = 1&lt;/code>, &lt;code>Juice = 2&lt;/code>:&lt;/p>
+&lt;div class="highlight">&lt;pre class="chroma">&lt;code class="language-shell" data-lang="shell">$ clang -Wall main.c -o main &lt;span class="o">&amp;amp;&amp;amp;&lt;/span> ./main
+&lt;span class="nv">dri&lt;/span> &lt;span class="o">=&lt;/span> &lt;span class="m">1&lt;/span>
+sizeof&lt;span class="o">(&lt;/span>dri&lt;span class="o">)&lt;/span> &lt;span class="o">=&lt;/span> &lt;span class="m">4&lt;/span>
+sizeof&lt;span class="o">(&lt;/span>int&lt;span class="o">)&lt;/span> &lt;span class="o">=&lt;/span> &lt;span class="m">4&lt;/span>
+&lt;/code>&lt;/pre>&lt;/div>&lt;p>然而我不是很喜欢这个代码, 我不想要额外的限定词, 并且想要我的变量有着自己的命名空间, 但在 &lt;code>C&lt;/code> 里面我们需要自己做这些事:&lt;/p>
+&lt;div class="highlight">&lt;pre class="chroma">&lt;code class="language-rust" data-lang="rust">&lt;span class="err">#&lt;/span>&lt;span class="n">include&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="o">&amp;lt;&lt;/span>&lt;span class="n">stdio&lt;/span>&lt;span class="p">.&lt;/span>&lt;span class="n">h&lt;/span>&lt;span class="o">&amp;gt;&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w">&lt;/span>&lt;span class="c1">// this could also be done in two separate declarations
+&lt;/span>&lt;span class="c1">&lt;/span>&lt;span class="n">typedef&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="k">enum&lt;/span> &lt;span class="nc">Drink&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="p">{&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="n">Drink_Water&lt;/span>&lt;span class="p">,&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="n">Drink_Soda&lt;/span>&lt;span class="p">,&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="n">Drink_Juice&lt;/span>&lt;span class="p">,&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w">&lt;/span>&lt;span class="p">}&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="n">Drink&lt;/span>&lt;span class="p">;&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w">&lt;/span>&lt;span class="n">int&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="n">main&lt;/span>&lt;span class="p">()&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="p">{&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="n">Drink&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="n">dri&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="o">=&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="n">Drink_Soda&lt;/span>&lt;span class="p">;&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="n">printf&lt;/span>&lt;span class="p">(&lt;/span>&lt;span class="s">&amp;#34;dri = %d\n&amp;#34;&lt;/span>&lt;span class="p">,&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="n">dri&lt;/span>&lt;span class="p">);&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="n">printf&lt;/span>&lt;span class="p">(&lt;/span>&lt;span class="s">&amp;#34;sizeof(dri) = %ld\n&amp;#34;&lt;/span>&lt;span class="p">,&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="kr">sizeof&lt;/span>&lt;span class="p">(&lt;/span>&lt;span class="n">dri&lt;/span>&lt;span class="p">));&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="n">printf&lt;/span>&lt;span class="p">(&lt;/span>&lt;span class="s">&amp;#34;sizeof(int) = %ld\n&amp;#34;&lt;/span>&lt;span class="p">,&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="kr">sizeof&lt;/span>&lt;span class="p">(&lt;/span>&lt;span class="n">int&lt;/span>&lt;span class="p">));&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w">&lt;/span>&lt;span class="p">}&lt;/span>&lt;span class="w">
+&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;p>Ahhh, 好多了. 但是这里仍然有其它的东西我不是特别喜欢, 像是 &lt;code>C&lt;/code> 的 &lt;code>switch&lt;/code>. 下面的代码是错误的:&lt;/p>
+&lt;div class="highlight">&lt;pre class="chroma">&lt;code class="language-c" data-lang="c">&lt;span class="cp">#include&lt;/span> &lt;span class="cpf">&amp;lt;stdio.h&amp;gt;&lt;/span>&lt;span class="cp">
+&lt;/span>&lt;span class="cp">&lt;/span>
+&lt;span class="k">typedef&lt;/span> &lt;span class="k">enum&lt;/span> &lt;span class="n">Drink&lt;/span> &lt;span class="p">{&lt;/span>
+&lt;span class="n">Drink_Water&lt;/span>&lt;span class="p">,&lt;/span>
+&lt;span class="n">Drink_Soda&lt;/span>&lt;span class="p">,&lt;/span>
+&lt;span class="n">Drink_Juice&lt;/span>&lt;span class="p">,&lt;/span>
+&lt;span class="p">}&lt;/span> &lt;span class="n">Drink&lt;/span>&lt;span class="p">;&lt;/span>
+&lt;span class="kt">void&lt;/span> &lt;span class="nf">print_drink&lt;/span>&lt;span class="p">(&lt;/span>&lt;span class="n">Drink&lt;/span> &lt;span class="n">dri&lt;/span>&lt;span class="p">)&lt;/span> &lt;span class="p">{&lt;/span>
+&lt;span class="k">switch&lt;/span> &lt;span class="p">(&lt;/span>&lt;span class="n">dri&lt;/span>&lt;span class="p">)&lt;/span> &lt;span class="p">{&lt;/span>
+&lt;span class="k">case&lt;/span> &lt;span class="nl">Drink_Water&lt;/span>&lt;span class="p">:&lt;/span>
+&lt;span class="n">printf&lt;/span>&lt;span class="p">(&lt;/span>&lt;span class="s">&amp;#34;It&amp;#39;s water!&lt;/span>&lt;span class="se">\n&lt;/span>&lt;span class="s">&amp;#34;&lt;/span>&lt;span class="p">);&lt;/span>
+&lt;span class="k">case&lt;/span> &lt;span class="nl">Drink_Soda&lt;/span>&lt;span class="p">:&lt;/span>
+&lt;span class="n">printf&lt;/span>&lt;span class="p">(&lt;/span>&lt;span class="s">&amp;#34;It&amp;#39;s soda!&lt;/span>&lt;span class="se">\n&lt;/span>&lt;span class="s">&amp;#34;&lt;/span>&lt;span class="p">);&lt;/span>
+&lt;span class="k">case&lt;/span> &lt;span class="nl">Drink_Juice&lt;/span>&lt;span class="p">:&lt;/span>
+&lt;span class="n">printf&lt;/span>&lt;span class="p">(&lt;/span>&lt;span class="s">&amp;#34;It&amp;#39;s juice!&lt;/span>&lt;span class="se">\n&lt;/span>&lt;span class="s">&amp;#34;&lt;/span>&lt;span class="p">);&lt;/span>
+&lt;span class="p">}&lt;/span>
+&lt;span class="p">}&lt;/span>
+&lt;span class="kt">int&lt;/span> &lt;span class="nf">main&lt;/span>&lt;span class="p">()&lt;/span> &lt;span class="p">{&lt;/span>
+&lt;span class="n">print_drink&lt;/span>&lt;span class="p">(&lt;/span>&lt;span class="n">Drink_Soda&lt;/span>&lt;span class="p">);&lt;/span>
+&lt;span class="p">}&lt;/span>
+&lt;/code>&lt;/pre>&lt;/div>&lt;p>正确的代码是在每个 &lt;code>case&lt;/code> 语句的结尾都使用 &lt;code>break&lt;/code>. 这是刚起步的开发人员很早就应该了解的事情之一.&lt;/p></description></item><item><title>200行Rust代码解释绿色线程</title><link>https://example.com/posts/translation/rust/green_threads_explained_in_200_lines_of_rust/</link><pubDate>Wed, 18 Nov 2020 13:28:44 +0800</pubDate><guid>https://example.com/posts/translation/rust/green_threads_explained_in_200_lines_of_rust/</guid><description>&lt;img src="https://example.com/posts/translation/rust/green_threads_explained_in_200_lines_of_rust/cover.png" alt="Featured image of post 200行Rust代码解释绿色线程" />&lt;blockquote>
 &lt;p>本译文译自 &lt;a class="link" href="https://cfsamson.gitbook.io/green-threads-explained-in-200-lines-of-rust/" target="_blank" rel="noopener"
 >Green Threads Explained in 200 Lines of Rust&lt;/a>&lt;/p>
 &lt;/blockquote>
