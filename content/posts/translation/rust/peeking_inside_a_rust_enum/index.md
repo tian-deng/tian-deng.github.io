@@ -104,7 +104,7 @@ $ cargo run -q
 正如你看到的, 同样也是最初的问题描述的那样, 这两个类型的大小是相同的.
 
 <div class="dialog">
-    <img src="./bear.svg" class="dialog-head">
+    <img src="./bear.svg" class="dialog-head" />
     <div class="dialog-text">
     <p>毫无疑问的, `String` 存储实际数据是在别的地方? 因为所有 `String` 类型值的大小在64位平台上都是24个字节.</p>
     </div>
@@ -114,7 +114,7 @@ $ cargo run -q
 
 是的, 这当然不是一个完整的故事, 在这个特别的例子中, `smart` 以 `inline` 的方式存储它的值(在栈上), 而标准库将值存储在堆上:
 
-<img src="./heap-vs-not-heap.svg">
+<img src="./heap-vs-not-heap.svg" />
 
 如果我们想知道每个类型到底总共使用了多少内存, 我们可以这样做:
 
@@ -133,7 +133,7 @@ $ cargo run -q
 ```
 
 <div class="dialog">
-    <img src="./bear.svg" class="dialog-head">
+    <img src="./bear.svg" class="dialog-head" />
     <div class="dialog-text">
         <p>好吧, 但是 - 你说 <code>String</code> 显而易见在堆中存放它的内容. 有什么方法可以正式这个说法么?
         </p>
@@ -141,7 +141,7 @@ $ cargo run -q
 </div>
 
 <div class="dialog amos">
-    <img src="./author.svg" class="dialog-head">
+    <img src="./author.svg" class="dialog-head" />
     <div class="dialog-text">
         <p>当然有!</p>
     </div>
@@ -181,7 +181,7 @@ $ cargo run -q
 
 
 <div class="dialog">
-    <img src="./bear.svg" class="dialog-head">
+    <img src="./bear.svg" class="dialog-head" />
     <div class="dialog-text">
         <p>好吧, 我信了. 那么 <code>smart</code> 总是把它的数据存储在栈中吗?</p>
     </div>
@@ -222,7 +222,7 @@ $ cargo run -q
 ...然后我们就可以看到这两个类型的内容现在都放在堆上了.
 
 <div class="dialog">
-    <img src="./bear.svg" class="dialog-head">
+    <img src="./bear.svg" class="dialog-head" />
     <div class="dialog-text">
         <p>这样, 那 <code>SmartString</code> 是否意味着买一送一的处理方式? 这和他的类型有关?</p>
         <br/>
@@ -231,7 +231,7 @@ $ cargo run -q
 </div>
 
 <div class="dialog amos">
-    <img src="./author.svg" class="dialog-head">
+    <img src="./author.svg" class="dialog-head" />
     <div class="dialog-text">
         <p>多么好的一个问题. 让我们谈谈枚举</p>
     </div>
@@ -320,10 +320,10 @@ int main() {
 
 <div class="tip">
     <div class="tip-header">
-        <img src="./bear.svg">
+        <img src="./bear.svg" />
         Cool bear's hot tip
     </div>
-    鹅妹子嘤, 在 `C#` 中也是一样, 这除了防止你硬编码错误而导致的隐式跌落(意思是没有 <code>break</code> 的情况就一个 <code>case</code> 一个 <code>case</code> 向下运行)以外, 如果喜欢的话你仍然可以实现一个 <a href="https://stackoverflow.com/questions/174155/switch-statement-fallthrough-in-c/174223#174223">明确的跌落</a>.
+    鹅妹子嘤, 在 `C#` 中是强制要求在每个非空的 <code>case</code> 中添加 <code>break</code> 否则不能编译通过, 这防止你硬编码错误而导致的隐式跌落(意思是没有 <code>break</code> 的情况就一个 <code>case</code> 一个 <code>case</code> 向下运行), 如果喜欢的话你仍然可以实现一个 <a href="https://stackoverflow.com/questions/174155/switch-statement-fallthrough-in-c/174223#174223">明确的跌落</a>.
 </div>
 
 即使我们修复了 `switch` 的问题, 还有件我不喜欢 `C` 枚举的事情, 那就是没什么可以阻止我传递一个无意义的值:
@@ -406,7 +406,7 @@ warning: 2 warnings emitted
 
 
 <div class="dialog">
-    <img src="./bear.svg" class="dialog-head">
+    <img src="./bear.svg" class="dialog-head" />
     <div class="dialog-text">
         <p>让我看看, 这看起来像是一个 <code>Integer</code> 类型 - 至少, 我能把它转型为一个 <code>u32</code>. 但是它默认就有命名空间?</p>
     </div>
@@ -497,7 +497,7 @@ fn print_drink(dri: &Drink) {
 
 <div class="tip">
     <div class="tip-header">
-        <img src="./bear.svg">
+        <img src="./bear.svg" />
         Cool bear's hot tip
     </div>
     这听起来是不是要敲很多代码? 幸运的是, <code>rust-analyzer</code> 可以帮忙补全 <code>case</code>, 这帮我们自动生成的很大一部分代码.
@@ -534,7 +534,7 @@ fn print_drink(dri: &Drink) {
 让我们想想, 我们还抱怨了 `C` 枚举的什么地方?
 
 <div class="dialog">
-    <img src="./bear.svg" class="dialog-head">
+    <img src="./bear.svg" class="dialog-head" />
     <div class="dialog-text">
         <p>你可以传递无意义的值!</p>
     </div>
@@ -640,3 +640,170 @@ note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
 并且我们的快乐还并不止步于此.
 
 还记得我们之前打印我们的枚举大小么? 让我们来 [refresh out memory](https://en.wikipedia.org/wiki/Memory_refresh):
+
+```rust
+use std::mem::size_of;
+
+#[allow(dead_code)]
+enum Drink {
+    Water,
+    Soda,
+    Juice,
+}
+
+fn main() {
+    dbg!(size_of::<Drink>());
+}
+```
+
+```shell
+$ cargo run -q
+[src/main.rs:11] size_of::<Drink>() = 1
+```
+
+单位是字节, 所以这里显示我们的枚举只有一个字节.
+
+让我们与 `C` 的对比下:
+
+```c
+#include <stdio.h>
+
+typedef enum Drink {
+    Drink_Water,
+    Drink_Soda,
+    Drink_Juice,
+} Drink;
+
+int main() {
+    printf("sizeof(Drink) = %ld\n", sizeof(Drink));
+}
+```
+
+```shell
+$ clang -Wall main.c -o main && ./main
+sizeof(Drink) = 4
+```
+
+这里枚举有足足4个字节, 所以我们可以近似地说 `Rust` 的枚举是 `u8`, `C` 枚举是 `u32`.
+
+如果 `Rust` 的枚举超过256个变体呢?
+
+```rust
+use std::mem::size_of;
+
+#[allow(dead_code)]
+enum Drink {
+    Variant0,
+    Variant1,
+    Variant2,
+    Variant3,
+    Variant4,
+    // (etc.)
+    Variant252,
+    Variant253,
+    Variant254,
+    Variant255,
+    Variant256,
+}
+
+fn main() {
+    dbg!(size_of::<Drink>());
+}
+```
+
+<div class="dialog">
+    <img src="./bear.svg" class="dialog-head" />
+    <div class="dialog-text">
+        <p>等等, 这里只有256个变体?</p>
+    </div>
+</div>
+
+<div class="dialog amos">
+    <img src="./author.svg" class="dialog-head" />
+    <div class="dialog-text">
+        <p>Nice try cool bear, but no! <a href="https://en.wikipedia.org/wiki/Off-by-one_error#Fencepost_error">你只是在数栅栏中的格子, 你应该数标杆</a>.</p>
+    </div>
+</div>
+
+> 译者: [counting the fences, when you should be counting the posts.](https://en.wikipedia.org/wiki/Off-by-one_error#Fencepost_error)
+
+不管怎样, 我们先看看现在的枚举大小?
+
+```shell
+$ cargo run -q
+[src/main.rs:265] size_of::<Drink>() = 2
+```
+
+2个字节! 看起来又像是 `u16`.
+
+当然看起来像并不是一个专业术语 - 专业术语应该是 "representation". 一个 `Rust` 枚举是对特定整数类型的抽象.
+
+让我们看看我们原来的 `Drink`:
+
+<img src="./representation.svg" />
+
+概念上, `Drink` 只有三个有意义的值, 但是它的表现是一个 `u8`, 能持有256个不同的值. 这就是你为什么总是能把 `Drink` 转为 `u8`, 但是把 `u8` 转为 `Drink` 却是一个容易出错的操作.
+
+<div class="dialog">
+    <img src="./bear.svg" class="dialog-head" />
+    <div class="dialog-text">
+        <p>因此使用 <code>TryFrom/TryInto</code> 而不是 <code>From/Into</code></p>
+    </div>
+</div>
+
+对的! 潜在的 `Drink` 作为一个 `u8` 应该总是为0, 1或者2, 这被称为不变体(invariant). 如果我们破坏了这个不变体, 我们的代码就不是那么健壮了.
+
+在 `Rust`, 破坏不变体需要使用 `unsafe` 代码:
+
+```rust
+use std::mem::transmute;
+
+#[allow(dead_code)]
+#[derive(Debug, PartialEq)]
+enum Drink {
+    Water,
+    Soda,
+    Juice,
+}
+
+fn main() {
+    // woops! that's unsound.
+    let d: Drink = unsafe { transmute(15_u8) };
+    dbg!(&d);
+    dbg!(d == Drink::Juice);
+}
+```
+
+```shell
+$ cargo run -q
+[src/main.rs:14] &d = Juice
+[src/main.rs:15] d == Drink::Juice = false
+```
+
+<div class="dialog">
+    <img src="./bear.svg" class="dialog-head" />
+    <div class="dialog-text">
+        <p>这太糟了 - 但是你没法意外的通过安全代码来获取一个无效的枚举值不是吗?</p>
+    </div>
+</div>
+
+<div class="dialog amos">
+    <img src="./author.svg" class="dialog-head" />
+    <div class="dialog-text">
+        <p>对的, <code>unsafe</code>关键字将一个区域标记为更少的约束, 所以在代码审查中要对有潜在危险的代码格外注意.</p>
+    </div>
+</div>
+
+<div class="dialog">
+    <img src="./bear.svg" class="dialog-head" />
+    <div class="dialog-text">
+        <p>听起来很糟. 是不是 <code>unsafe</code> 代码就很差呢?</p>
+    </div>
+</div>
+
+<div class="dialog amos">
+    <img src="./author.svg" class="dialog-head" />
+    <div class="dialog-text">
+        <p>有时候是不可避免的. 但是仅仅是有时候! 库作者通常会发现他们并不是真的需要 <code>unsafe</code> 来做他们想做的事情, 他们可以把那些替换成安全的代码 - 这使得只有更少的区域需要去重点关注.</p>
+    </div>
+</div>
