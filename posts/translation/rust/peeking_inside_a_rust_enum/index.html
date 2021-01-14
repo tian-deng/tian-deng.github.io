@@ -15,7 +15,7 @@
 </span></code></pre></div><div class=highlight><pre class=chroma><code class=language-shell data-lang=shell>$ cargo run -q
 <span class=o>[</span>src/main.rs:6<span class=o>]</span> size_of_val<span class=o>(</span><span class=p>&amp;</span>smart<span class=o>)</span> <span class=o>=</span> <span class=m>24</span>
 <span class=o>[</span>src/main.rs:9<span class=o>]</span> size_of_val<span class=o>(</span><span class=p>&amp;</span>stand<span class=o>)</span> <span class=o>=</span> <span class=m>24</span>
-</code></pre></div><p>正如你看到的, 同样也是最初的问题描述的那样, 这两个类型的大小是相同的.</p><div class=dialog><img src=./bear.svg class=dialog-head><div class=dialog-text><p>毫无疑问的, `String` 存储实际数据是在别的地方? 因为所有 `String` 类型值的大小在64位平台上都是24个字节.</p></div></div><p>是的, 这当然不是一个完整的故事, 在这个特别的例子中, <code>smart</code> 以 <code>inline</code> 的方式存储它的值(在栈上), 而标准库将值存储在堆上:</p><img src=./heap-vs-not-heap.svg><p>如果我们想知道每个类型到底总共使用了多少内存, 我们可以这样做:</p><div class=highlight><pre class=chroma><code class=language-rust data-lang=rust><span class=w>    </span><span class=kd>let</span><span class=w> </span><span class=n>smart</span><span class=w> </span><span class=o>=</span><span class=w> </span><span class=n>SmartString</span>::<span class=o>&lt;</span><span class=n>Compact</span><span class=o>&gt;</span>::<span class=n>from</span><span class=p>(</span><span class=s>&#34;hello world&#34;</span><span class=p>);</span><span class=w>
+</code></pre></div><p>正如你看到的, 同样也是最初的问题描述的那样, 这两个类型的大小是相同的.</p><div class=dialog><img src=./bear.svg class=dialog-head><div class=dialog-text><p>毫无疑问的, `String` 存储实际数据是在别的地方? 因为所有 `String` 类型值的大小在64位平台上都是24个字节.</p></div></div><p>是的, 这当然不是一个完整的故事, 在这个特别的例子中, <code>smart</code> 以 <code>inline</code> 的方式存储它的值(在栈上), 而标准库将值存储在堆上:</p><p><img src=./heap-vs-not-heap.svg></p><p>如果我们想知道每个类型到底总共使用了多少内存, 我们可以这样做:</p><div class=highlight><pre class=chroma><code class=language-rust data-lang=rust><span class=w>    </span><span class=kd>let</span><span class=w> </span><span class=n>smart</span><span class=w> </span><span class=o>=</span><span class=w> </span><span class=n>SmartString</span>::<span class=o>&lt;</span><span class=n>Compact</span><span class=o>&gt;</span>::<span class=n>from</span><span class=p>(</span><span class=s>&#34;hello world&#34;</span><span class=p>);</span><span class=w>
 </span><span class=w>    </span><span class=n>dbg</span><span class=o>!</span><span class=p>(</span><span class=n>size_of_val</span><span class=p>(</span><span class=o>&amp;</span><span class=n>smart</span><span class=p>));</span><span class=w>
 </span><span class=w>
 </span><span class=w>    </span><span class=kd>let</span><span class=w> </span><span class=n>stand</span><span class=w> </span><span class=o>=</span><span class=w> </span><span class=nb>String</span>::<span class=n>from</span><span class=p>(</span><span class=s>&#34;hello world&#34;</span><span class=p>);</span><span class=w>
@@ -125,7 +125,7 @@ sizeof<span class=o>(</span>int<span class=o>)</span> <span class=o>=</span> <sp
     <span class=n>print_drink</span><span class=p>(</span><span class=n>Drink_Soda</span><span class=p>);</span>
 <span class=p>}</span>
 </code></pre></div><p>正确的代码是在每个 <code>case</code> 语句的结尾都使用 <code>break</code>. 这是刚起步的开发人员很早就应该了解的事情之一.</p><div class=tip><div class=tip-header><img src=./bear.svg>
-Cool bear's hot tip</div>鹅妹子嘤, 在 `C#` 中也是一样, 这除了防止你硬编码错误而导致的隐式跌落(意思是没有 <code>break</code> 的情况就一个 <code>case</code> 一个 <code>case</code> 向下运行)以外, 如果喜欢的话你仍然可以实现一个 <a href=https://stackoverflow.com/questions/174155/switch-statement-fallthrough-in-c/174223#174223>明确的跌落</a>.</div><p>即使我们修复了 <code>switch</code> 的问题, 还有件我不喜欢 <code>C</code> 枚举的事情, 那就是没什么可以阻止我传递一个无意义的值:</p><div class=highlight><pre class=chroma><code class=language-c data-lang=c><span class=cp>#include</span> <span class=cpf>&lt;stdio.h&gt;</span><span class=cp>
+Cool bear's hot tip</div>鹅妹子嘤, 在 `C#` 中是强制要求在每个非空的 <code>case</code> 中添加 <code>break</code> 否则不能编译通过, 这防止你硬编码错误而导致的隐式跌落(意思是没有 <code>break</code> 的情况就一个 <code>case</code> 一个 <code>case</code> 向下运行), 如果喜欢的话你仍然可以实现一个 <a href=https://stackoverflow.com/questions/174155/switch-statement-fallthrough-in-c/174223#174223>明确的跌落</a>.</div><p>即使我们修复了 <code>switch</code> 的问题, 还有件我不喜欢 <code>C</code> 枚举的事情, 那就是没什么可以阻止我传递一个无意义的值:</p><div class=highlight><pre class=chroma><code class=language-c data-lang=c><span class=cp>#include</span> <span class=cpf>&lt;stdio.h&gt;</span><span class=cp>
 </span><span class=cp></span>
 <span class=k>typedef</span> <span class=k>enum</span> <span class=n>Drink</span> <span class=p>{</span>
     <span class=n>Drink_Water</span><span class=p>,</span>
@@ -332,7 +332,75 @@ it<span class=se>\&#39;</span>s juice!
 it<span class=se>\&#39;</span>s juice!
 thread <span class=s1>&#39;main&#39;</span> panicked at <span class=s1>&#39;called `Result::unwrap()` on an `Err` value: &#34;invalid Drink value&#34;&#39;</span>, src/main.rs:27:22
 note: run with <span class=sb>`</span><span class=nv>RUST_BACKTRACE</span><span class=o>=</span>1<span class=sb>`</span> environment variable to display a backtrace
-</code></pre></div><p>并且我们的快乐还并不止步于此.</p><p>还记得我们之前打印我们的枚举大小么? 让我们来 <a class=link href=https://en.wikipedia.org/wiki/Memory_refresh target=_blank rel=noopener>refresh out memory</a>:</p></section><footer class=article-footer><section class=article-tags><a href=/tags/translation/>Translation</a>
+</code></pre></div><p>并且我们的快乐还并不止步于此.</p><p>还记得我们之前打印我们的枚举大小么? 让我们来 <a class=link href=https://en.wikipedia.org/wiki/Memory_refresh target=_blank rel=noopener>refresh out memory</a>:</p><div class=highlight><pre class=chroma><code class=language-rust data-lang=rust><span class=k>use</span><span class=w> </span><span class=n>std</span>::<span class=n>mem</span>::<span class=n>size_of</span><span class=p>;</span><span class=w>
+</span><span class=w>
+</span><span class=w></span><span class=cp>#[allow(dead_code)]</span><span class=w>
+</span><span class=w></span><span class=k>enum</span> <span class=nc>Drink</span><span class=w> </span><span class=p>{</span><span class=w>
+</span><span class=w>    </span><span class=n>Water</span><span class=p>,</span><span class=w>
+</span><span class=w>    </span><span class=n>Soda</span><span class=p>,</span><span class=w>
+</span><span class=w>    </span><span class=n>Juice</span><span class=p>,</span><span class=w>
+</span><span class=w></span><span class=p>}</span><span class=w>
+</span><span class=w>
+</span><span class=w></span><span class=k>fn</span> <span class=nf>main</span><span class=p>()</span><span class=w> </span><span class=p>{</span><span class=w>
+</span><span class=w>    </span><span class=n>dbg</span><span class=o>!</span><span class=p>(</span><span class=n>size_of</span>::<span class=o>&lt;</span><span class=n>Drink</span><span class=o>&gt;</span><span class=p>());</span><span class=w>
+</span><span class=w></span><span class=p>}</span><span class=w>
+</span></code></pre></div><div class=highlight><pre class=chroma><code class=language-shell data-lang=shell>$ cargo run -q
+<span class=o>[</span>src/main.rs:11<span class=o>]</span> size_of::&lt;Drink&gt;<span class=o>()</span> <span class=o>=</span> <span class=m>1</span>
+</code></pre></div><p>单位是字节, 所以这里显示我们的枚举只有一个字节.</p><p>让我们与 <code>C</code> 的对比下:</p><div class=highlight><pre class=chroma><code class=language-c data-lang=c><span class=cp>#include</span> <span class=cpf>&lt;stdio.h&gt;</span><span class=cp>
+</span><span class=cp></span>
+<span class=k>typedef</span> <span class=k>enum</span> <span class=n>Drink</span> <span class=p>{</span>
+    <span class=n>Drink_Water</span><span class=p>,</span>
+    <span class=n>Drink_Soda</span><span class=p>,</span>
+    <span class=n>Drink_Juice</span><span class=p>,</span>
+<span class=p>}</span> <span class=n>Drink</span><span class=p>;</span>
+
+<span class=kt>int</span> <span class=nf>main</span><span class=p>()</span> <span class=p>{</span>
+    <span class=n>printf</span><span class=p>(</span><span class=s>&#34;sizeof(Drink) = %ld</span><span class=se>\n</span><span class=s>&#34;</span><span class=p>,</span> <span class=k>sizeof</span><span class=p>(</span><span class=n>Drink</span><span class=p>));</span>
+<span class=p>}</span>
+</code></pre></div><div class=highlight><pre class=chroma><code class=language-shell data-lang=shell>$ clang -Wall main.c -o main <span class=o>&amp;&amp;</span> ./main
+sizeof<span class=o>(</span>Drink<span class=o>)</span> <span class=o>=</span> <span class=m>4</span>
+</code></pre></div><p>这里枚举有足足4个字节, 所以我们可以近似地说 <code>Rust</code> 的枚举是 <code>u8</code>, <code>C</code> 枚举是 <code>u32</code>.</p><p>如果 <code>Rust</code> 的枚举超过256个变体呢?</p><div class=highlight><pre class=chroma><code class=language-rust data-lang=rust><span class=k>use</span><span class=w> </span><span class=n>std</span>::<span class=n>mem</span>::<span class=n>size_of</span><span class=p>;</span><span class=w>
+</span><span class=w>
+</span><span class=w></span><span class=cp>#[allow(dead_code)]</span><span class=w>
+</span><span class=w></span><span class=k>enum</span> <span class=nc>Drink</span><span class=w> </span><span class=p>{</span><span class=w>
+</span><span class=w>    </span><span class=n>Variant0</span><span class=p>,</span><span class=w>
+</span><span class=w>    </span><span class=n>Variant1</span><span class=p>,</span><span class=w>
+</span><span class=w>    </span><span class=n>Variant2</span><span class=p>,</span><span class=w>
+</span><span class=w>    </span><span class=n>Variant3</span><span class=p>,</span><span class=w>
+</span><span class=w>    </span><span class=n>Variant4</span><span class=p>,</span><span class=w>
+</span><span class=w>    </span><span class=c1>// (etc.)
+</span><span class=c1></span><span class=w>    </span><span class=n>Variant252</span><span class=p>,</span><span class=w>
+</span><span class=w>    </span><span class=n>Variant253</span><span class=p>,</span><span class=w>
+</span><span class=w>    </span><span class=n>Variant254</span><span class=p>,</span><span class=w>
+</span><span class=w>    </span><span class=n>Variant255</span><span class=p>,</span><span class=w>
+</span><span class=w>    </span><span class=n>Variant256</span><span class=p>,</span><span class=w>
+</span><span class=w></span><span class=p>}</span><span class=w>
+</span><span class=w>
+</span><span class=w></span><span class=k>fn</span> <span class=nf>main</span><span class=p>()</span><span class=w> </span><span class=p>{</span><span class=w>
+</span><span class=w>    </span><span class=n>dbg</span><span class=o>!</span><span class=p>(</span><span class=n>size_of</span>::<span class=o>&lt;</span><span class=n>Drink</span><span class=o>&gt;</span><span class=p>());</span><span class=w>
+</span><span class=w></span><span class=p>}</span><span class=w>
+</span></code></pre></div><div class=dialog><img src=./bear.svg class=dialog-head><div class=dialog-text><p>等等, 这里只有256个变体?</p></div></div><div class="dialog amos"><img src=./author.svg class=dialog-head><div class=dialog-text><p>Nice try cool bear, but no! <a href=https://en.wikipedia.org/wiki/Off-by-one_error#Fencepost_error>你只是在数栅栏中的格子, 你应该数标杆</a>.</p></div></div><blockquote><p>译者: <a class=link href=https://en.wikipedia.org/wiki/Off-by-one_error#Fencepost_error target=_blank rel=noopener>counting the fences, when you should be counting the posts.</a></p></blockquote><p>不管怎样, 我们先看看现在的枚举大小?</p><div class=highlight><pre class=chroma><code class=language-shell data-lang=shell>$ cargo run -q
+<span class=o>[</span>src/main.rs:265<span class=o>]</span> size_of::&lt;Drink&gt;<span class=o>()</span> <span class=o>=</span> <span class=m>2</span>
+</code></pre></div><p>2个字节! 看起来又像是 <code>u16</code>.</p><p>当然看起来像并不是一个专业术语 - 专业术语应该是 &ldquo;representation&rdquo;. 一个 <code>Rust</code> 枚举是对特定整数类型的抽象.</p><p>让我们看看我们原来的 <code>Drink</code>:</p><p><img src=./representation.svg></p><p>概念上, <code>Drink</code> 只有三个有意义的值, 但是它的表现是一个 <code>u8</code>, 能持有256个不同的值. 这就是你为什么总是能把 <code>Drink</code> 转为 <code>u8</code>, 但是把 <code>u8</code> 转为 <code>Drink</code> 却是一个容易出错的操作.</p><div class=dialog><img src=./bear.svg class=dialog-head><div class=dialog-text><p>因此使用 <code>TryFrom/TryInto</code> 而不是 <code>From/Into</code></p></div></div><p>对的! 潜在的 <code>Drink</code> 作为一个 <code>u8</code> 应该总是为0, 1或者2, 这被称为不变体(invariant). 如果我们破坏了这个不变体, 我们的代码就不是那么健壮了.</p><p>在 <code>Rust</code>, 破坏不变体需要使用 <code>unsafe</code> 代码:</p><div class=highlight><pre class=chroma><code class=language-rust data-lang=rust><span class=k>use</span><span class=w> </span><span class=n>std</span>::<span class=n>mem</span>::<span class=n>transmute</span><span class=p>;</span><span class=w>
+</span><span class=w>
+</span><span class=w></span><span class=cp>#[allow(dead_code)]</span><span class=w>
+</span><span class=w></span><span class=cp>#[derive(Debug, PartialEq)]</span><span class=w>
+</span><span class=w></span><span class=k>enum</span> <span class=nc>Drink</span><span class=w> </span><span class=p>{</span><span class=w>
+</span><span class=w>    </span><span class=n>Water</span><span class=p>,</span><span class=w>
+</span><span class=w>    </span><span class=n>Soda</span><span class=p>,</span><span class=w>
+</span><span class=w>    </span><span class=n>Juice</span><span class=p>,</span><span class=w>
+</span><span class=w></span><span class=p>}</span><span class=w>
+</span><span class=w>
+</span><span class=w></span><span class=k>fn</span> <span class=nf>main</span><span class=p>()</span><span class=w> </span><span class=p>{</span><span class=w>
+</span><span class=w>    </span><span class=c1>// woops! that&#39;s unsound.
+</span><span class=c1></span><span class=w>    </span><span class=kd>let</span><span class=w> </span><span class=n>d</span>: <span class=nc>Drink</span><span class=w> </span><span class=o>=</span><span class=w> </span><span class=k>unsafe</span><span class=w> </span><span class=p>{</span><span class=w> </span><span class=n>transmute</span><span class=p>(</span><span class=mi>15_</span><span class=k>u8</span><span class=p>)</span><span class=w> </span><span class=p>};</span><span class=w>
+</span><span class=w>    </span><span class=n>dbg</span><span class=o>!</span><span class=p>(</span><span class=o>&amp;</span><span class=n>d</span><span class=p>);</span><span class=w>
+</span><span class=w>    </span><span class=n>dbg</span><span class=o>!</span><span class=p>(</span><span class=n>d</span><span class=w> </span><span class=o>==</span><span class=w> </span><span class=n>Drink</span>::<span class=n>Juice</span><span class=p>);</span><span class=w>
+</span><span class=w></span><span class=p>}</span><span class=w>
+</span></code></pre></div><div class=highlight><pre class=chroma><code class=language-shell data-lang=shell>$ cargo run -q
+<span class=o>[</span>src/main.rs:14<span class=o>]</span> <span class=p>&amp;</span><span class=nv>d</span> <span class=o>=</span> Juice
+<span class=o>[</span>src/main.rs:15<span class=o>]</span> <span class=nv>d</span> <span class=o>==</span> Drink::Juice <span class=o>=</span> <span class=nb>false</span>
+</code></pre></div><div class=dialog><img src=./bear.svg class=dialog-head><div class=dialog-text><p>这太糟了 - 但是你没法意外的通过安全代码来获取一个无效的枚举值不是吗?</p></div></div><div class="dialog amos"><img src=./author.svg class=dialog-head><div class=dialog-text><p>对的, <code>unsafe</code>关键字将一个区域标记为更少的约束, 所以在代码审查中要对有潜在危险的代码格外注意.</p></div></div><div class=dialog><img src=./bear.svg class=dialog-head><div class=dialog-text><p>听起来很糟. 是不是 <code>unsafe</code> 代码就很差呢?</p></div></div><div class="dialog amos"><img src=./author.svg class=dialog-head><div class=dialog-text><p>有时候是不可避免的. 但是仅仅是有时候! 库作者通常会发现他们并不是真的需要 <code>unsafe</code> 来做他们想做的事情, 他们可以把那些替换成安全的代码 - 这使得只有更少的区域需要去重点关注.</p></div></div></section><footer class=article-footer><section class=article-tags><a href=/tags/translation/>Translation</a>
 <a href=/tags/rust/>Rust</a>
 <a href=/tags/enum/>Enum</a></section><section class=article-copyright><svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-copyright" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentcolor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z"/><circle cx="12" cy="12" r="9"/><path d="M14.5 9a3.5 4 0 100 6"/></svg><span>Licensed under CC BY-NC-SA 4.0</span></section><section class=article-time><svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-clock" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentcolor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z"/><circle cx="12" cy="12" r="9"/><polyline points="12 7 12 12 15 15"/></svg><span class=article-time--modified>Last updated on Jan 13, 2021 15:00 +0800</span></section></footer></article><footer class=site-footer><section class=copyright>&copy;
 2020 -
