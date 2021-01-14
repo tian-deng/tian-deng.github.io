@@ -600,7 +600,7 @@ sizeof&lt;span class="o">(&lt;/span>Drink&lt;span class="o">)&lt;/span> &lt;span
 &lt;div class="dialog">
 &lt;img src="./bear.svg" class="dialog-head" />
 &lt;div class="dialog-text">
-&lt;p>听起来很糟. 是不是 &lt;code>unsafe&lt;/code> 代码就很差呢?&lt;/p>
+&lt;p>听起来很糟. 是不是意味着有 &lt;code>unsafe&lt;/code> 的代码就很糟糕呢?&lt;/p>
 &lt;/div>
 &lt;/div>
 &lt;div class="dialog amos">
@@ -608,7 +608,49 @@ sizeof&lt;span class="o">(&lt;/span>Drink&lt;span class="o">)&lt;/span> &lt;span
 &lt;div class="dialog-text">
 &lt;p>有时候是不可避免的. 但是仅仅是有时候! 库作者通常会发现他们并不是真的需要 &lt;code>unsafe&lt;/code> 来做他们想做的事情, 他们可以把那些替换成安全的代码 - 这使得只有更少的区域需要去重点关注.&lt;/p>
 &lt;/div>
-&lt;/div></description></item><item><title>200行Rust代码解释绿色线程</title><link>https://example.com/posts/translation/rust/green_threads_explained_in_200_lines_of_rust/</link><pubDate>Wed, 18 Nov 2020 13:28:44 +0800</pubDate><guid>https://example.com/posts/translation/rust/green_threads_explained_in_200_lines_of_rust/</guid><description>&lt;img src="https://example.com/posts/translation/rust/green_threads_explained_in_200_lines_of_rust/cover.png" alt="Featured image of post 200行Rust代码解释绿色线程" />&lt;blockquote>
+&lt;/div>
+&lt;div class="dialog">
+&lt;img src="./bear.svg" class="dialog-head" />
+&lt;div class="dialog-text">
+&lt;p>不能使语言本身完全没有 &lt;code>unsafe&lt;/code> 代码吗?&lt;/p>
+&lt;/div>
+&lt;/div>
+&lt;div class="dialog amos">
+&lt;img src="./author.svg" class="dialog-head" />
+&lt;div class="dialog-text">
+&lt;p>完全不要 &lt;code>unsafe&lt;/code> 代码是一个比较大的话题, 但是当然需要更少的不安全代码. 举个例子, 有一个为了 &lt;a href="https://github.com/rust-lang/project-safe-transmute">safe(r) transmute&lt;/a> 的工作小组.&lt;/p>
+&lt;/div>
+&lt;/div>
+&lt;p>问题的关键在于不是所有的事情都可以交由计算机去做(意味着需要你自己去做), 可以使用 &lt;code>Rust&lt;/code> 的模型检查. 因为种种原因, 你仍然需要 &lt;code>unsafe&lt;/code> 代码.&lt;/p>
+&lt;p>这并不意味有着两种 &lt;code>Rust&lt;/code>, 仅仅意味着不同的风险以及不同的可信任等级.&lt;/p>
+&lt;p>如果你相信 &lt;code>Rust&lt;/code> 核心团队可以根除标准库中的不健全之处, 那么你甚至就可以让团队中的初级人员在此基础上编写受 &lt;code>Rust&lt;/code> 安全保证的 &lt;code>safe code&lt;/code>.&lt;/p>
+&lt;p>&lt;img src="./unsafe-and-trust.svg" />&lt;/p>
+&lt;h2 id="rust枚举不止于此">Rust枚举不止于此&lt;/h2>
+&lt;p>Cool bear早先说 &lt;code>SmartString&lt;/code> 有着买一送一的处理字符串的方式. Cool bear是对的!&lt;/p>
+&lt;p>让我们来自己做一个 &lt;code>two-for-one&lt;/code> 的处理方式:&lt;/p>
+&lt;div class="highlight">&lt;pre class="chroma">&lt;code class="language-rust" data-lang="rust">&lt;span class="k">enum&lt;/span> &lt;span class="nc">UserID&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="p">{&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="n">Number&lt;/span>&lt;span class="p">(&lt;/span>&lt;span class="kt">u64&lt;/span>&lt;span class="p">),&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="n">Text&lt;/span>&lt;span class="p">(&lt;/span>&lt;span class="nb">String&lt;/span>&lt;span class="p">),&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w">&lt;/span>&lt;span class="p">}&lt;/span>&lt;span class="w">
+&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;p>&lt;code>UserID&lt;/code> 是一个合体类型, 一个 &lt;code>UserID&lt;/code> 的值可以是一个 &lt;code>UserID::Number&lt;/code> 变体, 或是一个 &lt;code>UserID::Text&lt;/code> 变体.如果我们想对它的内容做些操作, 我们需要用模式匹配:&lt;/p>
+&lt;div class="highlight">&lt;pre class="chroma">&lt;code class="language-rust" data-lang="rust">&lt;span class="k">fn&lt;/span> &lt;span class="nf">print_user_id&lt;/span>&lt;span class="p">(&lt;/span>&lt;span class="n">id&lt;/span>: &lt;span class="kp">&amp;amp;&lt;/span>&lt;span class="nc">UserID&lt;/span>&lt;span class="p">)&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="p">{&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="k">match&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="n">id&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="p">{&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="n">UserID&lt;/span>::&lt;span class="n">Number&lt;/span>&lt;span class="p">(&lt;/span>&lt;span class="n">n&lt;/span>&lt;span class="p">)&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="o">=&amp;gt;&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="p">{&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="n">println&lt;/span>&lt;span class="o">!&lt;/span>&lt;span class="p">(&lt;/span>&lt;span class="s">&amp;#34;user id number {}&amp;#34;&lt;/span>&lt;span class="p">,&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="n">n&lt;/span>&lt;span class="p">);&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="p">}&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="n">UserID&lt;/span>::&lt;span class="n">Text&lt;/span>&lt;span class="p">(&lt;/span>&lt;span class="n">s&lt;/span>&lt;span class="p">)&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="o">=&amp;gt;&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="n">println&lt;/span>&lt;span class="o">!&lt;/span>&lt;span class="p">(&lt;/span>&lt;span class="s">&amp;#34;user id {}&amp;#34;&lt;/span>&lt;span class="p">,&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="n">s&lt;/span>&lt;span class="p">),&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="p">}&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w">&lt;/span>&lt;span class="p">}&lt;/span>&lt;span class="w">
+&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;p>希望你对这个用法很熟悉, 我们在不久前刚提到过这个用法.&lt;/p>
+&lt;p>让我们进行一次打印操作:&lt;/p>
+&lt;div class="highlight">&lt;pre class="chroma">&lt;code class="language-rust" data-lang="rust">&lt;span class="k">fn&lt;/span> &lt;span class="nf">main&lt;/span>&lt;span class="p">()&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="p">{&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="n">print_user_id&lt;/span>&lt;span class="p">(&lt;/span>&lt;span class="o">&amp;amp;&lt;/span>&lt;span class="n">UserID&lt;/span>::&lt;span class="n">Number&lt;/span>&lt;span class="p">(&lt;/span>&lt;span class="mi">79&lt;/span>&lt;span class="p">));&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="n">print_user_id&lt;/span>&lt;span class="p">(&lt;/span>&lt;span class="o">&amp;amp;&lt;/span>&lt;span class="n">UserID&lt;/span>::&lt;span class="n">Text&lt;/span>&lt;span class="p">(&lt;/span>&lt;span class="s">&amp;#34;fh99a73gbh8&amp;#34;&lt;/span>&lt;span class="p">.&lt;/span>&lt;span class="n">into&lt;/span>&lt;span class="p">()));&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w">&lt;/span>&lt;span class="p">}&lt;/span>&lt;span class="w">
+&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;div class="highlight">&lt;pre class="chroma">&lt;code class="language-shell" data-lang="shell">$ cargo run -q
+user id number &lt;span class="m">79&lt;/span>
+user id fh99a73gbh8
+&lt;/code>&lt;/pre>&lt;/div></description></item><item><title>200行Rust代码解释绿色线程</title><link>https://example.com/posts/translation/rust/green_threads_explained_in_200_lines_of_rust/</link><pubDate>Wed, 18 Nov 2020 13:28:44 +0800</pubDate><guid>https://example.com/posts/translation/rust/green_threads_explained_in_200_lines_of_rust/</guid><description>&lt;img src="https://example.com/posts/translation/rust/green_threads_explained_in_200_lines_of_rust/cover.png" alt="Featured image of post 200行Rust代码解释绿色线程" />&lt;blockquote>
 &lt;p>本译文译自 &lt;a class="link" href="https://cfsamson.gitbook.io/green-threads-explained-in-200-lines-of-rust/" target="_blank" rel="noopener"
 >Green Threads Explained in 200 Lines of Rust&lt;/a>&lt;/p>
 &lt;/blockquote>
