@@ -797,7 +797,7 @@ $ cargo run -q
 <div class="dialog">
     <img src="./bear.svg" class="dialog-head" />
     <div class="dialog-text">
-        <p>听起来很糟. 是不是 <code>unsafe</code> 代码就很差呢?</p>
+        <p>听起来很糟. 是不是意味着有 <code>unsafe</code> 的代码就很糟糕呢?</p>
     </div>
 </div>
 
@@ -807,3 +807,68 @@ $ cargo run -q
         <p>有时候是不可避免的. 但是仅仅是有时候! 库作者通常会发现他们并不是真的需要 <code>unsafe</code> 来做他们想做的事情, 他们可以把那些替换成安全的代码 - 这使得只有更少的区域需要去重点关注.</p>
     </div>
 </div>
+
+<div class="dialog">
+    <img src="./bear.svg" class="dialog-head" />
+    <div class="dialog-text">
+        <p>不能使语言本身完全没有 <code>unsafe</code> 代码吗?</p>
+    </div>
+</div>
+
+<div class="dialog amos">
+    <img src="./author.svg" class="dialog-head" />
+    <div class="dialog-text">
+        <p>完全不要 <code>unsafe</code> 代码是一个比较大的话题, 但是当然需要更少的不安全代码. 举个例子, 有一个为了 <a href="https://github.com/rust-lang/project-safe-transmute">safe(r) transmute</a> 的工作小组.</p>
+    </div>
+</div>
+
+问题的关键在于不是所有的事情都可以交由计算机去做(意味着需要你自己去做), 可以使用 `Rust` 的模型检查. 因为种种原因, 你仍然需要 `unsafe` 代码.
+
+这并不意味有着两种 `Rust`, 仅仅意味着不同的风险以及不同的可信任等级.
+
+如果你相信 `Rust` 核心团队可以根除标准库中的不健全之处, 那么你甚至就可以让团队中的初级人员在此基础上编写受 `Rust` 安全保证的 `safe code`.
+
+<img src="./unsafe-and-trust.svg" />
+
+## Rust枚举不止于此
+
+Cool bear早先说 `SmartString` 有着买一送一的处理字符串的方式. Cool bear是对的!
+
+让我们来自己做一个 `two-for-one` 的处理方式:
+
+```rust
+enum UserID {
+    Number(u64),
+    Text(String),
+}
+```
+
+`UserID` 是一个合体类型, 一个 `UserID` 的值可以是一个 `UserID::Number` 变体, 或是一个 `UserID::Text` 变体.如果我们想对它的内容做些操作, 我们需要用模式匹配:
+
+```rust
+fn print_user_id(id: &UserID) {
+    match id {
+        UserID::Number(n) => {
+            println!("user id number {}", n);
+        }
+        UserID::Text(s) => println!("user id {}", s),
+    }
+}
+```
+
+希望你对这个用法很熟悉, 我们在不久前刚提到过这个用法.
+
+让我们进行一次打印操作:
+
+```rust
+fn main() {
+    print_user_id(&UserID::Number(79));
+    print_user_id(&UserID::Text("fh99a73gbh8".into()));
+}
+```
+
+```shell
+$ cargo run -q
+user id number 79
+user id fh99a73gbh8
+```
