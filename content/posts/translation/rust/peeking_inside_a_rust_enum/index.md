@@ -24,6 +24,13 @@ tags:
     padding-bottom: 1em;
     overflow: hidden;
 }
+.dialog p {
+    color: black;
+}
+.dialog a {
+    color: #0366d6;
+    
+}
 .dialog.amos {
     flex-direction: row-reverse;
 }
