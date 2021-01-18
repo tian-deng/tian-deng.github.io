@@ -638,7 +638,7 @@ sizeof&lt;span class="o">(&lt;/span>Drink&lt;span class="o">)&lt;/span> &lt;span
 &lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="n">Number&lt;/span>&lt;span class="p">(&lt;/span>&lt;span class="kt">u64&lt;/span>&lt;span class="p">),&lt;/span>&lt;span class="w">
 &lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="n">Text&lt;/span>&lt;span class="p">(&lt;/span>&lt;span class="nb">String&lt;/span>&lt;span class="p">),&lt;/span>&lt;span class="w">
 &lt;/span>&lt;span class="w">&lt;/span>&lt;span class="p">}&lt;/span>&lt;span class="w">
-&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;p>&lt;code>UserID&lt;/code> 是一个合体类型, 一个 &lt;code>UserID&lt;/code> 的值可以是一个 &lt;code>UserID::Number&lt;/code> 变体, 或是一个 &lt;code>UserID::Text&lt;/code> 变体.如果我们想对它的内容做些操作, 我们需要用模式匹配:&lt;/p>
+&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;p>&lt;code>UserID&lt;/code> 是一个聚合类型, 一个 &lt;code>UserID&lt;/code> 的值可以是一个 &lt;code>UserID::Number&lt;/code> 变体, 或是一个 &lt;code>UserID::Text&lt;/code> 变体.如果我们想对它的内容做些操作, 我们需要用模式匹配:&lt;/p>
 &lt;div class="highlight">&lt;pre class="chroma">&lt;code class="language-rust" data-lang="rust">&lt;span class="k">fn&lt;/span> &lt;span class="nf">print_user_id&lt;/span>&lt;span class="p">(&lt;/span>&lt;span class="n">id&lt;/span>: &lt;span class="kp">&amp;amp;&lt;/span>&lt;span class="nc">UserID&lt;/span>&lt;span class="p">)&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="p">{&lt;/span>&lt;span class="w">
 &lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="k">match&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="n">id&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="p">{&lt;/span>&lt;span class="w">
 &lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="n">UserID&lt;/span>::&lt;span class="n">Number&lt;/span>&lt;span class="p">(&lt;/span>&lt;span class="n">n&lt;/span>&lt;span class="p">)&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="o">=&amp;gt;&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="p">{&lt;/span>&lt;span class="w">
@@ -656,6 +656,438 @@ sizeof&lt;span class="o">(&lt;/span>Drink&lt;span class="o">)&lt;/span> &lt;span
 &lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;div class="highlight">&lt;pre class="chroma">&lt;code class="language-shell" data-lang="shell">$ cargo run -q
 user id number &lt;span class="m">79&lt;/span>
 user id fh99a73gbh8
+&lt;/code>&lt;/pre>&lt;/div>&lt;p>我们在这文章之前看到过另一个聚合类型, 然后我们实现 &lt;code>TryInto&lt;/code>, 我们会返回 &lt;code>Result&amp;lt;T, E&amp;gt;&lt;/code>:&lt;/p>
+&lt;div class="highlight">&lt;pre class="chroma">&lt;code class="language-rust" data-lang="rust">&lt;span class="k">impl&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="n">TryFrom&lt;/span>&lt;span class="o">&amp;lt;&lt;/span>&lt;span class="kt">i32&lt;/span>&lt;span class="o">&amp;gt;&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="k">for&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="n">Drink&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="p">{&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="k">type&lt;/span> &lt;span class="nc">Error&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="o">=&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="o">&amp;amp;&lt;/span>&lt;span class="nb">&amp;#39;static&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="kt">str&lt;/span>&lt;span class="p">;&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="k">fn&lt;/span> &lt;span class="nf">try_from&lt;/span>&lt;span class="p">(&lt;/span>&lt;span class="n">x&lt;/span>: &lt;span class="kt">i32&lt;/span>&lt;span class="p">)&lt;/span>&lt;span class="w"> &lt;/span>-&amp;gt; &lt;span class="nb">Result&lt;/span>&lt;span class="o">&amp;lt;&lt;/span>&lt;span class="n">Self&lt;/span>&lt;span class="p">,&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="n">Self&lt;/span>::&lt;span class="n">Error&lt;/span>&lt;span class="o">&amp;gt;&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="p">{&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="c1">// omitted
+&lt;/span>&lt;span class="c1">&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="p">}&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w">&lt;/span>&lt;span class="p">}&lt;/span>&lt;span class="w">
+&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;p>&lt;code>Result&lt;/code> 值是一个枚举, 它实际是这样定义的:&lt;/p>
+&lt;div class="highlight">&lt;pre class="chroma">&lt;code class="language-rust" data-lang="rust">&lt;span class="k">pub&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="k">enum&lt;/span> &lt;span class="nb">Result&lt;/span>&lt;span class="o">&amp;lt;&lt;/span>&lt;span class="n">T&lt;/span>&lt;span class="p">,&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="n">E&lt;/span>&lt;span class="o">&amp;gt;&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="p">{&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="sd">/// Contains the success value
+&lt;/span>&lt;span class="sd">&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="nb">Ok&lt;/span>&lt;span class="p">(&lt;/span>&lt;span class="n">T&lt;/span>&lt;span class="p">),&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="sd">/// Contains the error value
+&lt;/span>&lt;span class="sd">&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="nb">Err&lt;/span>&lt;span class="p">(&lt;/span>&lt;span class="n">E&lt;/span>&lt;span class="p">),&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w">&lt;/span>&lt;span class="p">}&lt;/span>&lt;span class="w">
+&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;p>让我们返回看我们的 &lt;code>UserID&lt;/code> 枚举:&lt;/p>
+&lt;div class="highlight">&lt;pre class="chroma">&lt;code class="language-rust" data-lang="rust">&lt;span class="k">enum&lt;/span> &lt;span class="nc">UserID&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="p">{&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="n">Number&lt;/span>&lt;span class="p">(&lt;/span>&lt;span class="kt">u64&lt;/span>&lt;span class="p">),&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="n">Text&lt;/span>&lt;span class="p">(&lt;/span>&lt;span class="nb">String&lt;/span>&lt;span class="p">),&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w">&lt;/span>&lt;span class="p">}&lt;/span>&lt;span class="w">
+&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;p>它的大小是多少呢? 如果我们尝试在 &lt;code>C&lt;/code> 里模拟实现一个 &lt;code>Rust&lt;/code> 的枚举, 它将会看起来如下:&lt;/p>
+&lt;div class="highlight">&lt;pre class="chroma">&lt;code class="language-c" data-lang="c">&lt;span class="cp">#include&lt;/span> &lt;span class="cpf">&amp;lt;stdint.h&amp;gt;&lt;/span>&lt;span class="cp">
+&lt;/span>&lt;span class="cp">#include&lt;/span> &lt;span class="cpf">&amp;lt;stdio.h&amp;gt;&lt;/span>&lt;span class="cp">
+&lt;/span>&lt;span class="cp">&lt;/span>
+&lt;span class="k">enum&lt;/span> &lt;span class="n">UserIDKind&lt;/span> &lt;span class="p">{&lt;/span>
+&lt;span class="n">UserIDKind_Number&lt;/span>&lt;span class="p">,&lt;/span>
+&lt;span class="n">UserIDKind_Text&lt;/span>&lt;span class="p">,&lt;/span>
+&lt;span class="p">};&lt;/span>
+&lt;span class="k">struct&lt;/span> &lt;span class="n">UserID&lt;/span> &lt;span class="p">{&lt;/span>
+&lt;span class="k">enum&lt;/span> &lt;span class="n">UserIDKind&lt;/span> &lt;span class="n">kind&lt;/span>&lt;span class="p">;&lt;/span>
+&lt;span class="n">uint64_t&lt;/span> &lt;span class="n">number&lt;/span>&lt;span class="p">;&lt;/span>
+&lt;span class="kt">char&lt;/span> &lt;span class="o">*&lt;/span>&lt;span class="n">text&lt;/span>&lt;span class="p">;&lt;/span>
+&lt;span class="p">};&lt;/span>
+&lt;/code>&lt;/pre>&lt;/div>&lt;p>尽管我们只需要两个变体, 但我们需要三个属性, 以让我们知道我们现在处理的是哪一个变体.&lt;/p>
+&lt;p>举个例子, 在 &lt;code>print_user_id&lt;/code>, 我们应该使用 &lt;code>switch&lt;/code> 来处理我们使用的是 &lt;code>Number&lt;/code> 变体还是 &lt;code>Text&lt;/code> 变体:&lt;/p>
+&lt;div class="highlight">&lt;pre class="chroma">&lt;code class="language-c" data-lang="c">&lt;span class="kt">void&lt;/span> &lt;span class="nf">print_user_id&lt;/span>&lt;span class="p">(&lt;/span>&lt;span class="k">struct&lt;/span> &lt;span class="n">UserID&lt;/span>&lt;span class="o">*&lt;/span> &lt;span class="n">id&lt;/span>&lt;span class="p">)&lt;/span> &lt;span class="p">{&lt;/span>
+&lt;span class="k">switch&lt;/span> &lt;span class="p">(&lt;/span>&lt;span class="n">id&lt;/span>&lt;span class="o">-&amp;gt;&lt;/span>&lt;span class="n">kind&lt;/span>&lt;span class="p">)&lt;/span> &lt;span class="p">{&lt;/span>
+&lt;span class="k">case&lt;/span> &lt;span class="nl">UserIDKind_Number&lt;/span>&lt;span class="p">:&lt;/span>
+&lt;span class="n">printf&lt;/span>&lt;span class="p">(&lt;/span>&lt;span class="s">&amp;#34;user id number %lu&lt;/span>&lt;span class="se">\n&lt;/span>&lt;span class="s">&amp;#34;&lt;/span>&lt;span class="p">,&lt;/span> &lt;span class="n">id&lt;/span>&lt;span class="o">-&amp;gt;&lt;/span>&lt;span class="n">number&lt;/span>&lt;span class="p">);&lt;/span>
+&lt;span class="k">break&lt;/span>&lt;span class="p">;&lt;/span>
+&lt;span class="k">case&lt;/span> &lt;span class="nl">UserIDKind_Text&lt;/span>&lt;span class="p">:&lt;/span>
+&lt;span class="n">printf&lt;/span>&lt;span class="p">(&lt;/span>&lt;span class="s">&amp;#34;user id %s&lt;/span>&lt;span class="se">\n&lt;/span>&lt;span class="s">&amp;#34;&lt;/span>&lt;span class="p">,&lt;/span> &lt;span class="n">id&lt;/span>&lt;span class="o">-&amp;gt;&lt;/span>&lt;span class="n">text&lt;/span>&lt;span class="p">);&lt;/span>
+&lt;span class="k">break&lt;/span>&lt;span class="p">;&lt;/span>
+&lt;span class="p">}&lt;/span>
+&lt;span class="p">}&lt;/span>
+&lt;/code>&lt;/pre>&lt;/div>&lt;p>并且当我们初始化 &lt;code>UserID&lt;/code> 结构体的时候, 我们仅需要初始化我们需要的属性, 并且设置它的 &lt;code>kind&lt;/code>:&lt;/p>
+&lt;div class="highlight">&lt;pre class="chroma">&lt;code class="language-c" data-lang="c">&lt;span class="kt">int&lt;/span> &lt;span class="nf">main&lt;/span>&lt;span class="p">()&lt;/span> &lt;span class="p">{&lt;/span>
+&lt;span class="k">struct&lt;/span> &lt;span class="n">UserID&lt;/span> &lt;span class="n">a&lt;/span> &lt;span class="o">=&lt;/span> &lt;span class="p">{&lt;/span>
+&lt;span class="p">.&lt;/span>&lt;span class="n">kind&lt;/span> &lt;span class="o">=&lt;/span> &lt;span class="n">UserIDKind_Number&lt;/span>&lt;span class="p">,&lt;/span>
+&lt;span class="p">.&lt;/span>&lt;span class="n">number&lt;/span> &lt;span class="o">=&lt;/span> &lt;span class="mi">79&lt;/span>&lt;span class="p">,&lt;/span>
+&lt;span class="p">};&lt;/span>
+&lt;span class="n">print_user_id&lt;/span>&lt;span class="p">(&lt;/span>&lt;span class="o">&amp;amp;&lt;/span>&lt;span class="n">a&lt;/span>&lt;span class="p">);&lt;/span>
+&lt;span class="k">struct&lt;/span> &lt;span class="n">UserID&lt;/span> &lt;span class="n">b&lt;/span> &lt;span class="o">=&lt;/span> &lt;span class="p">{&lt;/span>
+&lt;span class="p">.&lt;/span>&lt;span class="n">kind&lt;/span> &lt;span class="o">=&lt;/span> &lt;span class="n">UserIDKind_Text&lt;/span>&lt;span class="p">,&lt;/span>
+&lt;span class="p">.&lt;/span>&lt;span class="n">text&lt;/span> &lt;span class="o">=&lt;/span> &lt;span class="s">&amp;#34;fh99a73gbh8&amp;#34;&lt;/span>&lt;span class="p">,&lt;/span>
+&lt;span class="p">};&lt;/span>
+&lt;span class="n">print_user_id&lt;/span>&lt;span class="p">(&lt;/span>&lt;span class="o">&amp;amp;&lt;/span>&lt;span class="n">b&lt;/span>&lt;span class="p">);&lt;/span>
+&lt;span class="p">}&lt;/span>
+&lt;/code>&lt;/pre>&lt;/div>&lt;p>这是可以工作的:&lt;/p>
+&lt;div class="highlight">&lt;pre class="chroma">&lt;code class="language-shell" data-lang="shell">$ clang -Wall main.c -o main &lt;span class="o">&amp;amp;&amp;amp;&lt;/span> ./main
+user id number &lt;span class="m">79&lt;/span>
+user id fh99a73gbh8
+&lt;/code>&lt;/pre>&lt;/div>&lt;p>但这并不理想, 这并没有像 &lt;code>Rust&lt;/code> 那样的安全保证, 我们无法阻止你创建一个 &lt;code>Text&lt;/code> 而 &lt;code>kind&lt;/code> 是一个 &lt;code>Number&lt;/code>:&lt;/p>
+&lt;div class="highlight">&lt;pre class="chroma">&lt;code class="language-c" data-lang="c">&lt;span class="kt">int&lt;/span> &lt;span class="nf">main&lt;/span>&lt;span class="p">()&lt;/span> &lt;span class="p">{&lt;/span>
+&lt;span class="k">struct&lt;/span> &lt;span class="n">UserID&lt;/span> &lt;span class="n">woops&lt;/span> &lt;span class="o">=&lt;/span> &lt;span class="p">{&lt;/span>
+&lt;span class="p">.&lt;/span>&lt;span class="n">kind&lt;/span> &lt;span class="o">=&lt;/span> &lt;span class="n">UserIDKind_Number&lt;/span>&lt;span class="p">,&lt;/span>
+&lt;span class="p">.&lt;/span>&lt;span class="n">text&lt;/span> &lt;span class="o">=&lt;/span> &lt;span class="s">&amp;#34;woops&amp;#34;&lt;/span>&lt;span class="p">,&lt;/span>
+&lt;span class="p">};&lt;/span>
+&lt;span class="n">print_user_id&lt;/span>&lt;span class="p">(&lt;/span>&lt;span class="o">&amp;amp;&lt;/span>&lt;span class="n">woops&lt;/span>&lt;span class="p">);&lt;/span>
+&lt;span class="p">}&lt;/span>
+&lt;/code>&lt;/pre>&lt;/div>&lt;div class="highlight">&lt;pre class="chroma">&lt;code class="language-shell" data-lang="shell">$ clang -Wall main.c -o main &lt;span class="o">&amp;amp;&amp;amp;&lt;/span> ./main
+user id number &lt;span class="m">0&lt;/span>
+&lt;/code>&lt;/pre>&lt;/div>&lt;p>我们实现了一个不完善的抽象 - 我们可以直接访问它的底层表示, 并且以不合理的方式操作它.&lt;/p>
+&lt;p>举个例子, 如果我们的 &lt;code>UserID&lt;/code> 是使用 &lt;code>malloc&lt;/code> 在堆上分配的并且也没有清零, 那会发生什么?&lt;/p>
+&lt;div class="highlight">&lt;pre class="chroma">&lt;code class="language-c" data-lang="c">&lt;span class="cp">#include&lt;/span> &lt;span class="cpf">&amp;lt;stdlib.h&amp;gt;&lt;/span>&lt;span class="cp">
+&lt;/span>&lt;span class="cp">&lt;/span>
+&lt;span class="kt">int&lt;/span> &lt;span class="nf">main&lt;/span>&lt;span class="p">()&lt;/span> &lt;span class="p">{&lt;/span>
+&lt;span class="k">struct&lt;/span> &lt;span class="n">UserID&lt;/span> &lt;span class="o">*&lt;/span>&lt;span class="n">woops&lt;/span> &lt;span class="o">=&lt;/span> &lt;span class="n">malloc&lt;/span>&lt;span class="p">(&lt;/span>&lt;span class="k">sizeof&lt;/span>&lt;span class="p">(&lt;/span>&lt;span class="k">struct&lt;/span> &lt;span class="n">UserID&lt;/span>&lt;span class="p">));&lt;/span>
+&lt;span class="n">woops&lt;/span>&lt;span class="o">-&amp;gt;&lt;/span>&lt;span class="n">kind&lt;/span> &lt;span class="o">=&lt;/span> &lt;span class="n">UserIDKind_Text&lt;/span>&lt;span class="p">;&lt;/span>
+&lt;span class="n">woops&lt;/span>&lt;span class="o">-&amp;gt;&lt;/span>&lt;span class="n">number&lt;/span> &lt;span class="o">=&lt;/span> &lt;span class="mi">79&lt;/span>&lt;span class="p">;&lt;/span>
+&lt;span class="n">print_user_id&lt;/span>&lt;span class="p">(&lt;/span>&lt;span class="n">woops&lt;/span>&lt;span class="p">);&lt;/span>
+&lt;span class="p">}&lt;/span>
+&lt;/code>&lt;/pre>&lt;/div>&lt;p>在debug模式编译下, 它不会很糟糕:&lt;/p>
+&lt;div class="highlight">&lt;pre class="chroma">&lt;code class="language-shell" data-lang="shell">$ clang -Wall main.c -o main &lt;span class="o">&amp;amp;&amp;amp;&lt;/span> ./main
+user id &lt;span class="o">(&lt;/span>null&lt;span class="o">)&lt;/span>
+&lt;/code>&lt;/pre>&lt;/div>&lt;p>然而在release模式编译下, 随着优化的打开, 将会发生很有趣的现象:&lt;/p>
+&lt;div class="highlight">&lt;pre class="chroma">&lt;code class="language-shell" data-lang="shell">$ clang -O3 -Wall main.c -o main &lt;span class="o">&amp;amp;&amp;amp;&lt;/span> ./main
+user id &lt;span class="o">}&lt;/span>
+$ clang -O3 -Wall main.c -o main &lt;span class="o">&amp;amp;&amp;amp;&lt;/span> ./main
+user id
+$ clang -O3 -Wall main.c -o main &lt;span class="o">&amp;amp;&amp;amp;&lt;/span> ./main
+user id m
+&lt;/code>&lt;/pre>&lt;/div>&lt;p>从哪里来的? 谁知道呢. 但是它没有导致段错误 - 这意味着它从程序的其他部分读取数据. 在一个大型程序中, 那可能是用户的隐私数据, 而这个漏洞就可能被用来窃取隐私数据.&lt;/p>
+&lt;p>不过这并不是一篇讲 &lt;code>C&lt;/code> 有多危险的文章,&lt;/p>
+&lt;div class="dialog">
+&lt;img src="./bear.svg" class="dialog-head" />
+&lt;div class="dialog-text">
+&lt;p>...你一直在讲&lt;/p>
+&lt;/div>
+&lt;/div>
+&lt;p>&amp;hellip;emmm, 让我们看看还有什么不好的地方.&lt;/p>
+&lt;p>首先让我们看看我们 &lt;code>struct UserID&lt;/code> 的大小:&lt;/p>
+&lt;div class="highlight">&lt;pre class="chroma">&lt;code class="language-shell" data-lang="shell">$ clang -Wall main.c -o main &lt;span class="o">&amp;amp;&amp;amp;&lt;/span> ./main
+sizeof&lt;span class="o">(&lt;/span>struct UserID&lt;span class="o">)&lt;/span> &lt;span class="o">=&lt;/span> &lt;span class="m">24&lt;/span>
+&lt;/code>&lt;/pre>&lt;/div>&lt;p>24字节. 这只是一个结构体, 所以我们可以自己计算出来:&lt;/p>
+&lt;div class="highlight">&lt;pre class="chroma">&lt;code class="language-c" data-lang="c">&lt;span class="kt">int&lt;/span> &lt;span class="nf">main&lt;/span>&lt;span class="p">()&lt;/span> &lt;span class="p">{&lt;/span>
+&lt;span class="n">printf&lt;/span>&lt;span class="p">(&lt;/span>&lt;span class="s">&amp;#34;sizeof(struct UserID) = %ld&lt;/span>&lt;span class="se">\n&lt;/span>&lt;span class="s">&amp;#34;&lt;/span>&lt;span class="p">,&lt;/span> &lt;span class="k">sizeof&lt;/span>&lt;span class="p">(&lt;/span>&lt;span class="k">struct&lt;/span> &lt;span class="n">UserID&lt;/span>&lt;span class="p">));&lt;/span>
+&lt;span class="n">printf&lt;/span>&lt;span class="p">(&lt;/span>&lt;span class="s">&amp;#34;%ld + %ld + %ld = %ld&lt;/span>&lt;span class="se">\n&lt;/span>&lt;span class="s">&amp;#34;&lt;/span>&lt;span class="p">,&lt;/span>
+&lt;span class="k">sizeof&lt;/span>&lt;span class="p">(&lt;/span>&lt;span class="k">enum&lt;/span> &lt;span class="n">UserIDKind&lt;/span>&lt;span class="p">),&lt;/span> &lt;span class="k">sizeof&lt;/span>&lt;span class="p">(&lt;/span>&lt;span class="n">uint64_t&lt;/span>&lt;span class="p">),&lt;/span> &lt;span class="k">sizeof&lt;/span>&lt;span class="p">(&lt;/span>&lt;span class="kt">char&lt;/span> &lt;span class="o">*&lt;/span>&lt;span class="p">),&lt;/span>
+&lt;span class="k">sizeof&lt;/span>&lt;span class="p">(&lt;/span>&lt;span class="k">enum&lt;/span> &lt;span class="n">UserIDKind&lt;/span>&lt;span class="p">)&lt;/span> &lt;span class="o">+&lt;/span> &lt;span class="k">sizeof&lt;/span>&lt;span class="p">(&lt;/span>&lt;span class="n">uint64_t&lt;/span>&lt;span class="p">)&lt;/span> &lt;span class="o">+&lt;/span> &lt;span class="k">sizeof&lt;/span>&lt;span class="p">(&lt;/span>&lt;span class="kt">char&lt;/span> &lt;span class="o">*&lt;/span>&lt;span class="p">)&lt;/span>
+&lt;span class="p">);&lt;/span>
+&lt;span class="p">}&lt;/span>
+&lt;/code>&lt;/pre>&lt;/div>&lt;div class="highlight">&lt;pre class="chroma">&lt;code class="language-shell" data-lang="shell">$ clang -Wall main.c -o main &lt;span class="o">&amp;amp;&amp;amp;&lt;/span> ./main
+sizeof&lt;span class="o">(&lt;/span>struct UserID&lt;span class="o">)&lt;/span> &lt;span class="o">=&lt;/span> &lt;span class="m">24&lt;/span>
+&lt;span class="m">4&lt;/span> + &lt;span class="m">8&lt;/span> + &lt;span class="nv">8&lt;/span> &lt;span class="o">=&lt;/span> &lt;span class="m">20&lt;/span>
+&lt;/code>&lt;/pre>&lt;/div>&lt;p>Oh, woops. 我们哪里做错了?&lt;/p>
+&lt;p>淡定, 这是因为在 &lt;code>kind&lt;/code> 和 &lt;code>number&lt;/code> 之间有 &lt;code>padding&lt;/code>, 以使我们的属性是64位对齐的(后面会详细说明).&lt;/p>
+&lt;p>&lt;img src="./struct-padding.svg" />&lt;/p>
+&lt;p>这就是为什么我们的 &lt;code>UserID&lt;/code> 结构体是3*8=24个字节.&lt;/p>
+&lt;p>当前, 我们可以命令编译器不要做对齐, 然后在计算一次:&lt;/p>
+&lt;div class="highlight">&lt;pre class="chroma">&lt;code class="language-c" data-lang="c">&lt;span class="k">struct&lt;/span> &lt;span class="nf">__attribute__&lt;/span>&lt;span class="p">((&lt;/span>&lt;span class="n">packed&lt;/span>&lt;span class="p">))&lt;/span> &lt;span class="n">UserID&lt;/span> &lt;span class="p">{&lt;/span>
+&lt;span class="k">enum&lt;/span> &lt;span class="n">UserIDKind&lt;/span> &lt;span class="n">kind&lt;/span>&lt;span class="p">;&lt;/span>
+&lt;span class="n">uint64_t&lt;/span> &lt;span class="n">number&lt;/span>&lt;span class="p">;&lt;/span>
+&lt;span class="kt">char&lt;/span> &lt;span class="o">*&lt;/span>&lt;span class="n">text&lt;/span>&lt;span class="p">;&lt;/span>
+&lt;span class="p">};&lt;/span>
+&lt;/code>&lt;/pre>&lt;/div>&lt;div class="highlight">&lt;pre class="chroma">&lt;code class="language-shell" data-lang="shell">$ clang -Wall main.c -o main &lt;span class="o">&amp;amp;&amp;amp;&lt;/span> ./main
+sizeof&lt;span class="o">(&lt;/span>struct UserID&lt;span class="o">)&lt;/span> &lt;span class="o">=&lt;/span> &lt;span class="m">20&lt;/span>
+&lt;span class="m">4&lt;/span> + &lt;span class="m">8&lt;/span> + &lt;span class="nv">8&lt;/span> &lt;span class="o">=&lt;/span> &lt;span class="m">20&lt;/span>
+&lt;/code>&lt;/pre>&lt;/div>&lt;p>&lt;img src="./struct-packed.svg" />&lt;/p>
+&lt;p>现在让我们看看 &lt;code>Rust&lt;/code> 中 &lt;code>UserID&lt;/code> 枚举的大小:&lt;/p>
+&lt;div class="highlight">&lt;pre class="chroma">&lt;code class="language-rust" data-lang="rust">&lt;span class="k">use&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="n">std&lt;/span>::&lt;span class="n">mem&lt;/span>::&lt;span class="n">size_of&lt;/span>&lt;span class="p">;&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w">&lt;/span>&lt;span class="cp">#[allow(dead_code)]&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w">&lt;/span>&lt;span class="k">enum&lt;/span> &lt;span class="nc">UserID&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="p">{&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="n">Number&lt;/span>&lt;span class="p">(&lt;/span>&lt;span class="kt">u64&lt;/span>&lt;span class="p">),&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="n">Text&lt;/span>&lt;span class="p">(&lt;/span>&lt;span class="nb">String&lt;/span>&lt;span class="p">),&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w">&lt;/span>&lt;span class="p">}&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w">&lt;/span>&lt;span class="k">fn&lt;/span> &lt;span class="nf">main&lt;/span>&lt;span class="p">()&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="p">{&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="n">dbg&lt;/span>&lt;span class="o">!&lt;/span>&lt;span class="p">(&lt;/span>&lt;span class="n">size_of&lt;/span>::&lt;span class="o">&amp;lt;&lt;/span>&lt;span class="n">UserID&lt;/span>&lt;span class="o">&amp;gt;&lt;/span>&lt;span class="p">());&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w">&lt;/span>&lt;span class="p">}&lt;/span>&lt;span class="w">
+&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;div class="highlight">&lt;pre class="chroma">&lt;code class="language-shell" data-lang="shell">$ cargo run -q
+&lt;span class="o">[&lt;/span>src/main.rs:10&lt;span class="o">]&lt;/span> size_of::&amp;lt;UserID&amp;gt;&lt;span class="o">()&lt;/span> &lt;span class="o">=&lt;/span> &lt;span class="m">32&lt;/span>
+&lt;/code>&lt;/pre>&lt;/div>&lt;p>Oh, uh, 这太大了. 太大了. 我不认为 &lt;code>Rust&lt;/code> 的 &lt;code>String&lt;/code> 类型只是一个单纯的指向空字符结尾的指针(c-style). 我认为 &lt;a class="link" href="https://fasterthanli.me/articles/working-with-strings-in-rust" target="_blank" rel="noopener"
+>it&amp;rsquo;s a little more involved&lt;/a>.&lt;/p>
+&lt;div class="highlight">&lt;pre class="chroma">&lt;code class="language-rust" data-lang="rust">&lt;span class="k">use&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="n">std&lt;/span>::&lt;span class="p">{&lt;/span>&lt;span class="n">mem&lt;/span>::&lt;span class="n">size_of&lt;/span>&lt;span class="p">,&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="n">os&lt;/span>::&lt;span class="n">raw&lt;/span>::&lt;span class="n">c_char&lt;/span>&lt;span class="p">};&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w">&lt;/span>&lt;span class="cp">#[allow(dead_code)]&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w">&lt;/span>&lt;span class="k">enum&lt;/span> &lt;span class="nc">UserID&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="p">{&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="n">Number&lt;/span>&lt;span class="p">(&lt;/span>&lt;span class="kt">u64&lt;/span>&lt;span class="p">),&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="n">Text&lt;/span>&lt;span class="p">(&lt;/span>&lt;span class="o">*&lt;/span>&lt;span class="k">const&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="n">c_char&lt;/span>&lt;span class="p">),&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w">&lt;/span>&lt;span class="p">}&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w">&lt;/span>&lt;span class="k">fn&lt;/span> &lt;span class="nf">main&lt;/span>&lt;span class="p">()&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="p">{&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="n">dbg&lt;/span>&lt;span class="o">!&lt;/span>&lt;span class="p">(&lt;/span>&lt;span class="n">size_of&lt;/span>::&lt;span class="o">&amp;lt;&lt;/span>&lt;span class="n">UserID&lt;/span>&lt;span class="o">&amp;gt;&lt;/span>&lt;span class="p">());&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w">&lt;/span>&lt;span class="p">}&lt;/span>&lt;span class="w">
+&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;div class="highlight">&lt;pre class="chroma">&lt;code class="language-shell" data-lang="shell">$ cargo run -q
+&lt;span class="o">[&lt;/span>src/main.rs:10&lt;span class="o">]&lt;/span> size_of::&amp;lt;UserID&amp;gt;&lt;span class="o">()&lt;/span> &lt;span class="o">=&lt;/span> &lt;span class="m">16&lt;/span>
+&lt;/code>&lt;/pre>&lt;/div>&lt;p>Ok, 这看起来合理多了. 并且比 &lt;code>C&lt;/code> 版本要小很多. 这里是为什么呢?&lt;/p>
+&lt;p>首先, 这里必须有一个等同于上面写的 &lt;code>C&lt;/code> 语言的 &lt;code>kind&lt;/code> 一样作用的东西. 在 &lt;code>Rust&lt;/code> 中, 它叫做 &lt;code>discriminant&lt;/code>(判别符). 这是一个 &amp;ldquo;tagged unions&amp;rdquo; 中的 &amp;ldquo;tag&amp;rdquo;.&lt;/p>
+&lt;div class="dialog">
+&lt;img src="./bear.svg" class="dialog-head" />
+&lt;div class="dialog-text">
+&lt;p>欢迎来到计算机世界, 这里每个东西都有至少三个名字.&lt;/p>
+&lt;/div>
+&lt;/div>
+&lt;p>&amp;hellip;&amp;hellip;我猜它应该是通过重叠 &lt;code>*const c_char&lt;/code> 和 &lt;code>u64&lt;/code> 来节省空间, 因为它们只能有一个是有效的, 不能同时存在: 这也是为什么称他们为 &amp;ldquo;disjoint union&amp;rdquo;.&lt;/p>
+&lt;p>&lt;img src="./rust-enum-padding.svg" />&lt;/p>
+&lt;p>所以总共只有16个字节.&lt;/p>
+&lt;p>我们能做相同的事情在 &lt;code>C&lt;/code> 里面吗? 这当然可以! &lt;code>union&lt;/code> 关键字就是起着类似作用的. 这就像是一个结构体, 只是所有内容的内存地址是重叠的, 它的大小是它内部最大的那一个 (或多或少依然是需要考虑对齐的).&lt;/p>
+&lt;div class="highlight">&lt;pre class="chroma">&lt;code class="language-c" data-lang="c">&lt;span class="k">struct&lt;/span> &lt;span class="n">UserID&lt;/span> &lt;span class="p">{&lt;/span>
+&lt;span class="k">enum&lt;/span> &lt;span class="n">UserIDKind&lt;/span> &lt;span class="n">kind&lt;/span>&lt;span class="p">;&lt;/span>
+&lt;span class="k">union&lt;/span> &lt;span class="p">{&lt;/span>
+&lt;span class="n">uint64_t&lt;/span> &lt;span class="n">number&lt;/span>&lt;span class="p">;&lt;/span>
+&lt;span class="kt">char&lt;/span> &lt;span class="o">*&lt;/span>&lt;span class="n">text&lt;/span>&lt;span class="p">;&lt;/span>
+&lt;span class="p">};&lt;/span>
+&lt;span class="p">};&lt;/span>
+&lt;span class="kt">int&lt;/span> &lt;span class="nf">main&lt;/span>&lt;span class="p">()&lt;/span> &lt;span class="p">{&lt;/span>
+&lt;span class="n">printf&lt;/span>&lt;span class="p">(&lt;/span>&lt;span class="s">&amp;#34;sizeof(struct UserID) = %ld&lt;/span>&lt;span class="se">\n&lt;/span>&lt;span class="s">&amp;#34;&lt;/span>&lt;span class="p">,&lt;/span> &lt;span class="k">sizeof&lt;/span>&lt;span class="p">(&lt;/span>&lt;span class="k">struct&lt;/span> &lt;span class="n">UserID&lt;/span>&lt;span class="p">));&lt;/span>
+&lt;span class="p">}&lt;/span>
+&lt;/code>&lt;/pre>&lt;/div>&lt;div class="highlight">&lt;pre class="chroma">&lt;code class="language-shell" data-lang="shell">$ clang -Wall main.c -o main &lt;span class="o">&amp;amp;&amp;amp;&lt;/span> ./main
+sizeof&lt;span class="o">(&lt;/span>struct UserID&lt;span class="o">)&lt;/span> &lt;span class="o">=&lt;/span> &lt;span class="m">16&lt;/span>
+&lt;/code>&lt;/pre>&lt;/div>&lt;p>我们得到了与 &lt;code>Rust&lt;/code> 相同的结果.&lt;/p>
+&lt;p>进一步的, 我们可以把 &lt;code>UserIDKind&lt;/code> 改成一个 &lt;code>uint8_t&lt;/code>(在64位计算机, &lt;code>clang 10&lt;/code>作为编译器的情况下它是4个字节):&lt;/p>
+&lt;div class="highlight">&lt;pre class="chroma">&lt;code class="language-c" data-lang="c">&lt;span class="k">struct&lt;/span> &lt;span class="n">UserID&lt;/span> &lt;span class="p">{&lt;/span>
+&lt;span class="n">uint8_t&lt;/span> &lt;span class="n">kind&lt;/span>&lt;span class="p">;&lt;/span>
+&lt;span class="k">union&lt;/span> &lt;span class="p">{&lt;/span>
+&lt;span class="n">uint64_t&lt;/span> &lt;span class="n">number&lt;/span>&lt;span class="p">;&lt;/span>
+&lt;span class="kt">char&lt;/span> &lt;span class="o">*&lt;/span>&lt;span class="n">text&lt;/span>&lt;span class="p">;&lt;/span>
+&lt;span class="p">};&lt;/span>
+&lt;span class="p">};&lt;/span>
+&lt;/code>&lt;/pre>&lt;/div>&lt;div class="highlight">&lt;pre class="chroma">&lt;code class="language-shell" data-lang="shell">$ clang -Wall main.c -o main &lt;span class="o">&amp;amp;&amp;amp;&lt;/span> ./main
+sizeof&lt;span class="o">(&lt;/span>struct UserID&lt;span class="o">)&lt;/span> &lt;span class="o">=&lt;/span> 16&lt;span class="p">;&lt;/span>
+&lt;/code>&lt;/pre>&lt;/div>&lt;p>Mhhhh好像没发生什么变化&amp;hellip;&lt;/p>
+&lt;div class="dialog">
+&lt;img src="./bear.svg" class="dialog-head" />
+&lt;div class="dialog-text">
+&lt;p>像膨化食品包装一样 - 可能大部分都是填充物.&lt;/p>
+&lt;/div>
+&lt;/div>
+&lt;p>对的, 让我们再次 &lt;code>packing&lt;/code> 我们的结构体:&lt;/p>
+&lt;div class="highlight">&lt;pre class="chroma">&lt;code class="language-c" data-lang="c">&lt;span class="k">struct&lt;/span> &lt;span class="nf">__attribute__&lt;/span>&lt;span class="p">((&lt;/span>&lt;span class="n">packed&lt;/span>&lt;span class="p">))&lt;/span> &lt;span class="n">UserID&lt;/span> &lt;span class="p">{&lt;/span>
+&lt;span class="n">uint8_t&lt;/span> &lt;span class="n">kind&lt;/span>&lt;span class="p">;&lt;/span>
+&lt;span class="k">union&lt;/span> &lt;span class="p">{&lt;/span>
+&lt;span class="n">uint64_t&lt;/span> &lt;span class="n">number&lt;/span>&lt;span class="p">;&lt;/span>
+&lt;span class="kt">char&lt;/span> &lt;span class="o">*&lt;/span>&lt;span class="n">text&lt;/span>&lt;span class="p">;&lt;/span>
+&lt;span class="p">};&lt;/span>
+&lt;span class="p">};&lt;/span>
+&lt;/code>&lt;/pre>&lt;/div>&lt;div class="highlight">&lt;pre class="chroma">&lt;code class="language-shell" data-lang="shell">$ clang -Wall main.c -o main &lt;span class="o">&amp;amp;&amp;amp;&lt;/span> ./main
+sizeof&lt;span class="o">(&lt;/span>struct UserID&lt;span class="o">)&lt;/span> &lt;span class="o">=&lt;/span> &lt;span class="m">9&lt;/span>
+&lt;/code>&lt;/pre>&lt;/div>&lt;p>只有9个字节了! 现在它压缩了.&lt;/p>
+&lt;p>我们可以在 &lt;code>Rust&lt;/code> 中做类似的事情吗? &lt;code>Rust&lt;/code> 默认是以属性做适应性对齐的, 如果我们有一个 &lt;code>u8&lt;/code> and &lt;code>u64&lt;/code>:&lt;/p>
+&lt;div class="highlight">&lt;pre class="chroma">&lt;code class="language-rust" data-lang="rust">&lt;span class="k">struct&lt;/span> &lt;span class="nc">Foo&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="p">{&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="n">bar&lt;/span>: &lt;span class="kt">u8&lt;/span>&lt;span class="p">,&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="n">baz&lt;/span>: &lt;span class="kt">u64&lt;/span>&lt;span class="p">,&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w">&lt;/span>&lt;span class="p">}&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w">&lt;/span>&lt;span class="k">fn&lt;/span> &lt;span class="nf">main&lt;/span>&lt;span class="p">()&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="p">{&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="n">dbg&lt;/span>&lt;span class="o">!&lt;/span>&lt;span class="p">(&lt;/span>&lt;span class="n">size_of&lt;/span>::&lt;span class="o">&amp;lt;&lt;/span>&lt;span class="n">Foo&lt;/span>&lt;span class="o">&amp;gt;&lt;/span>&lt;span class="p">());&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w">&lt;/span>&lt;span class="p">}&lt;/span>&lt;span class="w">
+&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;p>&amp;hellip;它增长到了16个字节&lt;/p>
+&lt;div class="highlight">&lt;pre class="chroma">&lt;code class="language-shell" data-lang="shell">$ cargo run -q
+&lt;span class="o">[&lt;/span>src/main.rs:16&lt;span class="o">]&lt;/span> size_of::&amp;lt;Foo&amp;gt;&lt;span class="o">()&lt;/span> &lt;span class="o">=&lt;/span> &lt;span class="m">16&lt;/span>
+&lt;/code>&lt;/pre>&lt;/div>&lt;p>但是, 像 &lt;code>C&lt;/code> 一样, 如果我们友好地要求, &lt;code>Rust&lt;/code> 也可以 &lt;code>pack&lt;/code>:&lt;/p>
+&lt;div class="highlight">&lt;pre class="chroma">&lt;code class="language-rust" data-lang="rust">&lt;span class="cp">#[repr(packed)]&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w">&lt;/span>&lt;span class="k">struct&lt;/span> &lt;span class="nc">Foo&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="p">{&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="n">bar&lt;/span>: &lt;span class="kt">u8&lt;/span>&lt;span class="p">,&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="n">baz&lt;/span>: &lt;span class="kt">u64&lt;/span>&lt;span class="p">,&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w">&lt;/span>&lt;span class="p">}&lt;/span>&lt;span class="w">
+&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;div class="highlight">&lt;pre class="chroma">&lt;code class="language-shell" data-lang="shell">$ cargo run -q
+&lt;span class="o">[&lt;/span>src/main.rs:17&lt;span class="o">]&lt;/span> size_of::&amp;lt;Foo&amp;gt;&lt;span class="o">()&lt;/span> &lt;span class="o">=&lt;/span> &lt;span class="m">9&lt;/span>
+&lt;/code>&lt;/pre>&lt;/div>&lt;p>但是如果在枚举上呢?&lt;/p>
+&lt;div class="highlight">&lt;pre class="chroma">&lt;code class="language-rust" data-lang="rust">&lt;span class="cp">#[repr(packed)]&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w">&lt;/span>&lt;span class="k">enum&lt;/span> &lt;span class="nc">UserID&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="p">{&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="n">Number&lt;/span>&lt;span class="p">(&lt;/span>&lt;span class="kt">u64&lt;/span>&lt;span class="p">),&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="n">Text&lt;/span>&lt;span class="p">(&lt;/span>&lt;span class="o">*&lt;/span>&lt;span class="k">const&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="n">c_char&lt;/span>&lt;span class="p">),&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w">&lt;/span>&lt;span class="p">}&lt;/span>&lt;span class="w">
+&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;div class="highlight">&lt;pre class="chroma">&lt;code class="language-shell" data-lang="shell">$ cargo run -q
+error&lt;span class="o">[&lt;/span>E0517&lt;span class="o">]&lt;/span>: attribute should be applied to struct or union
+--&amp;gt; src/main.rs:4:8
+&lt;span class="p">|&lt;/span>
+&lt;span class="m">4&lt;/span> &lt;span class="p">|&lt;/span> &lt;span class="c1">#[repr(packed)]&lt;/span>
+&lt;span class="p">|&lt;/span> ^^^^^^
+&lt;span class="m">5&lt;/span> &lt;span class="p">|&lt;/span> / enum UserID &lt;span class="o">{&lt;/span>
+&lt;span class="m">6&lt;/span> &lt;span class="p">|&lt;/span> &lt;span class="p">|&lt;/span> Number&lt;span class="o">(&lt;/span>u64&lt;span class="o">)&lt;/span>,
+&lt;span class="m">7&lt;/span> &lt;span class="p">|&lt;/span> &lt;span class="p">|&lt;/span> Text&lt;span class="o">(&lt;/span>*const c_char&lt;span class="o">)&lt;/span>,
+&lt;span class="m">8&lt;/span> &lt;span class="p">|&lt;/span> &lt;span class="p">|&lt;/span> &lt;span class="o">}&lt;/span>
+&lt;span class="p">|&lt;/span> &lt;span class="p">|&lt;/span>_- not a struct or union
+&lt;/code>&lt;/pre>&lt;/div>&lt;p>我们不能 &lt;code>pack&lt;/code>. 这之前已经 &lt;a class="link" href="https://github.com/rust-lang/rust/issues/42547" target="_blank" rel="noopener"
+>讨论&lt;/a> 过了, 也有 &lt;a class="link" href="https://github.com/rust-lang/rfcs/issues/1230" target="_blank" rel="noopener"
+>讨论其它奇异的枚举布局优化的方案&lt;/a>, 但是现在, 还不能那么做.&lt;/p>
+&lt;p>然而显然, &lt;code>smartstring&lt;/code> 就是那么做的.&lt;/p>
+&lt;p>当一个 &lt;code>SmartString&lt;/code> 存在堆里的时候(这是一个 &lt;code>boxed&lt;/code> 变体), 它是24字节, 就像 &lt;code>String&lt;/code> 一样.&lt;/p>
+&lt;p>但是如果我们尝试做一个我们自己的 &lt;code>smartstring&lt;/code>, 使用 &lt;code>Rust&lt;/code> 的枚举, 我们甚至无法接近它的大小:&lt;/p>
+&lt;div class="highlight">&lt;pre class="chroma">&lt;code class="language-rust" data-lang="rust">&lt;span class="k">use&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="n">std&lt;/span>::&lt;span class="n">mem&lt;/span>::&lt;span class="n">size_of&lt;/span>&lt;span class="p">;&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w">&lt;/span>&lt;span class="cp">#[allow(dead_code)]&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w">&lt;/span>&lt;span class="k">enum&lt;/span> &lt;span class="nc">SmartString&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="p">{&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="n">Boxed&lt;/span>&lt;span class="p">(&lt;/span>&lt;span class="nb">String&lt;/span>&lt;span class="p">),&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="n">Inline&lt;/span>&lt;span class="p">([&lt;/span>&lt;span class="kt">u8&lt;/span>&lt;span class="p">;&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="mi">24&lt;/span>&lt;span class="p">]),&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w">&lt;/span>&lt;span class="p">}&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w">&lt;/span>&lt;span class="k">fn&lt;/span> &lt;span class="nf">main&lt;/span>&lt;span class="p">()&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="p">{&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="n">dbg&lt;/span>&lt;span class="o">!&lt;/span>&lt;span class="p">(&lt;/span>&lt;span class="n">size_of&lt;/span>::&lt;span class="o">&amp;lt;&lt;/span>&lt;span class="nb">String&lt;/span>&lt;span class="o">&amp;gt;&lt;/span>&lt;span class="p">());&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="n">dbg&lt;/span>&lt;span class="o">!&lt;/span>&lt;span class="p">(&lt;/span>&lt;span class="n">size_of&lt;/span>::&lt;span class="o">&amp;lt;&lt;/span>&lt;span class="p">[&lt;/span>&lt;span class="kt">u8&lt;/span>&lt;span class="p">;&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="mi">24&lt;/span>&lt;span class="p">]&lt;/span>&lt;span class="o">&amp;gt;&lt;/span>&lt;span class="p">());&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="n">dbg&lt;/span>&lt;span class="o">!&lt;/span>&lt;span class="p">(&lt;/span>&lt;span class="n">size_of&lt;/span>::&lt;span class="o">&amp;lt;&lt;/span>&lt;span class="n">SmartString&lt;/span>&lt;span class="o">&amp;gt;&lt;/span>&lt;span class="p">());&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w">&lt;/span>&lt;span class="p">}&lt;/span>&lt;span class="w">
+&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;div class="highlight">&lt;pre class="chroma">&lt;code class="language-shell" data-lang="shell">$ cargo run -q
+&lt;span class="o">[&lt;/span>src/main.rs:10&lt;span class="o">]&lt;/span> size_of::&amp;lt;String&amp;gt;&lt;span class="o">()&lt;/span> &lt;span class="o">=&lt;/span> &lt;span class="m">24&lt;/span>
+&lt;span class="o">[&lt;/span>src/main.rs:11&lt;span class="o">]&lt;/span> size_of::&amp;lt;&lt;span class="o">[&lt;/span>u8&lt;span class="p">;&lt;/span> 24&lt;span class="o">]&lt;/span>&amp;gt;&lt;span class="o">()&lt;/span> &lt;span class="o">=&lt;/span> &lt;span class="m">24&lt;/span>
+&lt;span class="o">[&lt;/span>src/main.rs:12&lt;span class="o">]&lt;/span> size_of::&amp;lt;SmartString&amp;gt;&lt;span class="o">()&lt;/span> &lt;span class="o">=&lt;/span> &lt;span class="m">32&lt;/span>
+&lt;/code>&lt;/pre>&lt;/div>&lt;p>这里有件事是我们可以做的, 既然 &lt;code>Rust&lt;/code> 不允许我们打包它的枚举, 那我们就做一个自己的枚举.&lt;/p>
+&lt;h2 id="写一个自己的枚举">写一个自己的枚举&lt;/h2>
+&lt;p>首先, 我们不能使用 &lt;a class="link" href="https://doc.rust-lang.org/reference/items/unions.html" target="_blank" rel="noopener"
+>Rust unions&lt;/a>, 因为它只支持 &lt;code>Copy&lt;/code> 和非 &lt;code>Drop&lt;/code> 类型.&lt;/p>
+&lt;div class="highlight">&lt;pre class="chroma">&lt;code class="language-rust" data-lang="rust">&lt;span class="k">use&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="n">std&lt;/span>::&lt;span class="n">mem&lt;/span>::&lt;span class="n">size_of&lt;/span>&lt;span class="p">;&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w">&lt;/span>&lt;span class="cp">#[allow(dead_code)]&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w">&lt;/span>&lt;span class="cp">#[repr(packed)]&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w">&lt;/span>&lt;span class="k">struct&lt;/span> &lt;span class="nc">SmartString&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="p">{&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="n">discriminant&lt;/span>: &lt;span class="kt">u8&lt;/span>&lt;span class="p">,&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="n">data&lt;/span>: &lt;span class="p">[&lt;/span>&lt;span class="kt">u8&lt;/span>&lt;span class="p">;&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="mi">24&lt;/span>&lt;span class="p">],&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w">&lt;/span>&lt;span class="p">}&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w">&lt;/span>&lt;span class="k">fn&lt;/span> &lt;span class="nf">main&lt;/span>&lt;span class="p">()&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="p">{&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="n">dbg&lt;/span>&lt;span class="o">!&lt;/span>&lt;span class="p">(&lt;/span>&lt;span class="n">size_of&lt;/span>::&lt;span class="o">&amp;lt;&lt;/span>&lt;span class="n">SmartString&lt;/span>&lt;span class="o">&amp;gt;&lt;/span>&lt;span class="p">());&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w">&lt;/span>&lt;span class="p">}&lt;/span>&lt;span class="w">
+&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;div class="highlight">&lt;pre class="chroma">&lt;code class="language-shell" data-lang="shell">$ cargo run -q
+&lt;span class="o">[&lt;/span>src/main.rs:11&lt;span class="o">]&lt;/span> size_of::&amp;lt;SmartString&amp;gt;&lt;span class="o">()&lt;/span> &lt;span class="o">=&lt;/span> &lt;span class="m">25&lt;/span>
+&lt;/code>&lt;/pre>&lt;/div>&lt;p>看! 25个字节. 这是我们目前最好的预想了.&lt;/p>
+&lt;p>但是实际上还没做任何事 - 我们只是存了25个字节在结构体里.&lt;/p>
+&lt;p>我们需要想出一个方法来保存我们的变体:&lt;/p>
+&lt;ul>
+&lt;li>boxed: a String&lt;/li>
+&lt;li>inline: some utf-8 bytes, and I guess a length?&lt;/li>
+&lt;/ul>
+&lt;p>在 &amp;ldquo;inline&amp;rdquo; 变体时我们不能存大于24个字节的内容, 所以我们可以使用一个 &lt;code>u8&lt;/code> 来表示长度, 实际像下面所示:&lt;/p>
+&lt;div class="highlight">&lt;pre class="chroma">&lt;code class="language-rust" data-lang="rust">&lt;span class="k">struct&lt;/span> &lt;span class="nc">Inline&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="p">{&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="n">len&lt;/span>: &lt;span class="kt">u8&lt;/span>&lt;span class="p">,&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="n">data&lt;/span>: &lt;span class="p">[&lt;/span>&lt;span class="kt">u8&lt;/span>&lt;span class="p">;&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="mi">23&lt;/span>&lt;span class="p">],&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w">&lt;/span>&lt;span class="p">}&lt;/span>&lt;span class="w">
+&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;p>然后, 为了确保我们这几个类型实际上有着相同的大小, 我们使用 &lt;a class="link" href="https://lib.rs/crates/static_assertions" target="_blank" rel="noopener"
+>static_assertions&lt;/a> crate:&lt;/p>
+&lt;div class="highlight">&lt;pre class="chroma">&lt;code class="language-rust" data-lang="rust">&lt;span class="k">use&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="n">static_assertions&lt;/span>::&lt;span class="o">*&lt;/span>&lt;span class="p">;&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w">&lt;/span>&lt;span class="k">use&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="n">std&lt;/span>::&lt;span class="n">mem&lt;/span>::&lt;span class="n">size_of&lt;/span>&lt;span class="p">;&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w">&lt;/span>&lt;span class="cp">#[allow(dead_code)]&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w">&lt;/span>&lt;span class="cp">#[repr(packed)]&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w">&lt;/span>&lt;span class="k">struct&lt;/span> &lt;span class="nc">SmartString&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="p">{&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="n">discriminant&lt;/span>: &lt;span class="kt">u8&lt;/span>&lt;span class="p">,&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="n">data&lt;/span>: &lt;span class="p">[&lt;/span>&lt;span class="kt">u8&lt;/span>&lt;span class="p">;&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="mi">24&lt;/span>&lt;span class="p">],&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w">&lt;/span>&lt;span class="p">}&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w">&lt;/span>&lt;span class="cp">#[allow(dead_code)]&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w">&lt;/span>&lt;span class="k">struct&lt;/span> &lt;span class="nc">Inline&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="p">{&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="n">len&lt;/span>: &lt;span class="kt">u8&lt;/span>&lt;span class="p">,&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="n">data&lt;/span>: &lt;span class="p">[&lt;/span>&lt;span class="kt">u8&lt;/span>&lt;span class="p">;&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="mi">23&lt;/span>&lt;span class="p">],&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w">&lt;/span>&lt;span class="p">}&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w">&lt;/span>&lt;span class="n">assert_eq_size&lt;/span>&lt;span class="o">!&lt;/span>&lt;span class="p">(&lt;/span>&lt;span class="nb">String&lt;/span>&lt;span class="p">,&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="n">Inline&lt;/span>&lt;span class="p">);&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w">&lt;/span>&lt;span class="k">fn&lt;/span> &lt;span class="nf">main&lt;/span>&lt;span class="p">()&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="p">{&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="n">dbg&lt;/span>&lt;span class="o">!&lt;/span>&lt;span class="p">(&lt;/span>&lt;span class="n">size_of&lt;/span>::&lt;span class="o">&amp;lt;&lt;/span>&lt;span class="n">SmartString&lt;/span>&lt;span class="o">&amp;gt;&lt;/span>&lt;span class="p">());&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w">&lt;/span>&lt;span class="p">}&lt;/span>&lt;span class="w">
+&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;div class="highlight">&lt;pre class="chroma">&lt;code class="language-shell" data-lang="shell">$ cargo check
+Finished dev &lt;span class="o">[&lt;/span>unoptimized + debuginfo&lt;span class="o">]&lt;/span> target&lt;span class="o">(&lt;/span>s&lt;span class="o">)&lt;/span> in 0.00s
+&lt;/code>&lt;/pre>&lt;/div>&lt;p>Good, 要确保足够傻瓜, 因为我们将要写很多 &lt;code>unsafe&lt;/code> 代码, 我们甚至能按照 &lt;code>String&lt;/code> 的大小来定义我们的 &lt;code>Inline&lt;/code>, 这个 &amp;ldquo;crate&amp;rdquo; 就可以帮忙检查我们的 &lt;code>Inline&lt;/code> 和 &lt;code>String&lt;/code> 大小相同.&lt;/p>
+&lt;div class="highlight">&lt;pre class="chroma">&lt;code class="language-rust" data-lang="rust">&lt;span class="k">use&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="n">static_assertions&lt;/span>::&lt;span class="o">*&lt;/span>&lt;span class="p">;&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w">&lt;/span>&lt;span class="k">use&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="n">std&lt;/span>::&lt;span class="n">mem&lt;/span>::&lt;span class="n">size_of&lt;/span>&lt;span class="p">;&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w">&lt;/span>&lt;span class="k">const&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="n">VARIANT_SIZE&lt;/span>: &lt;span class="kt">usize&lt;/span> &lt;span class="o">=&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="n">std&lt;/span>::&lt;span class="n">mem&lt;/span>::&lt;span class="n">size_of&lt;/span>::&lt;span class="o">&amp;lt;&lt;/span>&lt;span class="nb">String&lt;/span>&lt;span class="o">&amp;gt;&lt;/span>&lt;span class="p">();&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w">&lt;/span>&lt;span class="cp">#[allow(dead_code)]&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w">&lt;/span>&lt;span class="cp">#[repr(packed)]&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w">&lt;/span>&lt;span class="k">struct&lt;/span> &lt;span class="nc">SmartString&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="p">{&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="n">discriminant&lt;/span>: &lt;span class="kt">u8&lt;/span>&lt;span class="p">,&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="n">data&lt;/span>: &lt;span class="p">[&lt;/span>&lt;span class="kt">u8&lt;/span>&lt;span class="p">;&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="n">VARIANT_SIZE&lt;/span>&lt;span class="p">],&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w">&lt;/span>&lt;span class="p">}&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w">&lt;/span>&lt;span class="cp">#[allow(dead_code)]&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w">&lt;/span>&lt;span class="k">struct&lt;/span> &lt;span class="nc">Inline&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="p">{&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="n">len&lt;/span>: &lt;span class="kt">u8&lt;/span>&lt;span class="p">,&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="n">data&lt;/span>: &lt;span class="p">[&lt;/span>&lt;span class="kt">u8&lt;/span>&lt;span class="p">;&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="n">VARIANT_SIZE&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="o">-&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="mi">1&lt;/span>&lt;span class="p">],&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w">&lt;/span>&lt;span class="p">}&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w">&lt;/span>&lt;span class="n">assert_eq_size&lt;/span>&lt;span class="o">!&lt;/span>&lt;span class="p">(&lt;/span>&lt;span class="nb">String&lt;/span>&lt;span class="p">,&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="n">Inline&lt;/span>&lt;span class="p">);&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w">&lt;/span>&lt;span class="k">fn&lt;/span> &lt;span class="nf">main&lt;/span>&lt;span class="p">()&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="p">{&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="n">dbg&lt;/span>&lt;span class="o">!&lt;/span>&lt;span class="p">(&lt;/span>&lt;span class="n">size_of&lt;/span>::&lt;span class="o">&amp;lt;&lt;/span>&lt;span class="n">SmartString&lt;/span>&lt;span class="o">&amp;gt;&lt;/span>&lt;span class="p">());&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w">&lt;/span>&lt;span class="p">}&lt;/span>&lt;span class="w">
+&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;p>Okay, 现在让我们实现我们的手动枚举. 首先让它能够被构建.&lt;/p>
+&lt;p>我们仅使用了 &lt;code>[u8; VARIANT_SIZE]&lt;/code> 来保留 &lt;code>VARIANT_SIZE&lt;/code> 字节 - 如果我们真的想要往里面存一点东西, 我们将会用一个 &lt;code>*mut&lt;/code> 指针指向它, 然后把它转型为我们所需要的:&lt;/p>
+&lt;div class="highlight">&lt;pre class="chroma">&lt;code class="language-rust" data-lang="rust">&lt;span class="k">impl&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="n">SmartString&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="p">{&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="k">pub&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="k">fn&lt;/span> &lt;span class="nf">new_boxed&lt;/span>&lt;span class="p">(&lt;/span>&lt;span class="n">s&lt;/span>: &lt;span class="nb">String&lt;/span>&lt;span class="p">)&lt;/span>&lt;span class="w"> &lt;/span>-&amp;gt; &lt;span class="nc">Self&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="p">{&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="n">Self&lt;/span>::&lt;span class="n">new&lt;/span>&lt;span class="p">(&lt;/span>&lt;span class="mi">0&lt;/span>&lt;span class="p">,&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="n">s&lt;/span>&lt;span class="p">)&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="p">}&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="k">pub&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="k">fn&lt;/span> &lt;span class="nf">new_inline&lt;/span>&lt;span class="p">()&lt;/span>&lt;span class="w"> &lt;/span>-&amp;gt; &lt;span class="nc">Self&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="p">{&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="n">Self&lt;/span>::&lt;span class="n">new&lt;/span>&lt;span class="p">(&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="mi">1&lt;/span>&lt;span class="p">,&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="n">Inline&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="p">{&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="n">len&lt;/span>: &lt;span class="mi">0&lt;/span>&lt;span class="p">,&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="n">data&lt;/span>: &lt;span class="nb">Default&lt;/span>::&lt;span class="n">default&lt;/span>&lt;span class="p">(),&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="p">},&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="p">)&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="p">}&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="k">fn&lt;/span> &lt;span class="nf">new&lt;/span>&lt;span class="o">&amp;lt;&lt;/span>&lt;span class="n">T&lt;/span>&lt;span class="o">&amp;gt;&lt;/span>&lt;span class="p">(&lt;/span>&lt;span class="n">discriminant&lt;/span>: &lt;span class="kt">u8&lt;/span>&lt;span class="p">,&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="n">data&lt;/span>: &lt;span class="nc">T&lt;/span>&lt;span class="p">)&lt;/span>&lt;span class="w"> &lt;/span>-&amp;gt; &lt;span class="nc">Self&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="p">{&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="kd">let&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="k">mut&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="n">res&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="o">=&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="n">Self&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="p">{&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="n">discriminant&lt;/span>&lt;span class="p">,&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="n">data&lt;/span>: &lt;span class="nb">Default&lt;/span>::&lt;span class="n">default&lt;/span>&lt;span class="p">(),&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="p">};&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="kd">let&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="n">ptr&lt;/span>: &lt;span class="o">*&lt;/span>&lt;span class="k">mut&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="n">T&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="o">=&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="n">res&lt;/span>&lt;span class="p">.&lt;/span>&lt;span class="n">data&lt;/span>&lt;span class="p">.&lt;/span>&lt;span class="n">as_mut_ptr&lt;/span>&lt;span class="p">().&lt;/span>&lt;span class="n">cast&lt;/span>&lt;span class="p">();&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="k">unsafe&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="p">{&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="n">ptr&lt;/span>&lt;span class="p">.&lt;/span>&lt;span class="n">write_unaligned&lt;/span>&lt;span class="p">(&lt;/span>&lt;span class="n">data&lt;/span>&lt;span class="p">)&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="p">};&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="n">res&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="p">}&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w">&lt;/span>&lt;span class="p">}&lt;/span>&lt;span class="w">
+&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;p>我们现在可以在我们的 &lt;code>SmartString&lt;/code> 构建这两种变体:&lt;/p>
+&lt;div class="highlight">&lt;pre class="chroma">&lt;code class="language-rust" data-lang="rust">&lt;span class="k">fn&lt;/span> &lt;span class="nf">main&lt;/span>&lt;span class="p">()&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="p">{&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="kd">let&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="n">boxed&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="o">=&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="n">SmartString&lt;/span>::&lt;span class="n">new_boxed&lt;/span>&lt;span class="p">(&lt;/span>&lt;span class="s">&amp;#34;This is a longer string, would not fit inline&amp;#34;&lt;/span>&lt;span class="p">.&lt;/span>&lt;span class="n">into&lt;/span>&lt;span class="p">());&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="kd">let&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="n">inline&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="o">=&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="n">SmartString&lt;/span>::&lt;span class="n">new_inline&lt;/span>&lt;span class="p">();&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w">&lt;/span>&lt;span class="p">}&lt;/span>&lt;span class="w">
+&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;p>除此之外我们目前也不能对它做其它事情了.&lt;/p>
+&lt;p>让我们把它变得有用点, 例如, 从它获取一个 &lt;code>&amp;amp;str&lt;/code> 切片:&lt;/p>
+&lt;div class="highlight">&lt;pre class="chroma">&lt;code class="language-rust" data-lang="rust">&lt;span class="k">impl&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="nb">AsRef&lt;/span>&lt;span class="o">&amp;lt;&lt;/span>&lt;span class="kt">str&lt;/span>&lt;span class="o">&amp;gt;&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="k">for&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="n">SmartString&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="p">{&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="k">fn&lt;/span> &lt;span class="nf">as_ref&lt;/span>&lt;span class="p">(&lt;/span>&lt;span class="o">&amp;amp;&lt;/span>&lt;span class="bp">self&lt;/span>&lt;span class="p">)&lt;/span>&lt;span class="w"> &lt;/span>-&amp;gt; &lt;span class="kp">&amp;amp;&lt;/span>&lt;span class="kt">str&lt;/span> &lt;span class="p">{&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="k">match&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="bp">self&lt;/span>&lt;span class="p">.&lt;/span>&lt;span class="n">discriminant&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="p">{&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="mi">0&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="o">=&amp;gt;&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="p">{&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="kd">let&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="n">s&lt;/span>: &lt;span class="o">*&lt;/span>&lt;span class="k">const&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="n">ManuallyDrop&lt;/span>&lt;span class="o">&amp;lt;&lt;/span>&lt;span class="nb">String&lt;/span>&lt;span class="o">&amp;gt;&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="o">=&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="bp">self&lt;/span>&lt;span class="p">.&lt;/span>&lt;span class="n">data&lt;/span>&lt;span class="p">.&lt;/span>&lt;span class="n">as_ptr&lt;/span>&lt;span class="p">().&lt;/span>&lt;span class="n">cast&lt;/span>&lt;span class="p">();&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="kd">let&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="n">tmp&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="o">=&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="k">unsafe&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="p">{&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="n">s&lt;/span>&lt;span class="p">.&lt;/span>&lt;span class="n">read_unaligned&lt;/span>&lt;span class="p">()&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="p">};&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="k">unsafe&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="p">{&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="o">&amp;amp;*&lt;/span>&lt;span class="p">(&lt;/span>&lt;span class="n">tmp&lt;/span>&lt;span class="p">.&lt;/span>&lt;span class="n">as_ref&lt;/span>&lt;span class="p">()&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="k">as&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="o">*&lt;/span>&lt;span class="k">const&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="kt">str&lt;/span>&lt;span class="p">)&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="p">}&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="p">}&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="mi">1&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="o">=&amp;gt;&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="p">{&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="kd">let&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="n">s&lt;/span>: &lt;span class="o">*&lt;/span>&lt;span class="k">const&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="n">Inline&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="o">=&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="bp">self&lt;/span>&lt;span class="p">.&lt;/span>&lt;span class="n">data&lt;/span>&lt;span class="p">.&lt;/span>&lt;span class="n">as_ptr&lt;/span>&lt;span class="p">().&lt;/span>&lt;span class="n">cast&lt;/span>&lt;span class="p">();&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="k">unsafe&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="p">{&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="kd">let&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="n">slice&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="o">=&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="n">std&lt;/span>::&lt;span class="n">slice&lt;/span>::&lt;span class="n">from_raw_parts&lt;/span>&lt;span class="p">((&lt;/span>&lt;span class="o">*&lt;/span>&lt;span class="n">s&lt;/span>&lt;span class="p">).&lt;/span>&lt;span class="n">data&lt;/span>&lt;span class="p">.&lt;/span>&lt;span class="n">as_ptr&lt;/span>&lt;span class="p">(),&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="p">(&lt;/span>&lt;span class="o">*&lt;/span>&lt;span class="n">s&lt;/span>&lt;span class="p">).&lt;/span>&lt;span class="n">len&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="k">as&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="n">_&lt;/span>&lt;span class="p">);&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="n">std&lt;/span>::&lt;span class="kt">str&lt;/span>::&lt;span class="n">from_utf8_unchecked&lt;/span>&lt;span class="p">(&lt;/span>&lt;span class="n">slice&lt;/span>&lt;span class="p">)&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="p">}&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="p">}&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="n">_&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="o">=&amp;gt;&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="n">unreachable&lt;/span>&lt;span class="o">!&lt;/span>&lt;span class="p">(),&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="p">}&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="p">}&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w">&lt;/span>&lt;span class="p">}&lt;/span>&lt;span class="w">
+&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;p>还记得我之前说过的我们应该如何努力审查不安全代码以确保不会违反不变体, 在这里就比较适用. 我们使用了更安全的变体, &lt;code>unreachable&lt;/code>, 但是如果我想冒险的话, 我会考虑使用 &lt;a class="link" href="https://doc.rust-lang.org/std/hint/fn.unreachable_unchecked.html" target="_blank" rel="noopener"
+>unreachable_unchecked&lt;/a>.&lt;/p>
+&lt;p>现在我们有了一个 &lt;code>AsRef&lt;/code> 实现, 我们可以打印出它的实际内容了 - 而不需要在意实际上它的变体是什么(&lt;code>Inline&lt;/code> or &lt;code>Boxoed&lt;/code>).&lt;/p>
+&lt;p>方便起见, 我们实现 &lt;code>Display&lt;/code> 和 &lt;code>Debug&lt;/code>:&lt;/p>
+&lt;div class="highlight">&lt;pre class="chroma">&lt;code class="language-rust" data-lang="rust">&lt;span class="k">use&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="n">std&lt;/span>::&lt;span class="n">fmt&lt;/span>&lt;span class="p">;&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w">&lt;/span>&lt;span class="k">impl&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="n">fmt&lt;/span>::&lt;span class="n">Display&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="k">for&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="n">SmartString&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="p">{&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="k">fn&lt;/span> &lt;span class="nf">fmt&lt;/span>&lt;span class="p">(&lt;/span>&lt;span class="o">&amp;amp;&lt;/span>&lt;span class="bp">self&lt;/span>&lt;span class="p">,&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="n">f&lt;/span>: &lt;span class="kp">&amp;amp;&lt;/span>&lt;span class="nc">mut&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="n">fmt&lt;/span>::&lt;span class="n">Formatter&lt;/span>&lt;span class="o">&amp;lt;&lt;/span>&lt;span class="na">&amp;#39;_&lt;/span>&lt;span class="o">&amp;gt;&lt;/span>&lt;span class="p">)&lt;/span>&lt;span class="w"> &lt;/span>-&amp;gt; &lt;span class="nc">fmt&lt;/span>::&lt;span class="nb">Result&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="p">{&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="kd">let&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="n">s&lt;/span>: &lt;span class="kp">&amp;amp;&lt;/span>&lt;span class="kt">str&lt;/span> &lt;span class="o">=&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="bp">self&lt;/span>&lt;span class="p">.&lt;/span>&lt;span class="n">as_ref&lt;/span>&lt;span class="p">();&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="n">fmt&lt;/span>::&lt;span class="n">Display&lt;/span>::&lt;span class="n">fmt&lt;/span>&lt;span class="p">(&lt;/span>&lt;span class="n">s&lt;/span>&lt;span class="p">,&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="n">f&lt;/span>&lt;span class="p">)&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="p">}&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w">&lt;/span>&lt;span class="p">}&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w">&lt;/span>&lt;span class="k">impl&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="n">fmt&lt;/span>::&lt;span class="n">Debug&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="k">for&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="n">SmartString&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="p">{&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="k">fn&lt;/span> &lt;span class="nf">fmt&lt;/span>&lt;span class="p">(&lt;/span>&lt;span class="o">&amp;amp;&lt;/span>&lt;span class="bp">self&lt;/span>&lt;span class="p">,&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="n">f&lt;/span>: &lt;span class="kp">&amp;amp;&lt;/span>&lt;span class="nc">mut&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="n">fmt&lt;/span>::&lt;span class="n">Formatter&lt;/span>&lt;span class="o">&amp;lt;&lt;/span>&lt;span class="na">&amp;#39;_&lt;/span>&lt;span class="o">&amp;gt;&lt;/span>&lt;span class="p">)&lt;/span>&lt;span class="w"> &lt;/span>-&amp;gt; &lt;span class="nc">fmt&lt;/span>::&lt;span class="nb">Result&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="p">{&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="kd">let&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="n">s&lt;/span>: &lt;span class="kp">&amp;amp;&lt;/span>&lt;span class="kt">str&lt;/span> &lt;span class="o">=&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="bp">self&lt;/span>&lt;span class="p">.&lt;/span>&lt;span class="n">as_ref&lt;/span>&lt;span class="p">();&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="n">fmt&lt;/span>::&lt;span class="n">Debug&lt;/span>::&lt;span class="n">fmt&lt;/span>&lt;span class="p">(&lt;/span>&lt;span class="n">s&lt;/span>&lt;span class="p">,&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="n">f&lt;/span>&lt;span class="p">)&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="p">}&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w">&lt;/span>&lt;span class="p">}&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w">&lt;/span>&lt;span class="k">fn&lt;/span> &lt;span class="nf">main&lt;/span>&lt;span class="p">()&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="p">{&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="kd">let&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="n">boxed&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="o">=&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="n">SmartString&lt;/span>::&lt;span class="n">new_boxed&lt;/span>&lt;span class="p">(&lt;/span>&lt;span class="s">&amp;#34;This is a longer string, would not fit inline&amp;#34;&lt;/span>&lt;span class="p">.&lt;/span>&lt;span class="n">into&lt;/span>&lt;span class="p">());&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="kd">let&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="n">inline&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="o">=&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="n">SmartString&lt;/span>::&lt;span class="n">new_inline&lt;/span>&lt;span class="p">();&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="n">dbg&lt;/span>&lt;span class="o">!&lt;/span>&lt;span class="p">(&lt;/span>&lt;span class="n">boxed&lt;/span>&lt;span class="p">,&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="n">inline&lt;/span>&lt;span class="p">);&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w">&lt;/span>&lt;span class="p">}&lt;/span>&lt;span class="w">
+&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;div class="highlight">&lt;pre class="chroma">&lt;code class="language-shell" data-lang="shell">$ cargo run -q
+&lt;span class="o">[&lt;/span>src/main.rs:84&lt;span class="o">]&lt;/span> &lt;span class="nv">boxed&lt;/span> &lt;span class="o">=&lt;/span> &lt;span class="s2">&amp;#34;This is a longer string, would not fit inline&amp;#34;&lt;/span>
+&lt;span class="o">[&lt;/span>src/main.rs:84&lt;span class="o">]&lt;/span> &lt;span class="nv">inline&lt;/span> &lt;span class="o">=&lt;/span> &lt;span class="s2">&amp;#34;&amp;#34;&lt;/span>
 &lt;/code>&lt;/pre>&lt;/div></description></item><item><title>200行Rust代码解释绿色线程</title><link>https://example.com/posts/translation/rust/green_threads_explained_in_200_lines_of_rust/</link><pubDate>Wed, 18 Nov 2020 13:28:44 +0800</pubDate><guid>https://example.com/posts/translation/rust/green_threads_explained_in_200_lines_of_rust/</guid><description>&lt;img src="https://example.com/posts/translation/rust/green_threads_explained_in_200_lines_of_rust/cover.png" alt="Featured image of post 200行Rust代码解释绿色线程" />&lt;blockquote>
 &lt;p>本译文译自 &lt;a class="link" href="https://cfsamson.gitbook.io/green-threads-explained-in-200-lines-of-rust/" target="_blank" rel="noopener"
 >Green Threads Explained in 200 Lines of Rust&lt;/a>&lt;/p>
