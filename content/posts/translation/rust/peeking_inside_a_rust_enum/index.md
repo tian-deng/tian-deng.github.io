@@ -850,7 +850,7 @@ enum UserID {
 }
 ```
 
-`UserID` 是一个合体类型, 一个 `UserID` 的值可以是一个 `UserID::Number` 变体, 或是一个 `UserID::Text` 变体.如果我们想对它的内容做些操作, 我们需要用模式匹配:
+`UserID` 是一个聚合类型, 一个 `UserID` 的值可以是一个 `UserID::Number` 变体, 或是一个 `UserID::Text` 变体.如果我们想对它的内容做些操作, 我们需要用模式匹配:
 
 ```rust
 fn print_user_id(id: &UserID) {
@@ -879,3 +879,635 @@ $ cargo run -q
 user id number 79
 user id fh99a73gbh8
 ```
+
+我们在这文章之前看到过另一个聚合类型, 然后我们实现 `TryInto`, 我们会返回 `Result<T, E>`:
+
+```rust
+impl TryFrom<i32> for Drink {
+    type Error = &'static str;
+
+    fn try_from(x: i32) -> Result<Self, Self::Error> {
+        // omitted
+    }
+}
+```
+
+`Result` 值是一个枚举, 它实际是这样定义的:
+
+```rust
+pub enum Result<T, E> {
+    /// Contains the success value
+    Ok(T),
+    /// Contains the error value
+    Err(E),
+}
+```
+
+让我们返回看我们的 `UserID` 枚举:
+
+```rust
+enum UserID {
+    Number(u64),
+    Text(String),
+}
+```
+
+它的大小是多少呢? 如果我们尝试在 `C` 里模拟实现一个 `Rust` 的枚举, 它将会看起来如下:
+
+```c
+#include <stdint.h>
+#include <stdio.h>
+
+enum UserIDKind {
+    UserIDKind_Number,
+    UserIDKind_Text,
+};
+
+struct UserID {
+    enum UserIDKind kind;
+    uint64_t number;
+    char *text;
+};
+```
+
+尽管我们只需要两个变体, 但我们需要三个属性, 以让我们知道我们现在处理的是哪一个变体.
+
+举个例子, 在 `print_user_id`, 我们应该使用 `switch` 来处理我们使用的是 `Number` 变体还是 `Text` 变体:
+
+```c
+void print_user_id(struct UserID* id) {
+    switch (id->kind) {
+        case UserIDKind_Number:
+            printf("user id number %lu\n", id->number);
+            break;
+        case UserIDKind_Text:
+            printf("user id %s\n", id->text);
+            break;
+    }
+}
+```
+
+并且当我们初始化 `UserID` 结构体的时候, 我们仅需要初始化我们需要的属性, 并且设置它的 `kind`:
+
+```c
+int main() {
+    struct UserID a = {
+        .kind = UserIDKind_Number,
+        .number = 79,
+    };
+    print_user_id(&a);
+
+    struct UserID b = {
+        .kind = UserIDKind_Text,
+        .text = "fh99a73gbh8",
+    };
+    print_user_id(&b);
+}
+```
+
+这是可以工作的:
+
+```shell
+$ clang -Wall main.c -o main && ./main
+user id number 79
+user id fh99a73gbh8
+```
+
+但这并不理想, 这并没有像 `Rust` 那样的安全保证, 我们无法阻止你创建一个 `Text` 而 `kind` 是一个 `Number`:
+
+```c
+int main() {
+    struct UserID woops = {
+        .kind = UserIDKind_Number,
+        .text = "woops",
+    };
+    print_user_id(&woops);
+}
+```
+
+```shell
+$ clang -Wall main.c -o main && ./main
+user id number 0
+```
+
+我们实现了一个不完善的抽象 - 我们可以直接访问它的底层表示, 并且以不合理的方式操作它.
+
+举个例子, 如果我们的 `UserID` 是使用 `malloc` 在堆上分配的并且也没有清零, 那会发生什么?
+
+```c
+#include <stdlib.h>
+
+int main() {
+    struct UserID *woops = malloc(sizeof(struct UserID));
+    woops->kind = UserIDKind_Text;
+    woops->number = 79;
+    print_user_id(woops);
+}
+```
+
+在debug模式编译下, 它不会很糟糕:
+
+```shell
+$ clang -Wall main.c -o main && ./main
+user id (null)
+```
+
+然而在release模式编译下, 随着优化的打开, 将会发生很有趣的现象:
+
+```shell
+$ clang -O3 -Wall main.c -o main && ./main
+user id }
+$ clang -O3 -Wall main.c -o main && ./main
+user id 
+$ clang -O3 -Wall main.c -o main && ./main
+user id m
+```
+
+从哪里来的? 谁知道呢. 但是它没有导致段错误 - 这意味着它从程序的其他部分读取数据. 在一个大型程序中, 那可能是用户的隐私数据, 而这个漏洞就可能被用来窃取隐私数据.
+
+不过这并不是一篇讲 `C` 有多危险的文章,
+
+<div class="dialog">
+    <img src="./bear.svg" class="dialog-head" />
+    <div class="dialog-text">
+        <p>...你一直在讲</p>
+    </div>
+</div>
+
+...emmm, 让我们看看还有什么不好的地方.
+
+首先让我们看看我们 `struct UserID` 的大小:
+
+```shell
+$ clang -Wall main.c -o main && ./main
+sizeof(struct UserID) = 24
+```
+
+24字节. 这只是一个结构体, 所以我们可以自己计算出来:
+
+```c
+int main() {
+    printf("sizeof(struct UserID) = %ld\n", sizeof(struct UserID));
+    printf("%ld + %ld + %ld = %ld\n",
+        sizeof(enum UserIDKind), sizeof(uint64_t), sizeof(char *),
+        sizeof(enum UserIDKind) + sizeof(uint64_t) + sizeof(char *)
+    );
+}
+```
+
+```shell
+$ clang -Wall main.c -o main && ./main
+sizeof(struct UserID) = 24
+4 + 8 + 8 = 20
+```
+
+Oh, woops. 我们哪里做错了?
+
+淡定, 这是因为在 `kind` 和 `number` 之间有 `padding`, 以使我们的属性是64位对齐的(后面会详细说明).
+
+<img src="./struct-padding.svg" />
+
+这就是为什么我们的 `UserID` 结构体是3*8=24个字节.
+
+当前, 我们可以命令编译器不要做对齐, 然后在计算一次:
+
+```c
+struct __attribute__((packed)) UserID {
+    enum UserIDKind kind;
+    uint64_t number;
+    char *text;
+};
+```
+
+```shell
+$ clang -Wall main.c -o main && ./main
+sizeof(struct UserID) = 20
+4 + 8 + 8 = 20
+```
+
+<img src="./struct-packed.svg" />
+
+现在让我们看看 `Rust` 中 `UserID` 枚举的大小:
+
+```rust
+use std::mem::size_of;
+
+#[allow(dead_code)]
+enum UserID {
+    Number(u64),
+    Text(String),
+}
+
+fn main() {
+    dbg!(size_of::<UserID>());
+}
+```
+
+```shell
+$ cargo run -q
+[src/main.rs:10] size_of::<UserID>() = 32
+```
+
+Oh, uh, 这太大了. 太大了. 我不认为 `Rust` 的 `String` 类型只是一个单纯的指向空字符结尾的指针(c-style). 我认为 [it's a little more involved](https://fasterthanli.me/articles/working-with-strings-in-rust).
+
+```rust
+use std::{mem::size_of, os::raw::c_char};
+
+#[allow(dead_code)]
+enum UserID {
+    Number(u64),
+    Text(*const c_char),
+}
+
+fn main() {
+    dbg!(size_of::<UserID>());
+}
+```
+
+```shell
+$ cargo run -q
+[src/main.rs:10] size_of::<UserID>() = 16
+```
+
+Ok, 这看起来合理多了. 并且比 `C` 版本要小很多. 这里是为什么呢?
+
+首先, 这里必须有一个等同于上面写的 `C` 语言的 `kind` 一样作用的东西. 在 `Rust` 中, 它叫做 `discriminant`(判别符). 这是一个 "tagged unions" 中的 "tag".
+
+<div class="dialog">
+    <img src="./bear.svg" class="dialog-head" />
+    <div class="dialog-text">
+        <p>欢迎来到计算机世界, 这里每个东西都有至少三个名字.</p>
+    </div>
+</div>
+
+......我猜它应该是通过重叠 `*const c_char` 和 `u64` 来节省空间, 因为它们只能有一个是有效的, 不能同时存在: 这也是为什么称他们为 "disjoint union".
+
+<img src="./rust-enum-padding.svg" />
+
+所以总共只有16个字节.
+
+我们能做相同的事情在 `C` 里面吗? 这当然可以! `union` 关键字就是起着类似作用的. 这就像是一个结构体, 只是所有内容的内存地址是重叠的, 它的大小是它内部最大的那一个 (或多或少依然是需要考虑对齐的).
+
+```c
+struct UserID {
+    enum UserIDKind kind;
+    union {
+        uint64_t number;
+        char *text;
+    };
+};
+
+int main() {
+    printf("sizeof(struct UserID) = %ld\n", sizeof(struct UserID));
+}
+```
+
+```shell
+$ clang -Wall main.c -o main && ./main
+sizeof(struct UserID) = 16
+```
+
+我们得到了与 `Rust` 相同的结果.
+
+进一步的, 我们可以把 `UserIDKind` 改成一个 `uint8_t`(在64位计算机, `clang 10`作为编译器的情况下它是4个字节):
+
+```c
+struct UserID {
+    uint8_t kind;
+    union {
+        uint64_t number;
+        char *text;
+    };
+};
+```
+
+```shell
+$ clang -Wall main.c -o main && ./main
+sizeof(struct UserID) = 16;
+```
+
+Mhhhh好像没发生什么变化...
+
+<div class="dialog">
+    <img src="./bear.svg" class="dialog-head" />
+    <div class="dialog-text">
+        <p>像膨化食品包装一样 - 可能大部分都是填充物.</p>
+    </div>
+</div>
+
+对的, 让我们再次 `packing` 我们的结构体:
+
+```c
+struct __attribute__((packed)) UserID {
+    uint8_t kind;
+    union {
+        uint64_t number;
+        char *text;
+    };
+};
+```
+
+```shell
+$ clang -Wall main.c -o main && ./main
+sizeof(struct UserID) = 9
+```
+
+只有9个字节了! 现在它压缩了.
+
+我们可以在 `Rust` 中做类似的事情吗? `Rust` 默认是以属性做适应性对齐的, 如果我们有一个 `u8` and `u64`:
+
+```rust
+struct Foo {
+    bar: u8,
+    baz: u64,
+}
+
+fn main() {
+    dbg!(size_of::<Foo>());
+}
+```
+
+...它增长到了16个字节
+
+```shell
+$ cargo run -q
+[src/main.rs:16] size_of::<Foo>() = 16
+```
+
+但是, 像 `C` 一样, 如果我们友好地要求, `Rust` 也可以 `pack`:
+
+```rust
+#[repr(packed)]
+struct Foo {
+    bar: u8,
+    baz: u64,
+}
+```
+
+```shell
+$ cargo run -q
+[src/main.rs:17] size_of::<Foo>() = 9
+```
+
+但是如果在枚举上呢?
+
+```rust
+#[repr(packed)]
+enum UserID {
+    Number(u64),
+    Text(*const c_char),
+}
+```
+
+```shell
+$ cargo run -q
+error[E0517]: attribute should be applied to struct or union
+ --> src/main.rs:4:8
+  |
+4 |   #[repr(packed)]
+  |          ^^^^^^
+5 | / enum UserID {
+6 | |     Number(u64),
+7 | |     Text(*const c_char),
+8 | | }
+  | |_- not a struct or union
+```
+
+我们不能 `pack`. 这之前已经 [讨论](https://github.com/rust-lang/rust/issues/42547) 过了, 也有 [讨论其它奇异的枚举布局优化的方案](https://github.com/rust-lang/rfcs/issues/1230), 但是现在, 还不能那么做.
+
+然而显然, `smartstring` 就是那么做的.
+
+当一个 `SmartString` 存在堆里的时候(这是一个 `boxed` 变体), 它是24字节, 就像 `String` 一样.
+
+但是如果我们尝试做一个我们自己的 `smartstring`, 使用 `Rust` 的枚举, 我们甚至无法接近它的大小:
+
+```rust
+use std::mem::size_of;
+
+#[allow(dead_code)]
+enum SmartString {
+    Boxed(String),
+    Inline([u8; 24]),
+}
+
+fn main() {
+    dbg!(size_of::<String>());
+    dbg!(size_of::<[u8; 24]>());
+    dbg!(size_of::<SmartString>());
+}
+```
+
+```shell
+$ cargo run -q
+[src/main.rs:10] size_of::<String>() = 24
+[src/main.rs:11] size_of::<[u8; 24]>() = 24
+[src/main.rs:12] size_of::<SmartString>() = 32
+```
+
+这里有件事是我们可以做的, 既然 `Rust` 不允许我们打包它的枚举, 那我们就做一个自己的枚举.
+
+## 写一个自己的枚举
+
+首先, 我们不能使用 [Rust unions](https://doc.rust-lang.org/reference/items/unions.html), 因为它只支持 `Copy` 和非 `Drop` 类型.
+
+```rust
+use std::mem::size_of;
+
+#[allow(dead_code)]
+#[repr(packed)]
+struct SmartString {
+    discriminant: u8,
+    data: [u8; 24],
+}
+
+fn main() {
+    dbg!(size_of::<SmartString>());
+}
+```
+
+```shell
+$ cargo run -q
+[src/main.rs:11] size_of::<SmartString>() = 25
+```
+
+看! 25个字节. 这是我们目前最好的预想了.
+
+但是实际上还没做任何事 - 我们只是存了25个字节在结构体里.
+
+我们需要想出一个方法来保存我们的变体:
+
+* boxed: a String
+* inline: some utf-8 bytes, and I guess a length?
+
+在 "inline" 变体时我们不能存大于24个字节的内容, 所以我们可以使用一个 `u8` 来表示长度, 实际像下面所示:
+
+```rust
+struct Inline {
+    len: u8,
+    data: [u8; 23],
+}
+```
+
+然后, 为了确保我们这几个类型实际上有着相同的大小, 我们使用 [static_assertions](https://lib.rs/crates/static_assertions) crate:
+
+```rust
+use static_assertions::*;
+use std::mem::size_of;
+
+#[allow(dead_code)]
+#[repr(packed)]
+struct SmartString {
+    discriminant: u8,
+    data: [u8; 24],
+}
+
+#[allow(dead_code)]
+struct Inline {
+    len: u8,
+    data: [u8; 23],
+}
+
+assert_eq_size!(String, Inline);
+
+fn main() {
+    dbg!(size_of::<SmartString>());
+}
+```
+
+```shell
+$ cargo check
+    Finished dev [unoptimized + debuginfo] target(s) in 0.00s
+```
+
+Good, 要确保足够傻瓜, 因为我们将要写很多 `unsafe` 代码, 我们甚至能按照 `String` 的大小来定义我们的 `Inline`, 这个 "crate" 就可以帮忙检查我们的 `Inline` 和 `String` 大小相同.
+
+```rust
+use static_assertions::*;
+use std::mem::size_of;
+
+const VARIANT_SIZE: usize = std::mem::size_of::<String>();
+
+#[allow(dead_code)]
+#[repr(packed)]
+struct SmartString {
+    discriminant: u8,
+    data: [u8; VARIANT_SIZE],
+}
+
+#[allow(dead_code)]
+struct Inline {
+    len: u8,
+    data: [u8; VARIANT_SIZE - 1],
+}
+
+assert_eq_size!(String, Inline);
+
+fn main() {
+    dbg!(size_of::<SmartString>());
+}
+```
+
+Okay, 现在让我们实现我们的手动枚举. 首先让它能够被构建.
+
+我们仅使用了 `[u8; VARIANT_SIZE]` 来保留 `VARIANT_SIZE` 字节 - 如果我们真的想要往里面存一点东西, 我们将会用一个 `*mut` 指针指向它, 然后把它转型为我们所需要的:
+
+```rust
+impl SmartString {
+    pub fn new_boxed(s: String) -> Self {
+        Self::new(0, s)
+    }
+
+    pub fn new_inline() -> Self {
+        Self::new(
+            1,
+            Inline {
+                len: 0,
+                data: Default::default(),
+            },
+        )
+    }
+
+    fn new<T>(discriminant: u8, data: T) -> Self {
+        let mut res = Self {
+            discriminant,
+            data: Default::default(),
+        };
+        let ptr: *mut T = res.data.as_mut_ptr().cast();
+        unsafe { ptr.write_unaligned(data) };
+        res
+    }
+}
+```
+
+我们现在可以在我们的 `SmartString` 构建这两种变体:
+
+```rust
+fn main() {
+    let boxed = SmartString::new_boxed("This is a longer string, would not fit inline".into());
+    let inline = SmartString::new_inline();
+}
+```
+
+除此之外我们目前也不能对它做其它事情了.
+
+让我们把它变得有用点, 例如, 从它获取一个 `&str` 切片:
+
+```rust
+impl AsRef<str> for SmartString {
+    fn as_ref(&self) -> &str {
+        match self.discriminant {
+            0 => {
+                let s: *const ManuallyDrop<String> = self.data.as_ptr().cast();
+                let tmp = unsafe { s.read_unaligned() };
+                unsafe { &*(tmp.as_ref() as *const str) }
+            }
+            1 => {
+                let s: *const Inline = self.data.as_ptr().cast();
+                unsafe {
+                    let slice = std::slice::from_raw_parts((*s).data.as_ptr(), (*s).len as _);
+                    std::str::from_utf8_unchecked(slice)
+                }
+            }
+            _ => unreachable!(),
+        }
+    }
+}
+```
+
+还记得我之前说过的我们应该如何努力审查不安全代码以确保不会违反不变体, 在这里就比较适用. 我们使用了更安全的变体, `unreachable`, 但是如果我想冒险的话, 我会考虑使用 [unreachable_unchecked](https://doc.rust-lang.org/std/hint/fn.unreachable_unchecked.html).
+
+现在我们有了一个 `AsRef` 实现, 我们可以打印出它的实际内容了 - 而不需要在意实际上它的变体是什么(`Inline` or `Boxoed`).
+
+方便起见, 我们实现 `Display` 和 `Debug`:
+
+```rust
+use std::fmt;
+
+impl fmt::Display for SmartString {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        let s: &str = self.as_ref();
+        fmt::Display::fmt(s, f)
+    }
+}
+
+impl fmt::Debug for SmartString {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        let s: &str = self.as_ref();
+        fmt::Debug::fmt(s, f)
+    }
+}
+
+fn main() {
+    let boxed = SmartString::new_boxed("This is a longer string, would not fit inline".into());
+    let inline = SmartString::new_inline();
+
+    dbg!(boxed, inline);
+}
+```
+
+```shell
+$ cargo run -q
+[src/main.rs:84] boxed = "This is a longer string, would not fit inline"
+[src/main.rs:84] inline = ""
+```
+
