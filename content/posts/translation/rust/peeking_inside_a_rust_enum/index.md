@@ -1476,6 +1476,8 @@ impl AsRef<str> for SmartString {
 
 还记得我之前说过的我们应该如何努力审查不安全代码以确保不会违反不变体, 在这里就比较适用. 我们使用了更安全的变体, `unreachable`, 但是如果我想冒险的话, 我会考虑使用 [unreachable_unchecked](https://doc.rust-lang.org/std/hint/fn.unreachable_unchecked.html).
 
+> 译者: 审查指: 在这里我们把 `discriminant` 当作一个枚举或者说不变体 `match` 了, 因为它的值只有可能是0或者1以表示内容是 `inline` or `boxed`, 但是可能会有前文像 `C` 那样在开发过程中传递了非法的值而导致错误, 所以使用 `unreachable!` 宏来确保不会有这种情况出现, 在编译期就可以友好地提示开发者, 以使代码更加安全.
+
 现在我们有了一个 `AsRef` 实现, 我们可以打印出它的实际内容了 - 而不需要在意实际上它的变体是什么(`Inline` or `Boxoed`).
 
 方便起见, 我们实现 `Display` 和 `Debug`:
