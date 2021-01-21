@@ -1061,6 +1061,9 @@ Finished dev &lt;span class="o">[&lt;/span>unoptimized + debuginfo&lt;span class
 &lt;/span>&lt;span class="w">&lt;/span>&lt;span class="p">}&lt;/span>&lt;span class="w">
 &lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;p>还记得我之前说过的我们应该如何努力审查不安全代码以确保不会违反不变体, 在这里就比较适用. 我们使用了更安全的变体, &lt;code>unreachable&lt;/code>, 但是如果我想冒险的话, 我会考虑使用 &lt;a class="link" href="https://doc.rust-lang.org/std/hint/fn.unreachable_unchecked.html" target="_blank" rel="noopener"
 >unreachable_unchecked&lt;/a>.&lt;/p>
+&lt;blockquote>
+&lt;p>译者: 审查指: 在这里我们把 &lt;code>discriminant&lt;/code> 当作一个枚举或者说不变体 &lt;code>match&lt;/code> 了, 因为它的值只有可能是0或者1以表示内容是 &lt;code>inline&lt;/code> or &lt;code>boxed&lt;/code>, 但是可能会有前文像 &lt;code>C&lt;/code> 那样在开发过程中传递了非法的值而导致错误, 所以使用 &lt;code>unreachable!&lt;/code> 宏来确保不会有这种情况出现, 在编译期就可以友好地提示开发者, 以使代码更加安全.&lt;/p>
+&lt;/blockquote>
 &lt;p>现在我们有了一个 &lt;code>AsRef&lt;/code> 实现, 我们可以打印出它的实际内容了 - 而不需要在意实际上它的变体是什么(&lt;code>Inline&lt;/code> or &lt;code>Boxoed&lt;/code>).&lt;/p>
 &lt;p>方便起见, 我们实现 &lt;code>Display&lt;/code> 和 &lt;code>Debug&lt;/code>:&lt;/p>
 &lt;div class="highlight">&lt;pre class="chroma">&lt;code class="language-rust" data-lang="rust">&lt;span class="k">use&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="n">std&lt;/span>::&lt;span class="n">fmt&lt;/span>&lt;span class="p">;&lt;/span>&lt;span class="w">
