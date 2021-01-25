@@ -1513,3 +1513,243 @@ $ cargo run -q
 [src/main.rs:84] inline = ""
 ```
 
+我们还有很多事情没做 - 我们不能改变我们的 `SmartString`, 但是 `smartstring` 是允许的. 我们也不能降级我们的 `boxed` 为 `inline`, 我们也不能把 `inline` 提升为 `boxed` 以防它存太多东西了.
+
+虽然, 但目前有更紧迫的事情要做.
+
+请允许我缓缓道来.
+
+```rust
+fn main() {
+    let s: String = "this is just some text".into();
+    dbg!(s);
+}
+```
+
+```shell
+$ cargo build --quiet --release && valgrind --tool=memcheck ./target/release/enumpeek
+==173592== Memcheck, a memory error detector
+==173592== Copyright (C) 2002-2017, and GNU GPL\'d, by Julian Seward et al.
+==173592== Using Valgrind-3.16.1 and LibVEX; rerun with -h for copyright info
+==173592== Command: ./target/release/enumpeek
+==173592== 
+[src/main.rs:82] s = "this is just some text"
+==173592== 
+==173592== HEAP SUMMARY:
+==173592==     in use at exit: 0 bytes in 0 blocks
+==173592==   total heap usage: 15 allocs, 15 frees, 2,335 bytes allocated
+==173592== 
+==173592== All heap blocks were freed -- no leaks are possible
+==173592== 
+==173592== For lists of detected and suppressed errors, rerun with: -s
+==173592== ERROR SUMMARY: 0 errors from 0 contexts (suppressed: 0 from 0)
+```
+
+```rust
+fn main() {
+    let s: SmartString = SmartString::new_boxed("this is just some text".into());
+    dbg!(s);
+}
+```
+
+```shell
+$ cargo build --quiet --release && valgrind --tool=memcheck ./target/release/enumpeek
+==173779== Memcheck, a memory error detector
+==173779== Copyright (C) 2002-2017, and GNU GPL\'d, by Julian Seward et al.
+==173779== Using Valgrind-3.16.1 and LibVEX; rerun with -h for copyright info
+==173779== Command: ./target/release/enumpeek
+==173779== 
+[src/main.rs:82] s = "this is just some text"
+==173779== 
+==173779== HEAP SUMMARY:
+==173779==     in use at exit: 22 bytes in 1 blocks
+==173779==   total heap usage: 15 allocs, 14 frees, 2,335 bytes allocated
+==173779== 
+==173779== LEAK SUMMARY:
+==173779==    definitely lost: 22 bytes in 1 blocks
+==173779==    indirectly lost: 0 bytes in 0 blocks
+==173779==      possibly lost: 0 bytes in 0 blocks
+==173779==    still reachable: 0 bytes in 0 blocks
+==173779==         suppressed: 0 bytes in 0 blocks
+==173779== Rerun with --leak-check=full to see details of leaked memory
+==173779== 
+==173779== For lists of detected and suppressed errors, rerun with: -s
+==173779== ERROR SUMMARY: 0 errors from 0 contexts (suppressed: 0 from 0)
+```
+
+我们发生了内存泄漏!
+
+`String` 只是一个单纯的结构体, 但它在堆中有自己的内存分配. 在我们的 `SmartString::new_boxed` 中, 我们拿了 `String` 的所有权, 并且它有着在堆中相关联的内存我们不曾释放.
+
+编译器不知道释放我们保存在 `SmartString` 以 `boxed` 形式存放的 `String`, 因为它不知道我们拿的是什么类型 - 它只知道我们用了24个字节, 这24个字节可能放着任何东西.
+
+如果我们知道这个类型, 事实上确实, 只是个 `String`, 并且它们需要被 `dropped`, 我们需要告诉编译器.
+
+下面是我们做 `Drop` 的第一次痛苦经历:
+
+```rust
+impl Drop for SmartString {
+    fn drop(&mut self) {
+        match self.discriminant {
+            0 => {
+                let s: *mut String = self.data.as_mut_ptr().cast();
+                let b: String = unsafe { *s };
+                drop(b);
+            }
+            1 => {
+                // etc.
+            }
+            _ => unreachable!(),
+        }
+    }
+}
+```
+
+```shell
+$ cargo run -q
+error[E0507]: cannot move out of `*s` which is behind a raw pointer
+  --> src/main.rs:46:42
+   |
+46 |                 let b: String = unsafe { *s };
+   |                                          ^^
+   |                                          |
+   |                                          move occurs because `*s` has type `std::string::String`, which does not implement the `Copy` trait
+   |                                          help: consider borrowing here: `&*s`
+```
+
+Woops, 这不能工作, 我们不能从一个 `raw pointer` `move` 因为 `String` 不是 `Copy`.
+
+我们能做些什么? 我们能把它 `Box` 起来么, `Box` 有一个 `from_raw` 方法, 这听起来不错:
+
+```rust
+impl Drop for SmartString {
+    fn drop(&mut self) {
+        match self.discriminant {
+            0 => {
+                let s: *mut String = self.data.as_mut_ptr().cast();
+                let b = unsafe { Box::from_raw(s) };
+                drop(b);
+            }
+            1 => {
+                // etc.
+            }
+            _ => unreachable!(),
+        }
+    }
+}
+```
+
+```shell
+$ cargo run -q
+[src/main.rs:117] s = "this is just some text"
+free(): invalid pointer
+[1]    179297 abort (core dumped)  cargo run -q
+```
+
+Uh, oh.
+
+<div class="dialog">
+    <img src="./bear.svg" class="dialog-head" />
+    <div class="dialog-text">
+        <p>Wow, 你没有撒谎, 不安全代码确实很棘手.</p>
+    </div>
+</div>
+
+让我们用我们友好的 `Valgrind` 检查一下:
+
+```rust
+$ cargo build --quiet --release && valgrind --tool=memcheck ./target/release/enumpeek
+==179648== Memcheck, a memory error detector
+==179648== Copyright (C) 2002-2017, and GNU GPL'd, by Julian Seward et al.
+==179648== Using Valgrind-3.16.1 and LibVEX; rerun with -h for copyright info
+==179648== Command: ./target/release/enumpeek
+==179648== 
+[src/main.rs:117] s = "this is just some text"
+==179648== Invalid free() / delete / delete[] / realloc()
+==179648==    at 0x483B9AB: free (vg_replace_malloc.c:538)
+==179648==    by 0x10D501: enumpeek::main (in /home/amos/ftl/enumpeek/target/release/enumpeek)
+==179648==    by 0x10D8E2: std::rt::lang_start::{{closure}} (in /home/amos/ftl/enumpeek/target/release/enumpeek)
+==179648==    by 0x1163F7: {{closure}} (rt.rs:52)
+==179648==    by 0x1163F7: do_call<closure-0,i32> (panicking.rs:297)
+==179648==    by 0x1163F7: try<i32,closure-0> (panicking.rs:274)
+==179648==    by 0x1163F7: catch_unwind<closure-0,i32> (panic.rs:394)
+==179648==    by 0x1163F7: std::rt::lang_start_internal (rt.rs:51)
+==179648==    by 0x10D561: main (in /home/amos/ftl/enumpeek/target/release/enumpeek)
+==179648==  Address 0x1ffefff561 is on thread 1's stack
+==179648==  in frame #1, created by enumpeek::main (???:)
+==179648== 
+==179648== 
+==179648== HEAP SUMMARY:
+==179648==     in use at exit: 0 bytes in 0 blocks
+==179648==   total heap usage: 15 allocs, 16 frees, 2,335 bytes allocated
+==179648== 
+==179648== All heap blocks were freed -- no leaks are possible
+==179648== 
+==179648== For lists of detected and suppressed errors, rerun with: -s
+==179648== ERROR SUMMARY: 1 errors from 1 contexts (suppressed: 0 from 0)
+```
+
+问题看起来像是它在试图释放 `String` 就像它分配在堆上一样, 然而并没有! 实际上是 `String` 中的数据分配在堆上, 而不是 `String` 本身.
+
+这里有一个看起来生效的方法:
+
+```rust
+impl Drop for SmartString {
+    fn drop(&mut self) {
+        match self.discriminant {
+            0 => {
+                let s: *mut String = self.data.as_mut_ptr().cast();
+                let s: String = unsafe { std::ptr::read_unaligned(s) };
+                drop(s);
+            }
+            1 => {
+                // etc.
+            }
+            _ => unreachable!(),
+        }
+    }
+}
+```
+
+我们可以更进一步:
+
+* 使用泛型函数来减少重复代码.
+* 省略掉 `drop`, 在 `std::ptr::read_unaligned` 离开作用域后自动调用.
+
+```rust
+impl SmartString {
+    fn drop_variant<T>(&self) {
+        unsafe { std::ptr::read_unaligned(self.data.as_ptr().cast::<T>()) };
+    }
+}
+
+impl Drop for SmartString {
+    fn drop(&mut self) {
+        match self.discriminant {
+            0 => unsafe { self.drop_variant::<String>() },
+            1 => unsafe { self.drop_variant::<Inline>() },
+            _ => unreachable!(),
+        }
+    }
+}
+```
+
+```shell
+$ cargo build --quiet --release && valgrind --tool=memcheck ./target/release/enumpeek
+==181085== Memcheck, a memory error detector
+==181085== Copyright (C) 2002-2017, and GNU GPL\'d, by Julian Seward et al.
+==181085== Using Valgrind-3.16.1 and LibVEX; rerun with -h for copyright info
+==181085== Command: ./target/release/enumpeek
+==181085== 
+[src/main.rs:99] s = "this is just some text"
+==181085== 
+==181085== HEAP SUMMARY:
+==181085==     in use at exit: 0 bytes in 0 blocks
+==181085==   total heap usage: 15 allocs, 15 frees, 2,335 bytes allocated
+==181085== 
+==181085== All heap blocks were freed -- no leaks are possible
+==181085== 
+==181085== For lists of detected and suppressed errors, rerun with: -s
+==181085== ERROR SUMMARY: 0 errors from 0 contexts (suppressed: 0 from 0)
+```
+
