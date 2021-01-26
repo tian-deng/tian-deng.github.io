@@ -1753,3 +1753,463 @@ $ cargo build --quiet --release && valgrind --tool=memcheck ./target/release/enu
 ==181085== ERROR SUMMARY: 0 errors from 0 contexts (suppressed: 0 from 0)
 ```
 
+完美, 但是这完全正确了吗? 我不知道, 在让一堆人测试看看之前我是不会把代码用到生产环境中的. 但是至少在我们的 `case` 中, 它已经没有发生内存泄漏了.
+
+这总归是好的.
+
+我们可以在我们的结构体中花上整天时间都在这重新实现 `smartstring` 里面的功能, 但是有个点需要记住, 我们的版本比 `smartstring` 大了足足一个字节.
+
+就像 `smallvec::SmallVec` 类型比 `Vec` 大一样.
+
+```shell
+$ cargo add smallvec
+      Adding smallvec v1.4.2 to dependencies
+```
+
+```rust
+use std::mem::size_of;
+use smallvec::SmallVec;
+
+fn main() {
+    dbg!(size_of::<Vec<u8>>(), size_of::<SmallVec<[u8; 1]>>());
+}
+```
+
+```shell
+$ cargo run -q
+[src/main.rs:100] size_of::<Vec<u8>>() = 24
+[src/main.rs:100] size_of::<SmallVec<[u8; 1]>>() = 32
+```
+
+因此, 希望到目前为止本文讲述的足足44分钟的时间里你已经 **完全** 明白了为什么这是一个有趣的问题(请回忆下开篇所提到的问题).
+
+它的神秘不在于 `SmallVec<[u8; 1]>` 比 `Vec<u8>` 大8个字节, 因为 `SmallVec` 只是一个枚举, 它的判定式只需要考虑两个变体, 但是因为 `Rust` 需要额外的空间来保证对齐, 所以多用了整整8个字节.
+
+它的神秘在于, `SmartString` 是怎么做到只有24个字节的.
+
+为了回答这个问题, 我们需要更深入的观察指针.
+
+## 仔细看看指针
+
+So, 什么是指针? 只是一串数字? 它告诉了你有些东西在内存的哪个地方.
+
+举个例子, 如果我们声明了一个本地变量 `x`, `i32`, 它可能直立在栈上:
+
+```rust
+fn main() {
+    // this is a signed 32-bit integer
+    let x = 30;
+    // this is a reference to a signed 32-bit integer
+    let x_ref = &x;
+    // this is a pointer to a signed 32-bit integer
+    let x_ptr = x_ref as *const _;
+
+    dbg!(x_ptr);
+}
+```
+
+```shell
+$ cargo run -q
+[src/main.rs:105] x_ptr = 0x00007fff10be39ec
+```
+
+当然, 一个本地变量也可能在寄存器中. 但这在这里无关紧要. 一旦我们获取了某个对象的地址, 它就需要映射到虚拟内存地址空间的某个地方, 而在寄存器中的则不需要, 为了方便解释, 我们现在假装寄存器不存在.
+
+<div class="dialog">
+    <img src="./bear.svg" class="dialog-head" />
+    <div class="dialog-text">
+        <p>是啊, 让我们忽略掉现代电脑中最快的存储空间, 不错.</p>
+    </div>
+</div>
+
+<div class="dialog amos">
+    <img src="./author.svg" class="dialog-head" />
+    <div class="dialog-text">
+        <p>Look cool bear, 你还想看完文章吗?</p>
+    </div>
+</div>
+
+<div class="dialog">
+    <img src="./bear.svg" class="dialog-head" />
+    <div class="dialog-text">
+        <p>yawn no no, 继续吧.</p>
+    </div>
+</div>
+
+So, 数字是为了告诉你某些东西在内存中的位置. 这就像是地址, 就跟国家有实际位置的地址一样, 只是多了些间接性.
+
+一个对齐的指针是一个其值(地址)是数据大小的倍数的指针. 当数据是自然对齐的时候对 CPUs 来说很方便.
+
+让我们看一些例子.
+
+我们可以在内存中寻址的的最小单元是字节. 一个指向字节的指针总是对齐的, 因为指针用字节来计数, 换句话说, 一个 `u8` 的对齐单位就是1.
+
+```rust
+fn main() {
+    let arr = [1u8, 2u8, 3u8, 4u8];
+    dbg!(
+        &arr[0] as *const _,
+        &arr[1] as *const _,
+        &arr[2] as *const _,
+        &arr[3] as *const _,
+    );
+}
+```
+
+```shell
+$ cargo run -q
+[src/main.rs:106] &arr[0] as *const _ = 0x00007ffd6474abdc
+[src/main.rs:106] &arr[1] as *const _ = 0x00007ffd6474abdd
+[src/main.rs:106] &arr[2] as *const _ = 0x00007ffd6474abde
+[src/main.rs:106] &arr[3] as *const _ = 0x00007ffd6474abdf
+```
+
+如果讨论的是指向 `u16` 的指针, 那么它的对齐单位是2.
+
+```shell
+fn main() {
+    let arr = [1u16, 2u16, 3u16, 4u16];
+    fn inspect<T>(t: *const T) -> (*const T, bool) {
+        (t, t as usize % 2 == 0)
+    }
+
+    dbg!(
+        inspect(&arr[0] as *const _),
+        inspect(&arr[1] as *const _),
+        inspect(&arr[2] as *const _),
+        inspect(&arr[3] as *const _),
+    );
+}
+```
+
+```shell
+$ cargo run -q
+[src/main.rs:110] inspect(&arr[0] as *const _) = (
+    0x00007ffd81bf5918,
+    true,
+)
+[src/main.rs:110] inspect(&arr[1] as *const _) = (
+    0x00007ffd81bf591a,
+    true,
+)
+[src/main.rs:110] inspect(&arr[2] as *const _) = (
+    0x00007ffd81bf591c,
+    true,
+)
+[src/main.rs:110] inspect(&arr[3] as *const _) = (
+    0x00007ffd81bf591e,
+    true,
+)
+```
+
+同理, 对于 `u32` 是4, `u64` 是8.
+
+下面有一个正确对齐的例子:
+
+<img src="./pointer-alignment.svg" />
+
+底部的小方块表示如果我们想要存该类型, 可以把它放在那里.
+
+顶部部分表示实际的内存布局, 举个例子, 一个结构体:
+
+```c
+#include <stdint.h>
+#include <stdio.h>
+#include <stddef.h>
+
+struct S {
+    uint8_t a;
+    uint8_t b;
+    uint16_t c;
+    uint32_t d;
+};
+
+int main() {
+    printf("sizeof(S) = %ld\n", sizeof(struct S));
+    printf("offsetof(struct S, a) = %zu\n", offsetof(struct S, a));
+    printf("offsetof(struct S, b) = %zu\n", offsetof(struct S, b));
+    printf("offsetof(struct S, c) = %zu\n", offsetof(struct S, c));
+    printf("offsetof(struct S, d) = %zu\n", offsetof(struct S, d));
+}
+```
+
+```shell
+$ clang -Wall main.c -o main && ./main
+sizeof(S) = 8
+offsetof(struct S, a) = 0
+offsetof(struct S, b) = 1
+offsetof(struct S, c) = 2
+offsetof(struct S, d) = 4
+```
+
+在这里, 一切顺利.
+
+我们用另一个布局代替看看:
+
+```c
+struct S {
+    uint8_t a;
+    uint16_t b;
+    uint8_t c;
+    uint32_t d;
+};
+```
+
+```shell
+$ clang -Wall main.c -o main && ./main
+sizeof(S) = 12
+offsetof(struct S, a) = 0
+offsetof(struct S, b) = 2
+offsetof(struct S, c) = 4
+offsetof(struct S, d) = 8
+```
+
+为了维持对齐, 编译器插入了废料:
+
+<img src="./pointer-alignment-padding.svg" />
+
+"Padding" 不绝对是置零 - 它只是没有使用的空间. 即使它初始化置零了, 也不能保证它会在你分配成员的时候维持0.
+
+经常使用该结构体可能会混淆值和填充的 `padding`, 因此一个好的 `old block memory comparison` (memcmp) 不能够测试两个结构体是否完全相等.
+> 原文: Regular usage of the struct might mess with the values in the padding, and so a good old block memory comparison (memcmp) would not be enough to test two structs for equality.
+
+> 译者: 这里没懂作者想说什么, 有人清楚的话可以提个issue给我.
+
+我们在 `Rust` 中定义一个相同布局的结构体会发生什么?
+
+```rust
+fn main() {
+    struct S {
+        a: u8,
+        b: u16,
+        c: u8,
+        d: u32,
+    }
+
+    dbg!(std::mem::size_of::<S>());
+}
+```
+
+```shell
+$ cargo run -q
+[src/main.rs:112] std::mem::size_of::<S>() = 8
+```
+
+为什么只有8个字节? 发生了什么? 让我们来借助工具看看它的布局:
+
+```shell
+$ cargo add memoffset
+      Adding memoffset v0.5.5 to dependencies
+```
+
+```rust
+fn main() {
+    struct S {
+        a: u8,
+        b: u16,
+        c: u8,
+        d: u32,
+    }
+
+    use memoffset::offset_of;
+    dbg!(
+        std::mem::size_of::<S>(),
+        offset_of!(S, a),
+        offset_of!(S, b),
+        offset_of!(S, c),
+        offset_of!(S, d)
+    );
+}
+```
+
+```shell
+$ cargo run -q
+[src/main.rs:113] std::mem::size_of::<S>() = 8
+[src/main.rs:113] offset_of!(S, a) = 6
+[src/main.rs:113] offset_of!(S, b) = 4
+[src/main.rs:113] offset_of!(S, c) = 7
+[src/main.rs:113] offset_of!(S, d) = 0
+```
+
+我们的成员被重新排序了!
+
+<img src="./pointer-alignment-reordered.svg" />
+
+我们可以让 `Rust compiler` 不要重排序就像 `C` 一样通过 `repr(C)`:
+
+```rust
+fn main() {
+    #[repr(C)]
+    struct S {
+        a: u8,
+        b: u16,
+        c: u8,
+        d: u32,
+    }
+
+    use memoffset::offset_of;
+    dbg!(
+        std::mem::size_of::<S>(),
+        offset_of!(S, a),
+        offset_of!(S, b),
+        offset_of!(S, c),
+        offset_of!(S, d)
+    );
+}
+```
+
+```shell
+cargo run -q
+[src/main.rs:11] std::mem::size_of::<S>() = 12
+[src/main.rs:11] offset_of!(S, a) = 0
+[src/main.rs:11] offset_of!(S, b) = 2
+[src/main.rs:11] offset_of!(S, c) = 4
+[src/main.rs:11] offset_of!(S, d) = 8
+```
+
+现在我们有了和 `C` 一样的布局了, 也有着相同的填充.
+
+<img src="./pointer-alignment-padding-rust.svg" />
+
+或者也可以让编译器既不要重新排序也不要填充以完全忽略对齐:
+
+```rust
+fn main() {
+    #[repr(C, packed)]
+    struct S {
+        a: u8,
+        b: u16,
+        c: u8,
+        d: u32,
+    }
+
+    use memoffset::offset_of;
+    dbg!(
+        std::mem::size_of::<S>(),
+        offset_of!(S, a),
+        offset_of!(S, b),
+        offset_of!(S, c),
+        offset_of!(S, d)
+    );
+}
+```
+
+现在, `S.b` 不再很好地对齐了.
+
+```shell
+$ cargo run -q
+[src/main.rs:11] std::mem::size_of::<S>() = 8
+[src/main.rs:11] offset_of!(S, a) = 0
+[src/main.rs:11] offset_of!(S, b) = 1
+[src/main.rs:11] offset_of!(S, c) = 3
+[src/main.rs:11] offset_of!(S, d) = 4
+```
+
+<img src="./pointer-alignment-unaligned.svg" />
+
+假如我们尝试获取一个引用, `Rust` 会警告我们(当前只是 `warn`, 以后可能会变成一个 `error`):
+
+```rust
+fn main() {
+    #[repr(C, packed)]
+    #[derive(Default)]
+    struct S {
+        a: u8,
+        b: u16,
+        c: u8,
+        d: u32,
+    }
+
+    let s: S = Default::default();
+    dbg!(&s.b);
+}
+```
+
+```shell
+$ cargo run -q
+warning: borrow of packed field is unsafe and requires unsafe function or block (error E0133)
+  --> src/main.rs:12:10
+   |
+12 |     dbg!(&s.b);
+   |          ^^^^
+   |
+   = note: `#[warn(safe_packed_borrows)]` on by default
+   = warning: this was previously accepted by the compiler but is being phased out; it will become a hard error in a future release!
+   = note: for more information, see issue #46043 <https://github.com/rust-lang/rust/issues/46043>
+   = note: fields of packed structs might be misaligned: dereferencing a misaligned pointer or even just creating a misaligned reference is undefined behavior
+
+warning: 1 warning emitted
+
+[src/main.rs:12] &s.b = 0
+```
+
+迄今... 所有的事情在我 `2018 i7` 处理器上工作得很好.
+
+我们可以改变它也没有任何问题:
+
+```rust
+fn main() {
+    #[repr(C, packed)]
+    #[derive(Default)]
+    struct S {
+        a: u8,
+        b: u16,
+        c: u8,
+        d: u32,
+    }
+
+    let mut s: S = Default::default();
+    unsafe {
+        s.b = 0x123;
+        println!("{:#x}", s.b);
+    }
+}
+```
+
+```shell
+$ cargo run -q
+0x123
+```
+
+这并不是获得未对齐指针的唯一方法, 使用指针类型转换我们也可以把两个 `u8` 当作一个单独的未对齐的 `u16`.
+
+```rust
+fn main() {
+    let mut arr = [1u8, 2u8, 3u8];
+    let ptr_u16 = (&mut arr[1]) as *mut _ as *mut u16;
+
+    unsafe {
+        *ptr_u16 = 0x123;
+        println!("{:#x}", *ptr_u16);
+    }
+}
+```
+
+注意, `clippy` 会捕获到这个, 并且认为这是一个错误.
+
+```shell
+$ cargo clippy
+    Checking enumpeek v0.1.0 (/home/amos/ftl/enumpeek)
+error: casting from `*mut u8` to a more-strictly-aligned pointer (`*mut u16`) (1 < 2 bytes)
+ --> src/main.rs:3:19
+  |
+3 |     let ptr_u16 = (&mut arr[1]) as *mut _ as *mut u16;
+  |                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  |
+  = note: `#[deny(clippy::cast_ptr_alignment)]` on by default
+  = help: for further information visit https://rust-lang.github.io/rust-clippy/master/index.html#cast_ptr_alignment
+```
+
+不过这在我的电脑上依旧是可以运行的:
+
+```shell
+$ cargo run -q
+0x123
+```
+
+所以为什么我们要再次关注对齐呢?
+
+好吧, 这是一个很长的故事...
+
+## 我们想要什么? 对齐! 我们为什么要它? Well...
+
