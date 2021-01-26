@@ -1280,7 +1280,328 @@ free&lt;span class="o">()&lt;/span>: invalid pointer
 &lt;span class="o">==&lt;/span>&lt;span class="nv">181085&lt;/span>&lt;span class="o">==&lt;/span>
 &lt;span class="o">==&lt;/span>&lt;span class="nv">181085&lt;/span>&lt;span class="o">==&lt;/span> For lists of detected and suppressed errors, rerun with: -s
 &lt;span class="o">==&lt;/span>&lt;span class="nv">181085&lt;/span>&lt;span class="o">==&lt;/span> ERROR SUMMARY: &lt;span class="m">0&lt;/span> errors from &lt;span class="m">0&lt;/span> contexts &lt;span class="o">(&lt;/span>suppressed: &lt;span class="m">0&lt;/span> from 0&lt;span class="o">)&lt;/span>
-&lt;/code>&lt;/pre>&lt;/div></description></item><item><title>200行Rust代码解释绿色线程</title><link>https://example.com/posts/translation/rust/green_threads_explained_in_200_lines_of_rust/</link><pubDate>Wed, 18 Nov 2020 13:28:44 +0800</pubDate><guid>https://example.com/posts/translation/rust/green_threads_explained_in_200_lines_of_rust/</guid><description>&lt;img src="https://example.com/posts/translation/rust/green_threads_explained_in_200_lines_of_rust/cover.png" alt="Featured image of post 200行Rust代码解释绿色线程" />&lt;blockquote>
+&lt;/code>&lt;/pre>&lt;/div>&lt;p>完美, 但是这完全正确了吗? 我不知道, 在让一堆人测试看看之前我是不会把代码用到生产环境中的. 但是至少在我们的 &lt;code>case&lt;/code> 中, 它已经没有发生内存泄漏了.&lt;/p>
+&lt;p>这总归是好的.&lt;/p>
+&lt;p>我们可以在我们的结构体中花上整天时间都在这重新实现 &lt;code>smartstring&lt;/code> 里面的功能, 但是有个点需要记住, 我们的版本比 &lt;code>smartstring&lt;/code> 大了足足一个字节.&lt;/p>
+&lt;p>就像 &lt;code>smallvec::SmallVec&lt;/code> 类型比 &lt;code>Vec&lt;/code> 大一样.&lt;/p>
+&lt;div class="highlight">&lt;pre class="chroma">&lt;code class="language-shell" data-lang="shell">$ cargo add smallvec
+Adding smallvec v1.4.2 to dependencies
+&lt;/code>&lt;/pre>&lt;/div>&lt;div class="highlight">&lt;pre class="chroma">&lt;code class="language-rust" data-lang="rust">&lt;span class="k">use&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="n">std&lt;/span>::&lt;span class="n">mem&lt;/span>::&lt;span class="n">size_of&lt;/span>&lt;span class="p">;&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w">&lt;/span>&lt;span class="k">use&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="n">smallvec&lt;/span>::&lt;span class="n">SmallVec&lt;/span>&lt;span class="p">;&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w">&lt;/span>&lt;span class="k">fn&lt;/span> &lt;span class="nf">main&lt;/span>&lt;span class="p">()&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="p">{&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="n">dbg&lt;/span>&lt;span class="o">!&lt;/span>&lt;span class="p">(&lt;/span>&lt;span class="n">size_of&lt;/span>::&lt;span class="o">&amp;lt;&lt;/span>&lt;span class="nb">Vec&lt;/span>&lt;span class="o">&amp;lt;&lt;/span>&lt;span class="kt">u8&lt;/span>&lt;span class="o">&amp;gt;&amp;gt;&lt;/span>&lt;span class="p">(),&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="n">size_of&lt;/span>::&lt;span class="o">&amp;lt;&lt;/span>&lt;span class="n">SmallVec&lt;/span>&lt;span class="o">&amp;lt;&lt;/span>&lt;span class="p">[&lt;/span>&lt;span class="kt">u8&lt;/span>&lt;span class="p">;&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="mi">1&lt;/span>&lt;span class="p">]&lt;/span>&lt;span class="o">&amp;gt;&amp;gt;&lt;/span>&lt;span class="p">());&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w">&lt;/span>&lt;span class="p">}&lt;/span>&lt;span class="w">
+&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;div class="highlight">&lt;pre class="chroma">&lt;code class="language-shell" data-lang="shell">$ cargo run -q
+&lt;span class="o">[&lt;/span>src/main.rs:100&lt;span class="o">]&lt;/span> size_of::&amp;lt;Vec&amp;lt;u8&amp;gt;&amp;gt;&lt;span class="o">()&lt;/span> &lt;span class="o">=&lt;/span> &lt;span class="m">24&lt;/span>
+&lt;span class="o">[&lt;/span>src/main.rs:100&lt;span class="o">]&lt;/span> size_of::&amp;lt;SmallVec&amp;lt;&lt;span class="o">[&lt;/span>u8&lt;span class="p">;&lt;/span> 1&lt;span class="o">]&lt;/span>&amp;gt;&amp;gt;&lt;span class="o">()&lt;/span> &lt;span class="o">=&lt;/span> &lt;span class="m">32&lt;/span>
+&lt;/code>&lt;/pre>&lt;/div>&lt;p>因此, 希望到目前为止本文讲述的足足44分钟的时间里你已经 &lt;strong>完全&lt;/strong> 明白了为什么这是一个有趣的问题(请回忆下开篇所提到的问题).&lt;/p>
+&lt;p>它的神秘不在于 &lt;code>SmallVec&amp;lt;[u8; 1]&amp;gt;&lt;/code> 比 &lt;code>Vec&amp;lt;u8&amp;gt;&lt;/code> 大8个字节, 因为 &lt;code>SmallVec&lt;/code> 只是一个枚举, 它的判定式只需要考虑两个变体, 但是因为 &lt;code>Rust&lt;/code> 需要额外的空间来保证对齐, 所以多用了整整8个字节.&lt;/p>
+&lt;p>它的神秘在于, &lt;code>SmartString&lt;/code> 是怎么做到只有24个字节的.&lt;/p>
+&lt;p>为了回答这个问题, 我们需要更深入的观察指针.&lt;/p>
+&lt;h2 id="仔细看看指针">仔细看看指针&lt;/h2>
+&lt;p>So, 什么是指针? 只是一串数字? 它告诉了你有些东西在内存的哪个地方.&lt;/p>
+&lt;p>举个例子, 如果我们声明了一个本地变量 &lt;code>x&lt;/code>, &lt;code>i32&lt;/code>, 它可能直立在栈上:&lt;/p>
+&lt;div class="highlight">&lt;pre class="chroma">&lt;code class="language-rust" data-lang="rust">&lt;span class="k">fn&lt;/span> &lt;span class="nf">main&lt;/span>&lt;span class="p">()&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="p">{&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="c1">// this is a signed 32-bit integer
+&lt;/span>&lt;span class="c1">&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="kd">let&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="n">x&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="o">=&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="mi">30&lt;/span>&lt;span class="p">;&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="c1">// this is a reference to a signed 32-bit integer
+&lt;/span>&lt;span class="c1">&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="kd">let&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="n">x_ref&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="o">=&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="o">&amp;amp;&lt;/span>&lt;span class="n">x&lt;/span>&lt;span class="p">;&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="c1">// this is a pointer to a signed 32-bit integer
+&lt;/span>&lt;span class="c1">&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="kd">let&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="n">x_ptr&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="o">=&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="n">x_ref&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="k">as&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="o">*&lt;/span>&lt;span class="k">const&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="n">_&lt;/span>&lt;span class="p">;&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="n">dbg&lt;/span>&lt;span class="o">!&lt;/span>&lt;span class="p">(&lt;/span>&lt;span class="n">x_ptr&lt;/span>&lt;span class="p">);&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w">&lt;/span>&lt;span class="p">}&lt;/span>&lt;span class="w">
+&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;div class="highlight">&lt;pre class="chroma">&lt;code class="language-shell" data-lang="shell">$ cargo run -q
+&lt;span class="o">[&lt;/span>src/main.rs:105&lt;span class="o">]&lt;/span> &lt;span class="nv">x_ptr&lt;/span> &lt;span class="o">=&lt;/span> 0x00007fff10be39ec
+&lt;/code>&lt;/pre>&lt;/div>&lt;p>当然, 一个本地变量也可能在寄存器中. 但这在这里无关紧要. 一旦我们获取了某个对象的地址, 它就需要映射到虚拟内存地址空间的某个地方, 而在寄存器中的则不需要, 为了方便解释, 我们现在假装寄存器不存在.&lt;/p>
+&lt;div class="dialog">
+&lt;img src="./bear.svg" class="dialog-head" />
+&lt;div class="dialog-text">
+&lt;p>是啊, 让我们忽略掉现代电脑中最快的存储空间, 不错.&lt;/p>
+&lt;/div>
+&lt;/div>
+&lt;div class="dialog amos">
+&lt;img src="./author.svg" class="dialog-head" />
+&lt;div class="dialog-text">
+&lt;p>Look cool bear, 你还想看完文章吗?&lt;/p>
+&lt;/div>
+&lt;/div>
+&lt;div class="dialog">
+&lt;img src="./bear.svg" class="dialog-head" />
+&lt;div class="dialog-text">
+&lt;p>yawn no no, 继续吧.&lt;/p>
+&lt;/div>
+&lt;/div>
+&lt;p>So, 数字是为了告诉你某些东西在内存中的位置. 这就像是地址, 就跟国家有实际位置的地址一样, 只是多了些间接性.&lt;/p>
+&lt;p>一个对齐的指针是一个其值(地址)是数据大小的倍数的指针. 当数据是自然对齐的时候对 CPUs 来说很方便.&lt;/p>
+&lt;p>让我们看一些例子.&lt;/p>
+&lt;p>我们可以在内存中寻址的的最小单元是字节. 一个指向字节的指针总是对齐的, 因为指针用字节来计数, 换句话说, 一个 &lt;code>u8&lt;/code> 的对齐单位就是1.&lt;/p>
+&lt;div class="highlight">&lt;pre class="chroma">&lt;code class="language-rust" data-lang="rust">&lt;span class="k">fn&lt;/span> &lt;span class="nf">main&lt;/span>&lt;span class="p">()&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="p">{&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="kd">let&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="n">arr&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="o">=&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="p">[&lt;/span>&lt;span class="mi">1&lt;/span>&lt;span class="k">u8&lt;/span>&lt;span class="p">,&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="mi">2&lt;/span>&lt;span class="k">u8&lt;/span>&lt;span class="p">,&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="mi">3&lt;/span>&lt;span class="k">u8&lt;/span>&lt;span class="p">,&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="mi">4&lt;/span>&lt;span class="k">u8&lt;/span>&lt;span class="p">];&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="n">dbg&lt;/span>&lt;span class="o">!&lt;/span>&lt;span class="p">(&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="o">&amp;amp;&lt;/span>&lt;span class="n">arr&lt;/span>&lt;span class="p">[&lt;/span>&lt;span class="mi">0&lt;/span>&lt;span class="p">]&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="k">as&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="o">*&lt;/span>&lt;span class="k">const&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="n">_&lt;/span>&lt;span class="p">,&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="o">&amp;amp;&lt;/span>&lt;span class="n">arr&lt;/span>&lt;span class="p">[&lt;/span>&lt;span class="mi">1&lt;/span>&lt;span class="p">]&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="k">as&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="o">*&lt;/span>&lt;span class="k">const&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="n">_&lt;/span>&lt;span class="p">,&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="o">&amp;amp;&lt;/span>&lt;span class="n">arr&lt;/span>&lt;span class="p">[&lt;/span>&lt;span class="mi">2&lt;/span>&lt;span class="p">]&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="k">as&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="o">*&lt;/span>&lt;span class="k">const&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="n">_&lt;/span>&lt;span class="p">,&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="o">&amp;amp;&lt;/span>&lt;span class="n">arr&lt;/span>&lt;span class="p">[&lt;/span>&lt;span class="mi">3&lt;/span>&lt;span class="p">]&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="k">as&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="o">*&lt;/span>&lt;span class="k">const&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="n">_&lt;/span>&lt;span class="p">,&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="p">);&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w">&lt;/span>&lt;span class="p">}&lt;/span>&lt;span class="w">
+&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;div class="highlight">&lt;pre class="chroma">&lt;code class="language-shell" data-lang="shell">$ cargo run -q
+&lt;span class="o">[&lt;/span>src/main.rs:106&lt;span class="o">]&lt;/span> &lt;span class="p">&amp;amp;&lt;/span>arr&lt;span class="o">[&lt;/span>0&lt;span class="o">]&lt;/span> as *const &lt;span class="nv">_&lt;/span> &lt;span class="o">=&lt;/span> 0x00007ffd6474abdc
+&lt;span class="o">[&lt;/span>src/main.rs:106&lt;span class="o">]&lt;/span> &lt;span class="p">&amp;amp;&lt;/span>arr&lt;span class="o">[&lt;/span>1&lt;span class="o">]&lt;/span> as *const &lt;span class="nv">_&lt;/span> &lt;span class="o">=&lt;/span> 0x00007ffd6474abdd
+&lt;span class="o">[&lt;/span>src/main.rs:106&lt;span class="o">]&lt;/span> &lt;span class="p">&amp;amp;&lt;/span>arr&lt;span class="o">[&lt;/span>2&lt;span class="o">]&lt;/span> as *const &lt;span class="nv">_&lt;/span> &lt;span class="o">=&lt;/span> 0x00007ffd6474abde
+&lt;span class="o">[&lt;/span>src/main.rs:106&lt;span class="o">]&lt;/span> &lt;span class="p">&amp;amp;&lt;/span>arr&lt;span class="o">[&lt;/span>3&lt;span class="o">]&lt;/span> as *const &lt;span class="nv">_&lt;/span> &lt;span class="o">=&lt;/span> 0x00007ffd6474abdf
+&lt;/code>&lt;/pre>&lt;/div>&lt;p>如果讨论的是指向 &lt;code>u16&lt;/code> 的指针, 那么它的对齐单位是2.&lt;/p>
+&lt;div class="highlight">&lt;pre class="chroma">&lt;code class="language-shell" data-lang="shell">fn main&lt;span class="o">()&lt;/span> &lt;span class="o">{&lt;/span>
+&lt;span class="nb">let&lt;/span> &lt;span class="nv">arr&lt;/span> &lt;span class="o">=&lt;/span> &lt;span class="o">[&lt;/span>1u16, 2u16, 3u16, 4u16&lt;span class="o">]&lt;/span>&lt;span class="p">;&lt;/span>
+fn inspect&amp;lt;T&amp;gt;&lt;span class="o">(&lt;/span>t: *const T&lt;span class="o">)&lt;/span> -&amp;gt; &lt;span class="o">(&lt;/span>*const T, bool&lt;span class="o">)&lt;/span> &lt;span class="o">{&lt;/span>
+&lt;span class="o">(&lt;/span>t, t as usize % &lt;span class="nv">2&lt;/span> &lt;span class="o">==&lt;/span> 0&lt;span class="o">)&lt;/span>
+&lt;span class="o">}&lt;/span>
+dbg!&lt;span class="o">(&lt;/span>
+inspect&lt;span class="o">(&lt;/span>&lt;span class="p">&amp;amp;&lt;/span>arr&lt;span class="o">[&lt;/span>0&lt;span class="o">]&lt;/span> as *const _&lt;span class="o">)&lt;/span>,
+inspect&lt;span class="o">(&lt;/span>&lt;span class="p">&amp;amp;&lt;/span>arr&lt;span class="o">[&lt;/span>1&lt;span class="o">]&lt;/span> as *const _&lt;span class="o">)&lt;/span>,
+inspect&lt;span class="o">(&lt;/span>&lt;span class="p">&amp;amp;&lt;/span>arr&lt;span class="o">[&lt;/span>2&lt;span class="o">]&lt;/span> as *const _&lt;span class="o">)&lt;/span>,
+inspect&lt;span class="o">(&lt;/span>&lt;span class="p">&amp;amp;&lt;/span>arr&lt;span class="o">[&lt;/span>3&lt;span class="o">]&lt;/span> as *const _&lt;span class="o">)&lt;/span>,
+&lt;span class="o">)&lt;/span>&lt;span class="p">;&lt;/span>
+&lt;span class="o">}&lt;/span>
+&lt;/code>&lt;/pre>&lt;/div>&lt;div class="highlight">&lt;pre class="chroma">&lt;code class="language-shell" data-lang="shell">$ cargo run -q
+&lt;span class="o">[&lt;/span>src/main.rs:110&lt;span class="o">]&lt;/span> inspect&lt;span class="o">(&lt;/span>&lt;span class="p">&amp;amp;&lt;/span>arr&lt;span class="o">[&lt;/span>0&lt;span class="o">]&lt;/span> as *const _&lt;span class="o">)&lt;/span> &lt;span class="o">=&lt;/span> &lt;span class="o">(&lt;/span>
+0x00007ffd81bf5918,
+true,
+&lt;span class="o">)&lt;/span>
+&lt;span class="o">[&lt;/span>src/main.rs:110&lt;span class="o">]&lt;/span> inspect&lt;span class="o">(&lt;/span>&lt;span class="p">&amp;amp;&lt;/span>arr&lt;span class="o">[&lt;/span>1&lt;span class="o">]&lt;/span> as *const _&lt;span class="o">)&lt;/span> &lt;span class="o">=&lt;/span> &lt;span class="o">(&lt;/span>
+0x00007ffd81bf591a,
+true,
+&lt;span class="o">)&lt;/span>
+&lt;span class="o">[&lt;/span>src/main.rs:110&lt;span class="o">]&lt;/span> inspect&lt;span class="o">(&lt;/span>&lt;span class="p">&amp;amp;&lt;/span>arr&lt;span class="o">[&lt;/span>2&lt;span class="o">]&lt;/span> as *const _&lt;span class="o">)&lt;/span> &lt;span class="o">=&lt;/span> &lt;span class="o">(&lt;/span>
+0x00007ffd81bf591c,
+true,
+&lt;span class="o">)&lt;/span>
+&lt;span class="o">[&lt;/span>src/main.rs:110&lt;span class="o">]&lt;/span> inspect&lt;span class="o">(&lt;/span>&lt;span class="p">&amp;amp;&lt;/span>arr&lt;span class="o">[&lt;/span>3&lt;span class="o">]&lt;/span> as *const _&lt;span class="o">)&lt;/span> &lt;span class="o">=&lt;/span> &lt;span class="o">(&lt;/span>
+0x00007ffd81bf591e,
+true,
+&lt;span class="o">)&lt;/span>
+&lt;/code>&lt;/pre>&lt;/div>&lt;p>同理, 对于 &lt;code>u32&lt;/code> 是4, &lt;code>u64&lt;/code> 是8.&lt;/p>
+&lt;p>下面有一个正确对齐的例子:&lt;/p>
+&lt;p>&lt;img src="./pointer-alignment.svg" />&lt;/p>
+&lt;p>底部的小方块表示如果我们想要存该类型, 可以把它放在那里.&lt;/p>
+&lt;p>顶部部分表示实际的内存布局, 举个例子, 一个结构体:&lt;/p>
+&lt;div class="highlight">&lt;pre class="chroma">&lt;code class="language-c" data-lang="c">&lt;span class="cp">#include&lt;/span> &lt;span class="cpf">&amp;lt;stdint.h&amp;gt;&lt;/span>&lt;span class="cp">
+&lt;/span>&lt;span class="cp">#include&lt;/span> &lt;span class="cpf">&amp;lt;stdio.h&amp;gt;&lt;/span>&lt;span class="cp">
+&lt;/span>&lt;span class="cp">#include&lt;/span> &lt;span class="cpf">&amp;lt;stddef.h&amp;gt;&lt;/span>&lt;span class="cp">
+&lt;/span>&lt;span class="cp">&lt;/span>
+&lt;span class="k">struct&lt;/span> &lt;span class="n">S&lt;/span> &lt;span class="p">{&lt;/span>
+&lt;span class="n">uint8_t&lt;/span> &lt;span class="n">a&lt;/span>&lt;span class="p">;&lt;/span>
+&lt;span class="n">uint8_t&lt;/span> &lt;span class="n">b&lt;/span>&lt;span class="p">;&lt;/span>
+&lt;span class="n">uint16_t&lt;/span> &lt;span class="n">c&lt;/span>&lt;span class="p">;&lt;/span>
+&lt;span class="n">uint32_t&lt;/span> &lt;span class="n">d&lt;/span>&lt;span class="p">;&lt;/span>
+&lt;span class="p">};&lt;/span>
+&lt;span class="kt">int&lt;/span> &lt;span class="nf">main&lt;/span>&lt;span class="p">()&lt;/span> &lt;span class="p">{&lt;/span>
+&lt;span class="n">printf&lt;/span>&lt;span class="p">(&lt;/span>&lt;span class="s">&amp;#34;sizeof(S) = %ld&lt;/span>&lt;span class="se">\n&lt;/span>&lt;span class="s">&amp;#34;&lt;/span>&lt;span class="p">,&lt;/span> &lt;span class="k">sizeof&lt;/span>&lt;span class="p">(&lt;/span>&lt;span class="k">struct&lt;/span> &lt;span class="n">S&lt;/span>&lt;span class="p">));&lt;/span>
+&lt;span class="n">printf&lt;/span>&lt;span class="p">(&lt;/span>&lt;span class="s">&amp;#34;offsetof(struct S, a) = %zu&lt;/span>&lt;span class="se">\n&lt;/span>&lt;span class="s">&amp;#34;&lt;/span>&lt;span class="p">,&lt;/span> &lt;span class="n">offsetof&lt;/span>&lt;span class="p">(&lt;/span>&lt;span class="k">struct&lt;/span> &lt;span class="n">S&lt;/span>&lt;span class="p">,&lt;/span> &lt;span class="n">a&lt;/span>&lt;span class="p">));&lt;/span>
+&lt;span class="n">printf&lt;/span>&lt;span class="p">(&lt;/span>&lt;span class="s">&amp;#34;offsetof(struct S, b) = %zu&lt;/span>&lt;span class="se">\n&lt;/span>&lt;span class="s">&amp;#34;&lt;/span>&lt;span class="p">,&lt;/span> &lt;span class="n">offsetof&lt;/span>&lt;span class="p">(&lt;/span>&lt;span class="k">struct&lt;/span> &lt;span class="n">S&lt;/span>&lt;span class="p">,&lt;/span> &lt;span class="n">b&lt;/span>&lt;span class="p">));&lt;/span>
+&lt;span class="n">printf&lt;/span>&lt;span class="p">(&lt;/span>&lt;span class="s">&amp;#34;offsetof(struct S, c) = %zu&lt;/span>&lt;span class="se">\n&lt;/span>&lt;span class="s">&amp;#34;&lt;/span>&lt;span class="p">,&lt;/span> &lt;span class="n">offsetof&lt;/span>&lt;span class="p">(&lt;/span>&lt;span class="k">struct&lt;/span> &lt;span class="n">S&lt;/span>&lt;span class="p">,&lt;/span> &lt;span class="n">c&lt;/span>&lt;span class="p">));&lt;/span>
+&lt;span class="n">printf&lt;/span>&lt;span class="p">(&lt;/span>&lt;span class="s">&amp;#34;offsetof(struct S, d) = %zu&lt;/span>&lt;span class="se">\n&lt;/span>&lt;span class="s">&amp;#34;&lt;/span>&lt;span class="p">,&lt;/span> &lt;span class="n">offsetof&lt;/span>&lt;span class="p">(&lt;/span>&lt;span class="k">struct&lt;/span> &lt;span class="n">S&lt;/span>&lt;span class="p">,&lt;/span> &lt;span class="n">d&lt;/span>&lt;span class="p">));&lt;/span>
+&lt;span class="p">}&lt;/span>
+&lt;/code>&lt;/pre>&lt;/div>&lt;div class="highlight">&lt;pre class="chroma">&lt;code class="language-shell" data-lang="shell">$ clang -Wall main.c -o main &lt;span class="o">&amp;amp;&amp;amp;&lt;/span> ./main
+sizeof&lt;span class="o">(&lt;/span>S&lt;span class="o">)&lt;/span> &lt;span class="o">=&lt;/span> &lt;span class="m">8&lt;/span>
+offsetof&lt;span class="o">(&lt;/span>struct S, a&lt;span class="o">)&lt;/span> &lt;span class="o">=&lt;/span> &lt;span class="m">0&lt;/span>
+offsetof&lt;span class="o">(&lt;/span>struct S, b&lt;span class="o">)&lt;/span> &lt;span class="o">=&lt;/span> &lt;span class="m">1&lt;/span>
+offsetof&lt;span class="o">(&lt;/span>struct S, c&lt;span class="o">)&lt;/span> &lt;span class="o">=&lt;/span> &lt;span class="m">2&lt;/span>
+offsetof&lt;span class="o">(&lt;/span>struct S, d&lt;span class="o">)&lt;/span> &lt;span class="o">=&lt;/span> &lt;span class="m">4&lt;/span>
+&lt;/code>&lt;/pre>&lt;/div>&lt;p>在这里, 一切顺利.&lt;/p>
+&lt;p>我们用另一个布局代替看看:&lt;/p>
+&lt;div class="highlight">&lt;pre class="chroma">&lt;code class="language-c" data-lang="c">&lt;span class="k">struct&lt;/span> &lt;span class="n">S&lt;/span> &lt;span class="p">{&lt;/span>
+&lt;span class="n">uint8_t&lt;/span> &lt;span class="n">a&lt;/span>&lt;span class="p">;&lt;/span>
+&lt;span class="n">uint16_t&lt;/span> &lt;span class="n">b&lt;/span>&lt;span class="p">;&lt;/span>
+&lt;span class="n">uint8_t&lt;/span> &lt;span class="n">c&lt;/span>&lt;span class="p">;&lt;/span>
+&lt;span class="n">uint32_t&lt;/span> &lt;span class="n">d&lt;/span>&lt;span class="p">;&lt;/span>
+&lt;span class="p">};&lt;/span>
+&lt;/code>&lt;/pre>&lt;/div>&lt;div class="highlight">&lt;pre class="chroma">&lt;code class="language-shell" data-lang="shell">$ clang -Wall main.c -o main &lt;span class="o">&amp;amp;&amp;amp;&lt;/span> ./main
+sizeof&lt;span class="o">(&lt;/span>S&lt;span class="o">)&lt;/span> &lt;span class="o">=&lt;/span> &lt;span class="m">12&lt;/span>
+offsetof&lt;span class="o">(&lt;/span>struct S, a&lt;span class="o">)&lt;/span> &lt;span class="o">=&lt;/span> &lt;span class="m">0&lt;/span>
+offsetof&lt;span class="o">(&lt;/span>struct S, b&lt;span class="o">)&lt;/span> &lt;span class="o">=&lt;/span> &lt;span class="m">2&lt;/span>
+offsetof&lt;span class="o">(&lt;/span>struct S, c&lt;span class="o">)&lt;/span> &lt;span class="o">=&lt;/span> &lt;span class="m">4&lt;/span>
+offsetof&lt;span class="o">(&lt;/span>struct S, d&lt;span class="o">)&lt;/span> &lt;span class="o">=&lt;/span> &lt;span class="m">8&lt;/span>
+&lt;/code>&lt;/pre>&lt;/div>&lt;p>为了维持对齐, 编译器插入了废料:&lt;/p>
+&lt;p>&lt;img src="./pointer-alignment-padding.svg" />&lt;/p>
+&lt;p>&amp;ldquo;Padding&amp;rdquo; 不绝对是置零 - 它只是没有使用的空间. 即使它初始化置零了, 也不能保证它会在你分配成员的时候维持0.&lt;/p>
+&lt;p>经常使用该结构体可能会混淆值和填充的 &lt;code>padding&lt;/code>, 因此一个好的 &lt;code>old block memory comparison&lt;/code> (memcmp) 不能够测试两个结构体是否完全相等.&lt;/p>
+&lt;blockquote>
+&lt;p>原文: Regular usage of the struct might mess with the values in the padding, and so a good old block memory comparison (memcmp) would not be enough to test two structs for equality.&lt;/p>
+&lt;/blockquote>
+&lt;blockquote>
+&lt;p>译者: 这里没懂作者想说什么, 有人清楚的话可以提个issue给我.&lt;/p>
+&lt;/blockquote>
+&lt;p>我们在 &lt;code>Rust&lt;/code> 中定义一个相同布局的结构体会发生什么?&lt;/p>
+&lt;div class="highlight">&lt;pre class="chroma">&lt;code class="language-rust" data-lang="rust">&lt;span class="k">fn&lt;/span> &lt;span class="nf">main&lt;/span>&lt;span class="p">()&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="p">{&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="k">struct&lt;/span> &lt;span class="nc">S&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="p">{&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="n">a&lt;/span>: &lt;span class="kt">u8&lt;/span>&lt;span class="p">,&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="n">b&lt;/span>: &lt;span class="kt">u16&lt;/span>&lt;span class="p">,&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="n">c&lt;/span>: &lt;span class="kt">u8&lt;/span>&lt;span class="p">,&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="n">d&lt;/span>: &lt;span class="kt">u32&lt;/span>&lt;span class="p">,&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="p">}&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="n">dbg&lt;/span>&lt;span class="o">!&lt;/span>&lt;span class="p">(&lt;/span>&lt;span class="n">std&lt;/span>::&lt;span class="n">mem&lt;/span>::&lt;span class="n">size_of&lt;/span>::&lt;span class="o">&amp;lt;&lt;/span>&lt;span class="n">S&lt;/span>&lt;span class="o">&amp;gt;&lt;/span>&lt;span class="p">());&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w">&lt;/span>&lt;span class="p">}&lt;/span>&lt;span class="w">
+&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;div class="highlight">&lt;pre class="chroma">&lt;code class="language-shell" data-lang="shell">$ cargo run -q
+&lt;span class="o">[&lt;/span>src/main.rs:112&lt;span class="o">]&lt;/span> std::mem::size_of::&amp;lt;S&amp;gt;&lt;span class="o">()&lt;/span> &lt;span class="o">=&lt;/span> &lt;span class="m">8&lt;/span>
+&lt;/code>&lt;/pre>&lt;/div>&lt;p>为什么只有8个字节? 发生了什么? 让我们来借助工具看看它的布局:&lt;/p>
+&lt;div class="highlight">&lt;pre class="chroma">&lt;code class="language-shell" data-lang="shell">$ cargo add memoffset
+Adding memoffset v0.5.5 to dependencies
+&lt;/code>&lt;/pre>&lt;/div>&lt;div class="highlight">&lt;pre class="chroma">&lt;code class="language-rust" data-lang="rust">&lt;span class="k">fn&lt;/span> &lt;span class="nf">main&lt;/span>&lt;span class="p">()&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="p">{&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="k">struct&lt;/span> &lt;span class="nc">S&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="p">{&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="n">a&lt;/span>: &lt;span class="kt">u8&lt;/span>&lt;span class="p">,&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="n">b&lt;/span>: &lt;span class="kt">u16&lt;/span>&lt;span class="p">,&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="n">c&lt;/span>: &lt;span class="kt">u8&lt;/span>&lt;span class="p">,&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="n">d&lt;/span>: &lt;span class="kt">u32&lt;/span>&lt;span class="p">,&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="p">}&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="k">use&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="n">memoffset&lt;/span>::&lt;span class="n">offset_of&lt;/span>&lt;span class="p">;&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="n">dbg&lt;/span>&lt;span class="o">!&lt;/span>&lt;span class="p">(&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="n">std&lt;/span>::&lt;span class="n">mem&lt;/span>::&lt;span class="n">size_of&lt;/span>::&lt;span class="o">&amp;lt;&lt;/span>&lt;span class="n">S&lt;/span>&lt;span class="o">&amp;gt;&lt;/span>&lt;span class="p">(),&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="n">offset_of&lt;/span>&lt;span class="o">!&lt;/span>&lt;span class="p">(&lt;/span>&lt;span class="n">S&lt;/span>&lt;span class="p">,&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="n">a&lt;/span>&lt;span class="p">),&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="n">offset_of&lt;/span>&lt;span class="o">!&lt;/span>&lt;span class="p">(&lt;/span>&lt;span class="n">S&lt;/span>&lt;span class="p">,&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="n">b&lt;/span>&lt;span class="p">),&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="n">offset_of&lt;/span>&lt;span class="o">!&lt;/span>&lt;span class="p">(&lt;/span>&lt;span class="n">S&lt;/span>&lt;span class="p">,&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="n">c&lt;/span>&lt;span class="p">),&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="n">offset_of&lt;/span>&lt;span class="o">!&lt;/span>&lt;span class="p">(&lt;/span>&lt;span class="n">S&lt;/span>&lt;span class="p">,&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="n">d&lt;/span>&lt;span class="p">)&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="p">);&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w">&lt;/span>&lt;span class="p">}&lt;/span>&lt;span class="w">
+&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;div class="highlight">&lt;pre class="chroma">&lt;code class="language-shell" data-lang="shell">$ cargo run -q
+&lt;span class="o">[&lt;/span>src/main.rs:113&lt;span class="o">]&lt;/span> std::mem::size_of::&amp;lt;S&amp;gt;&lt;span class="o">()&lt;/span> &lt;span class="o">=&lt;/span> &lt;span class="m">8&lt;/span>
+&lt;span class="o">[&lt;/span>src/main.rs:113&lt;span class="o">]&lt;/span> offset_of!&lt;span class="o">(&lt;/span>S, a&lt;span class="o">)&lt;/span> &lt;span class="o">=&lt;/span> &lt;span class="m">6&lt;/span>
+&lt;span class="o">[&lt;/span>src/main.rs:113&lt;span class="o">]&lt;/span> offset_of!&lt;span class="o">(&lt;/span>S, b&lt;span class="o">)&lt;/span> &lt;span class="o">=&lt;/span> &lt;span class="m">4&lt;/span>
+&lt;span class="o">[&lt;/span>src/main.rs:113&lt;span class="o">]&lt;/span> offset_of!&lt;span class="o">(&lt;/span>S, c&lt;span class="o">)&lt;/span> &lt;span class="o">=&lt;/span> &lt;span class="m">7&lt;/span>
+&lt;span class="o">[&lt;/span>src/main.rs:113&lt;span class="o">]&lt;/span> offset_of!&lt;span class="o">(&lt;/span>S, d&lt;span class="o">)&lt;/span> &lt;span class="o">=&lt;/span> &lt;span class="m">0&lt;/span>
+&lt;/code>&lt;/pre>&lt;/div>&lt;p>我们的成员被重新排序了!&lt;/p>
+&lt;p>&lt;img src="./pointer-alignment-reordered.svg" />&lt;/p>
+&lt;p>我们可以让 &lt;code>Rust compiler&lt;/code> 不要重排序就像 &lt;code>C&lt;/code> 一样通过 &lt;code>repr(C)&lt;/code>:&lt;/p>
+&lt;div class="highlight">&lt;pre class="chroma">&lt;code class="language-rust" data-lang="rust">&lt;span class="k">fn&lt;/span> &lt;span class="nf">main&lt;/span>&lt;span class="p">()&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="p">{&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="cp">#[repr(C)]&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="k">struct&lt;/span> &lt;span class="nc">S&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="p">{&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="n">a&lt;/span>: &lt;span class="kt">u8&lt;/span>&lt;span class="p">,&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="n">b&lt;/span>: &lt;span class="kt">u16&lt;/span>&lt;span class="p">,&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="n">c&lt;/span>: &lt;span class="kt">u8&lt;/span>&lt;span class="p">,&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="n">d&lt;/span>: &lt;span class="kt">u32&lt;/span>&lt;span class="p">,&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="p">}&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="k">use&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="n">memoffset&lt;/span>::&lt;span class="n">offset_of&lt;/span>&lt;span class="p">;&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="n">dbg&lt;/span>&lt;span class="o">!&lt;/span>&lt;span class="p">(&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="n">std&lt;/span>::&lt;span class="n">mem&lt;/span>::&lt;span class="n">size_of&lt;/span>::&lt;span class="o">&amp;lt;&lt;/span>&lt;span class="n">S&lt;/span>&lt;span class="o">&amp;gt;&lt;/span>&lt;span class="p">(),&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="n">offset_of&lt;/span>&lt;span class="o">!&lt;/span>&lt;span class="p">(&lt;/span>&lt;span class="n">S&lt;/span>&lt;span class="p">,&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="n">a&lt;/span>&lt;span class="p">),&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="n">offset_of&lt;/span>&lt;span class="o">!&lt;/span>&lt;span class="p">(&lt;/span>&lt;span class="n">S&lt;/span>&lt;span class="p">,&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="n">b&lt;/span>&lt;span class="p">),&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="n">offset_of&lt;/span>&lt;span class="o">!&lt;/span>&lt;span class="p">(&lt;/span>&lt;span class="n">S&lt;/span>&lt;span class="p">,&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="n">c&lt;/span>&lt;span class="p">),&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="n">offset_of&lt;/span>&lt;span class="o">!&lt;/span>&lt;span class="p">(&lt;/span>&lt;span class="n">S&lt;/span>&lt;span class="p">,&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="n">d&lt;/span>&lt;span class="p">)&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="p">);&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w">&lt;/span>&lt;span class="p">}&lt;/span>&lt;span class="w">
+&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;div class="highlight">&lt;pre class="chroma">&lt;code class="language-shell" data-lang="shell">cargo run -q
+&lt;span class="o">[&lt;/span>src/main.rs:11&lt;span class="o">]&lt;/span> std::mem::size_of::&amp;lt;S&amp;gt;&lt;span class="o">()&lt;/span> &lt;span class="o">=&lt;/span> &lt;span class="m">12&lt;/span>
+&lt;span class="o">[&lt;/span>src/main.rs:11&lt;span class="o">]&lt;/span> offset_of!&lt;span class="o">(&lt;/span>S, a&lt;span class="o">)&lt;/span> &lt;span class="o">=&lt;/span> &lt;span class="m">0&lt;/span>
+&lt;span class="o">[&lt;/span>src/main.rs:11&lt;span class="o">]&lt;/span> offset_of!&lt;span class="o">(&lt;/span>S, b&lt;span class="o">)&lt;/span> &lt;span class="o">=&lt;/span> &lt;span class="m">2&lt;/span>
+&lt;span class="o">[&lt;/span>src/main.rs:11&lt;span class="o">]&lt;/span> offset_of!&lt;span class="o">(&lt;/span>S, c&lt;span class="o">)&lt;/span> &lt;span class="o">=&lt;/span> &lt;span class="m">4&lt;/span>
+&lt;span class="o">[&lt;/span>src/main.rs:11&lt;span class="o">]&lt;/span> offset_of!&lt;span class="o">(&lt;/span>S, d&lt;span class="o">)&lt;/span> &lt;span class="o">=&lt;/span> &lt;span class="m">8&lt;/span>
+&lt;/code>&lt;/pre>&lt;/div>&lt;p>现在我们有了和 &lt;code>C&lt;/code> 一样的布局了, 也有着相同的填充.&lt;/p>
+&lt;p>&lt;img src="./pointer-alignment-padding-rust.svg" />&lt;/p>
+&lt;p>或者也可以让编译器既不要重新排序也不要填充以完全忽略对齐:&lt;/p>
+&lt;div class="highlight">&lt;pre class="chroma">&lt;code class="language-rust" data-lang="rust">&lt;span class="k">fn&lt;/span> &lt;span class="nf">main&lt;/span>&lt;span class="p">()&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="p">{&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="cp">#[repr(C, packed)]&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="k">struct&lt;/span> &lt;span class="nc">S&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="p">{&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="n">a&lt;/span>: &lt;span class="kt">u8&lt;/span>&lt;span class="p">,&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="n">b&lt;/span>: &lt;span class="kt">u16&lt;/span>&lt;span class="p">,&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="n">c&lt;/span>: &lt;span class="kt">u8&lt;/span>&lt;span class="p">,&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="n">d&lt;/span>: &lt;span class="kt">u32&lt;/span>&lt;span class="p">,&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="p">}&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="k">use&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="n">memoffset&lt;/span>::&lt;span class="n">offset_of&lt;/span>&lt;span class="p">;&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="n">dbg&lt;/span>&lt;span class="o">!&lt;/span>&lt;span class="p">(&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="n">std&lt;/span>::&lt;span class="n">mem&lt;/span>::&lt;span class="n">size_of&lt;/span>::&lt;span class="o">&amp;lt;&lt;/span>&lt;span class="n">S&lt;/span>&lt;span class="o">&amp;gt;&lt;/span>&lt;span class="p">(),&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="n">offset_of&lt;/span>&lt;span class="o">!&lt;/span>&lt;span class="p">(&lt;/span>&lt;span class="n">S&lt;/span>&lt;span class="p">,&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="n">a&lt;/span>&lt;span class="p">),&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="n">offset_of&lt;/span>&lt;span class="o">!&lt;/span>&lt;span class="p">(&lt;/span>&lt;span class="n">S&lt;/span>&lt;span class="p">,&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="n">b&lt;/span>&lt;span class="p">),&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="n">offset_of&lt;/span>&lt;span class="o">!&lt;/span>&lt;span class="p">(&lt;/span>&lt;span class="n">S&lt;/span>&lt;span class="p">,&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="n">c&lt;/span>&lt;span class="p">),&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="n">offset_of&lt;/span>&lt;span class="o">!&lt;/span>&lt;span class="p">(&lt;/span>&lt;span class="n">S&lt;/span>&lt;span class="p">,&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="n">d&lt;/span>&lt;span class="p">)&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="p">);&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w">&lt;/span>&lt;span class="p">}&lt;/span>&lt;span class="w">
+&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;p>现在, &lt;code>S.b&lt;/code> 不再很好地对齐了.&lt;/p>
+&lt;div class="highlight">&lt;pre class="chroma">&lt;code class="language-shell" data-lang="shell">$ cargo run -q
+&lt;span class="o">[&lt;/span>src/main.rs:11&lt;span class="o">]&lt;/span> std::mem::size_of::&amp;lt;S&amp;gt;&lt;span class="o">()&lt;/span> &lt;span class="o">=&lt;/span> &lt;span class="m">8&lt;/span>
+&lt;span class="o">[&lt;/span>src/main.rs:11&lt;span class="o">]&lt;/span> offset_of!&lt;span class="o">(&lt;/span>S, a&lt;span class="o">)&lt;/span> &lt;span class="o">=&lt;/span> &lt;span class="m">0&lt;/span>
+&lt;span class="o">[&lt;/span>src/main.rs:11&lt;span class="o">]&lt;/span> offset_of!&lt;span class="o">(&lt;/span>S, b&lt;span class="o">)&lt;/span> &lt;span class="o">=&lt;/span> &lt;span class="m">1&lt;/span>
+&lt;span class="o">[&lt;/span>src/main.rs:11&lt;span class="o">]&lt;/span> offset_of!&lt;span class="o">(&lt;/span>S, c&lt;span class="o">)&lt;/span> &lt;span class="o">=&lt;/span> &lt;span class="m">3&lt;/span>
+&lt;span class="o">[&lt;/span>src/main.rs:11&lt;span class="o">]&lt;/span> offset_of!&lt;span class="o">(&lt;/span>S, d&lt;span class="o">)&lt;/span> &lt;span class="o">=&lt;/span> &lt;span class="m">4&lt;/span>
+&lt;/code>&lt;/pre>&lt;/div>&lt;p>&lt;img src="./pointer-alignment-unaligned.svg" />&lt;/p>
+&lt;p>假如我们尝试获取一个引用, &lt;code>Rust&lt;/code> 会警告我们(当前只是 &lt;code>warn&lt;/code>, 以后可能会变成一个 &lt;code>error&lt;/code>):&lt;/p>
+&lt;div class="highlight">&lt;pre class="chroma">&lt;code class="language-rust" data-lang="rust">&lt;span class="k">fn&lt;/span> &lt;span class="nf">main&lt;/span>&lt;span class="p">()&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="p">{&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="cp">#[repr(C, packed)]&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="cp">#[derive(Default)]&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="k">struct&lt;/span> &lt;span class="nc">S&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="p">{&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="n">a&lt;/span>: &lt;span class="kt">u8&lt;/span>&lt;span class="p">,&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="n">b&lt;/span>: &lt;span class="kt">u16&lt;/span>&lt;span class="p">,&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="n">c&lt;/span>: &lt;span class="kt">u8&lt;/span>&lt;span class="p">,&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="n">d&lt;/span>: &lt;span class="kt">u32&lt;/span>&lt;span class="p">,&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="p">}&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="kd">let&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="n">s&lt;/span>: &lt;span class="nc">S&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="o">=&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="nb">Default&lt;/span>::&lt;span class="n">default&lt;/span>&lt;span class="p">();&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="n">dbg&lt;/span>&lt;span class="o">!&lt;/span>&lt;span class="p">(&lt;/span>&lt;span class="o">&amp;amp;&lt;/span>&lt;span class="n">s&lt;/span>&lt;span class="p">.&lt;/span>&lt;span class="n">b&lt;/span>&lt;span class="p">);&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w">&lt;/span>&lt;span class="p">}&lt;/span>&lt;span class="w">
+&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;div class="highlight">&lt;pre class="chroma">&lt;code class="language-shell" data-lang="shell">$ cargo run -q
+warning: borrow of packed field is unsafe and requires unsafe &lt;span class="k">function&lt;/span> or block &lt;span class="o">(&lt;/span>error E0133&lt;span class="o">)&lt;/span>
+--&amp;gt; src/main.rs:12:10
+&lt;span class="p">|&lt;/span>
+&lt;span class="m">12&lt;/span> &lt;span class="p">|&lt;/span> dbg!&lt;span class="o">(&lt;/span>&lt;span class="p">&amp;amp;&lt;/span>s.b&lt;span class="o">)&lt;/span>&lt;span class="p">;&lt;/span>
+&lt;span class="p">|&lt;/span> ^^^^
+&lt;span class="p">|&lt;/span>
+&lt;span class="o">=&lt;/span> note: &lt;span class="sb">`&lt;/span>&lt;span class="c1">#[warn(safe_packed_borrows)]` on by default&lt;/span>
+&lt;span class="o">=&lt;/span> warning: this was previously accepted by the compiler but is being phased out&lt;span class="p">;&lt;/span> it will become a hard error in a future release!
+&lt;span class="o">=&lt;/span> note: &lt;span class="k">for&lt;/span> more information, see issue &lt;span class="c1">#46043 &amp;lt;https://github.com/rust-lang/rust/issues/46043&amp;gt;&lt;/span>
+&lt;span class="o">=&lt;/span> note: fields of packed structs might be misaligned: dereferencing a misaligned pointer or even just creating a misaligned reference is undefined behavior
+warning: &lt;span class="m">1&lt;/span> warning emitted
+&lt;span class="o">[&lt;/span>src/main.rs:12&lt;span class="o">]&lt;/span> &lt;span class="p">&amp;amp;&lt;/span>s.b &lt;span class="o">=&lt;/span> &lt;span class="m">0&lt;/span>
+&lt;/code>&lt;/pre>&lt;/div>&lt;p>迄今&amp;hellip; 所有的事情在我 &lt;code>2018 i7&lt;/code> 处理器上工作得很好.&lt;/p>
+&lt;p>我们可以改变它也没有任何问题:&lt;/p>
+&lt;div class="highlight">&lt;pre class="chroma">&lt;code class="language-rust" data-lang="rust">&lt;span class="k">fn&lt;/span> &lt;span class="nf">main&lt;/span>&lt;span class="p">()&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="p">{&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="cp">#[repr(C, packed)]&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="cp">#[derive(Default)]&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="k">struct&lt;/span> &lt;span class="nc">S&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="p">{&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="n">a&lt;/span>: &lt;span class="kt">u8&lt;/span>&lt;span class="p">,&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="n">b&lt;/span>: &lt;span class="kt">u16&lt;/span>&lt;span class="p">,&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="n">c&lt;/span>: &lt;span class="kt">u8&lt;/span>&lt;span class="p">,&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="n">d&lt;/span>: &lt;span class="kt">u32&lt;/span>&lt;span class="p">,&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="p">}&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="kd">let&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="k">mut&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="n">s&lt;/span>: &lt;span class="nc">S&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="o">=&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="nb">Default&lt;/span>::&lt;span class="n">default&lt;/span>&lt;span class="p">();&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="k">unsafe&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="p">{&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="n">s&lt;/span>&lt;span class="p">.&lt;/span>&lt;span class="n">b&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="o">=&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="mh">0x123&lt;/span>&lt;span class="p">;&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="n">println&lt;/span>&lt;span class="o">!&lt;/span>&lt;span class="p">(&lt;/span>&lt;span class="s">&amp;#34;{:#x}&amp;#34;&lt;/span>&lt;span class="p">,&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="n">s&lt;/span>&lt;span class="p">.&lt;/span>&lt;span class="n">b&lt;/span>&lt;span class="p">);&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="p">}&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w">&lt;/span>&lt;span class="p">}&lt;/span>&lt;span class="w">
+&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;div class="highlight">&lt;pre class="chroma">&lt;code class="language-shell" data-lang="shell">$ cargo run -q
+0x123
+&lt;/code>&lt;/pre>&lt;/div>&lt;p>这并不是获得未对齐指针的唯一方法, 使用指针类型转换我们也可以把两个 &lt;code>u8&lt;/code> 当作一个单独的未对齐的 &lt;code>u16&lt;/code>.&lt;/p>
+&lt;div class="highlight">&lt;pre class="chroma">&lt;code class="language-rust" data-lang="rust">&lt;span class="k">fn&lt;/span> &lt;span class="nf">main&lt;/span>&lt;span class="p">()&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="p">{&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="kd">let&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="k">mut&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="n">arr&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="o">=&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="p">[&lt;/span>&lt;span class="mi">1&lt;/span>&lt;span class="k">u8&lt;/span>&lt;span class="p">,&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="mi">2&lt;/span>&lt;span class="k">u8&lt;/span>&lt;span class="p">,&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="mi">3&lt;/span>&lt;span class="k">u8&lt;/span>&lt;span class="p">];&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="kd">let&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="n">ptr_u16&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="o">=&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="p">(&lt;/span>&lt;span class="o">&amp;amp;&lt;/span>&lt;span class="k">mut&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="n">arr&lt;/span>&lt;span class="p">[&lt;/span>&lt;span class="mi">1&lt;/span>&lt;span class="p">])&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="k">as&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="o">*&lt;/span>&lt;span class="k">mut&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="n">_&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="k">as&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="o">*&lt;/span>&lt;span class="k">mut&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="kt">u16&lt;/span>&lt;span class="p">;&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="k">unsafe&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="p">{&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="o">*&lt;/span>&lt;span class="n">ptr_u16&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="o">=&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="mh">0x123&lt;/span>&lt;span class="p">;&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="n">println&lt;/span>&lt;span class="o">!&lt;/span>&lt;span class="p">(&lt;/span>&lt;span class="s">&amp;#34;{:#x}&amp;#34;&lt;/span>&lt;span class="p">,&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="o">*&lt;/span>&lt;span class="n">ptr_u16&lt;/span>&lt;span class="p">);&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="p">}&lt;/span>&lt;span class="w">
+&lt;/span>&lt;span class="w">&lt;/span>&lt;span class="p">}&lt;/span>&lt;span class="w">
+&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;p>注意, &lt;code>clippy&lt;/code> 会捕获到这个, 并且认为这是一个错误.&lt;/p>
+&lt;div class="highlight">&lt;pre class="chroma">&lt;code class="language-shell" data-lang="shell">$ cargo clippy
+Checking enumpeek v0.1.0 &lt;span class="o">(&lt;/span>/home/amos/ftl/enumpeek&lt;span class="o">)&lt;/span>
+error: casting from &lt;span class="sb">`&lt;/span>*mut u8&lt;span class="sb">`&lt;/span> to a more-strictly-aligned pointer &lt;span class="o">(&lt;/span>&lt;span class="sb">`&lt;/span>*mut u16&lt;span class="sb">`&lt;/span>&lt;span class="o">)&lt;/span> &lt;span class="o">(&lt;/span>&lt;span class="m">1&lt;/span> &amp;lt; &lt;span class="m">2&lt;/span> bytes&lt;span class="o">)&lt;/span>
+--&amp;gt; src/main.rs:3:19
+&lt;span class="p">|&lt;/span>
+&lt;span class="m">3&lt;/span> &lt;span class="p">|&lt;/span> &lt;span class="nb">let&lt;/span> &lt;span class="nv">ptr_u16&lt;/span> &lt;span class="o">=&lt;/span> &lt;span class="o">(&lt;/span>&lt;span class="p">&amp;amp;&lt;/span>mut arr&lt;span class="o">[&lt;/span>1&lt;span class="o">])&lt;/span> as *mut _ as *mut u16&lt;span class="p">;&lt;/span>
+&lt;span class="p">|&lt;/span> ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+&lt;span class="p">|&lt;/span>
+&lt;span class="o">=&lt;/span> note: &lt;span class="sb">`&lt;/span>&lt;span class="c1">#[deny(clippy::cast_ptr_alignment)]` on by default&lt;/span>
+&lt;span class="o">=&lt;/span> help: &lt;span class="k">for&lt;/span> further information visit https://rust-lang.github.io/rust-clippy/master/index.html#cast_ptr_alignment
+&lt;/code>&lt;/pre>&lt;/div>&lt;p>不过这在我的电脑上依旧是可以运行的:&lt;/p>
+&lt;div class="highlight">&lt;pre class="chroma">&lt;code class="language-shell" data-lang="shell">$ cargo run -q
+0x123
+&lt;/code>&lt;/pre>&lt;/div>&lt;p>所以为什么我们要再次关注对齐呢?&lt;/p>
+&lt;p>好吧, 这是一个很长的故事&amp;hellip;&lt;/p>
+&lt;h2 id="我们想要什么-对齐-我们为什么要它-well">我们想要什么? 对齐! 我们为什么要它? Well&amp;hellip;&lt;/h2></description></item><item><title>200行Rust代码解释绿色线程</title><link>https://example.com/posts/translation/rust/green_threads_explained_in_200_lines_of_rust/</link><pubDate>Wed, 18 Nov 2020 13:28:44 +0800</pubDate><guid>https://example.com/posts/translation/rust/green_threads_explained_in_200_lines_of_rust/</guid><description>&lt;img src="https://example.com/posts/translation/rust/green_threads_explained_in_200_lines_of_rust/cover.png" alt="Featured image of post 200行Rust代码解释绿色线程" />&lt;blockquote>
 &lt;p>本译文译自 &lt;a class="link" href="https://cfsamson.gitbook.io/green-threads-explained-in-200-lines-of-rust/" target="_blank" rel="noopener"
 >Green Threads Explained in 200 Lines of Rust&lt;/a>&lt;/p>
 &lt;/blockquote>
