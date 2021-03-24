@@ -1601,7 +1601,195 @@ error: casting from &lt;span class="sb">`&lt;/span>*mut u8&lt;span class="sb">`&
 0x123
 &lt;/code>&lt;/pre>&lt;/div>&lt;p>所以为什么我们要再次关注对齐呢?&lt;/p>
 &lt;p>好吧, 这是一个很长的故事&amp;hellip;&lt;/p>
-&lt;h2 id="我们想要什么-对齐-我们为什么要它-well">我们想要什么? 对齐! 我们为什么要它? Well&amp;hellip;&lt;/h2></description></item><item><title>200行Rust代码解释绿色线程</title><link>https://example.com/posts/translation/rust/green_threads_explained_in_200_lines_of_rust/</link><pubDate>Wed, 18 Nov 2020 13:28:44 +0800</pubDate><guid>https://example.com/posts/translation/rust/green_threads_explained_in_200_lines_of_rust/</guid><description>&lt;img src="https://example.com/posts/translation/rust/green_threads_explained_in_200_lines_of_rust/cover.png" alt="Featured image of post 200行Rust代码解释绿色线程" />&lt;blockquote>
+&lt;h2 id="我们想要什么-对齐-我们为什么要它-well">我们想要什么? 对齐! 我们为什么要它? Well&amp;hellip;&lt;/h2>
+&lt;p>回到 &lt;code>C&lt;/code> 发明的年代, 那个时候有些处理器不怎么支持没有对齐过的内存访问.&lt;/p>
+&lt;p>对于这些处理器, 没有对齐的内存访问可能会导致&lt;a class="link" href="https://www.kernel.org/doc/Documentation/unaligned-memory-access.txt" target="_blank" rel="noopener"
+>抛出一个处理器错误&lt;/a>: 异常处理器或许能够正常访问一个没有对齐的内存, 但是会浪费较多的性能, 或者是干脆没法访问未对齐的内存, 然后程序运行就被 abort 了.&lt;/p>
+&lt;p>在另一些处理器架构里, 像是英特尔的 &amp;ldquo;Core 2&amp;rdquo; 系列, 通常会用一些性能损耗来支持未对齐的内存.&lt;/p>
+&lt;p>我本来想在这里放上一些 microbenchmarks, 但是它们有时候会互相矛盾 - 基准测试有很多影响因素. 有些基准测试显示有 10% 的性能降低, 有些会降低 50%, 显然有很多会影响到关于访问未对齐内存的性能测试.&lt;/p>
+&lt;p>但是请记住, 即使处理器开始对未对齐内存做了一级支持, 但是出于性能原因仍然要避免使用未对齐内存.&lt;/p>
+&lt;p>我通常把最好的东西留到最后说 但是:&lt;/p>
+&lt;p>一些架构可能不会抛出处理器异常, 而是静默地执行一些不同的读操作.&lt;/p>
+&lt;p>&lt;figure style="flex-grow: 123; flex-basis: 296px">
+&lt;a href="https://example.com/posts/translation/rust/peeking_inside_a_rust_enum/armv4t.jpg" data-size="640x518">&lt;img src="https://example.com/posts/translation/rust/peeking_inside_a_rust_enum/armv4t.jpg"
+srcset="https://example.com/posts/translation/rust/peeking_inside_a_rust_enum/armv4t_hub50016a2bde62f69b78292ec788779b2_120594_480x0_resize_q75_box.jpg 480w, https://example.com/posts/translation/rust/peeking_inside_a_rust_enum/armv4t_hub50016a2bde62f69b78292ec788779b2_120594_1024x0_resize_q75_box.jpg 1024w"
+width="640"
+height="518"
+loading="lazy"
+alt="An example ARMv4t chip: the sound processor chip for the SEGA NAOMI arcade system.">
+&lt;/a>
+&lt;figcaption>An example ARMv4t chip: the sound processor chip for the SEGA NAOMI arcade system.&lt;/figcaption>
+&lt;/figure>&lt;/p>
+&lt;div class="dialog">
+&lt;img src="./bear.svg" class="dialog-head" />
+&lt;div class="dialog-text">
+&lt;p>等等, 它会执行不同的读操作?&lt;/p>
+&lt;/div>
+&lt;/div>
+&lt;div class="dialog amos">
+&lt;img src="./author.svg" class="dialog-head" />
+&lt;div class="dialog-text">
+&lt;p>是的.&lt;/p>
+&lt;/div>
+&lt;/div>
+&lt;div class="dialog">
+&lt;img src="./bear.svg" class="dialog-head" />
+&lt;div class="dialog-text">
+&lt;p>听起来很恐怖, 真的会发生吗? 你可以证实它吗?&lt;/p>
+&lt;/div>
+&lt;/div>
+&lt;div class="dialog amos">
+&lt;img src="./author.svg" class="dialog-head" />
+&lt;div class="dialog-text">
+&lt;p>我会的.&lt;/p>
+&lt;/div>
+&lt;/div>
+&lt;h2 id="很久很久-在armv5以前">很久很久, 在ARMv5以前&amp;hellip;&lt;/h2>
+&lt;p>我们已经在这篇文章里读了一些关于未对齐内存的内容.&lt;/p>
+&lt;p>所以展示上面所说的不同的读操作会相对比较容易.&lt;/p>
+&lt;p>首先你需要一些数据 - 我们只用了 8 个不同的字节值, 这很容易理解后面将会发生什么.&lt;/p>
+&lt;div class="highlight">&lt;pre class="chroma">&lt;code class="language-c" data-lang="c"> &lt;span class="n">uint8_t&lt;/span> &lt;span class="n">arr&lt;/span>&lt;span class="p">[&lt;/span>&lt;span class="mi">8&lt;/span>&lt;span class="p">]&lt;/span> &lt;span class="o">=&lt;/span> &lt;span class="p">{&lt;/span> &lt;span class="mh">0xef&lt;/span>&lt;span class="p">,&lt;/span> &lt;span class="mh">0xcd&lt;/span>&lt;span class="p">,&lt;/span> &lt;span class="mh">0xab&lt;/span>&lt;span class="p">,&lt;/span> &lt;span class="mh">0x89&lt;/span>&lt;span class="p">,&lt;/span> &lt;span class="mh">0x67&lt;/span>&lt;span class="p">,&lt;/span> &lt;span class="mh">0x45&lt;/span>&lt;span class="p">,&lt;/span> &lt;span class="mh">0x23&lt;/span>&lt;span class="p">,&lt;/span> &lt;span class="mh">0x01&lt;/span> &lt;span class="p">};&lt;/span>
+&lt;/code>&lt;/pre>&lt;/div>&lt;p>然后我们去读一个没有对齐的地址. 举个例子, 我们尝试从数组的第二个元素开始读取一个 &lt;code>uint32_t&lt;/code>.&lt;/p>
+&lt;div class="highlight">&lt;pre class="chroma">&lt;code class="language-c" data-lang="c">&lt;span class="cp">#include&lt;/span> &lt;span class="cpf">&amp;lt;stdint.h&amp;gt;&lt;/span>&lt;span class="cp">
+&lt;/span>&lt;span class="cp">#include&lt;/span> &lt;span class="cpf">&amp;lt;stdio.h&amp;gt;&lt;/span>&lt;span class="cp">
+&lt;/span>&lt;span class="cp">&lt;/span>
+&lt;span class="kt">int&lt;/span> &lt;span class="nf">main&lt;/span>&lt;span class="p">()&lt;/span> &lt;span class="p">{&lt;/span>
+&lt;span class="n">uint8_t&lt;/span> &lt;span class="n">arr&lt;/span>&lt;span class="p">[&lt;/span>&lt;span class="mi">8&lt;/span>&lt;span class="p">]&lt;/span> &lt;span class="o">=&lt;/span> &lt;span class="p">{&lt;/span>&lt;span class="mh">0xef&lt;/span>&lt;span class="p">,&lt;/span> &lt;span class="mh">0xcd&lt;/span>&lt;span class="p">,&lt;/span> &lt;span class="mh">0xab&lt;/span>&lt;span class="p">,&lt;/span> &lt;span class="mh">0x89&lt;/span>&lt;span class="p">,&lt;/span> &lt;span class="mh">0x67&lt;/span>&lt;span class="p">,&lt;/span> &lt;span class="mh">0x45&lt;/span>&lt;span class="p">,&lt;/span> &lt;span class="mh">0x23&lt;/span>&lt;span class="p">,&lt;/span> &lt;span class="mh">0x01&lt;/span>&lt;span class="p">};&lt;/span>
+&lt;span class="c1">// arrays are zero-indexed, so `1` is the second item
+&lt;/span>&lt;span class="c1">&lt;/span> &lt;span class="n">uint32_t&lt;/span> &lt;span class="o">*&lt;/span>&lt;span class="n">ptr&lt;/span> &lt;span class="o">=&lt;/span> &lt;span class="p">(&lt;/span>&lt;span class="n">uint32_t&lt;/span> &lt;span class="o">*&lt;/span>&lt;span class="p">)(&lt;/span>&lt;span class="o">&amp;amp;&lt;/span>&lt;span class="n">arr&lt;/span>&lt;span class="p">[&lt;/span>&lt;span class="mi">1&lt;/span>&lt;span class="p">]);&lt;/span>
+&lt;span class="n">printf&lt;/span>&lt;span class="p">(&lt;/span>&lt;span class="s">&amp;#34;0x%08x&lt;/span>&lt;span class="se">\n&lt;/span>&lt;span class="s">&amp;#34;&lt;/span>&lt;span class="p">,&lt;/span> &lt;span class="o">*&lt;/span>&lt;span class="n">ptr&lt;/span>&lt;span class="p">);&lt;/span>
+&lt;span class="k">return&lt;/span> &lt;span class="mi">0&lt;/span>&lt;span class="p">;&lt;/span>
+&lt;span class="p">}&lt;/span>
+&lt;/code>&lt;/pre>&lt;/div>&lt;p>猜猜会打印什么? 是 &lt;code>0xcdab8967&lt;/code>? 错了!&lt;/p>
+&lt;p>我2018年的i7处理器是一个小端处理器:&lt;/p>
+&lt;div class="highlight">&lt;pre class="chroma">&lt;code class="language-shell" data-lang="shell">$ lscpu &lt;span class="p">|&lt;/span> grep -E &lt;span class="s1">&amp;#39;(Byte Order|Model name)&amp;#39;&lt;/span>
+Byte Order: Little Endian
+Model name: Intel&lt;span class="o">(&lt;/span>R&lt;span class="o">)&lt;/span> Core&lt;span class="o">(&lt;/span>TM&lt;span class="o">)&lt;/span> i7-8750H CPU @ 2.20GHz
+&lt;/code>&lt;/pre>&lt;/div>&lt;p>这意味着字节是从最低有效值存储到最高有效值.&lt;/p>
+&lt;p>所以与其说是这样子的:&lt;/p>
+&lt;p>&lt;img src="./big-endian-unaligned-read.svg" />&lt;/p>
+&lt;p>其实是这样子的:&lt;/p>
+&lt;p>&lt;img src="./little-endian-unaligned-read.svg" />&lt;/p>
+&lt;div class="highlight">&lt;pre class="chroma">&lt;code class="language-shell" data-lang="shell">$ gcc -Wall main.c -o main &lt;span class="o">&amp;amp;&amp;amp;&lt;/span> ./main
+0x6789abcd
+&lt;/code>&lt;/pre>&lt;/div>&lt;p>这就是为什么我为我的数组选了这些好辨识的值的原因.&lt;/p>
+&lt;div class="dialog">
+&lt;img src="./bear.svg" class="dialog-head" />
+&lt;div class="dialog-text">
+&lt;p>好吧, 我仍然无法相信你 - 因为这些没有对齐的数据看起来工作的很好.&lt;/p>
+&lt;/div>
+&lt;/div>
+&lt;div class="dialog amos">
+&lt;img src="./author.svg" class="dialog-head" />
+&lt;div class="dialog-text">
+&lt;p>Yes, yes. 但是如果你在GBA上跑这些数据?&lt;/p>
+&lt;/div>
+&lt;/div>
+&lt;p>&lt;figure style="flex-grow: 144; flex-basis: 347px">
+&lt;a href="https://example.com/posts/translation/rust/peeking_inside_a_rust_enum/gba.jpg" data-size="1280x884">&lt;img src="https://example.com/posts/translation/rust/peeking_inside_a_rust_enum/gba.jpg"
+srcset="https://example.com/posts/translation/rust/peeking_inside_a_rust_enum/gba_hu302f1c2d37f956d6cc8b3c35003135c9_97592_480x0_resize_q75_box.jpg 480w, https://example.com/posts/translation/rust/peeking_inside_a_rust_enum/gba_hu302f1c2d37f956d6cc8b3c35003135c9_97592_1024x0_resize_q75_box.jpg 1024w"
+width="1280"
+height="884"
+loading="lazy"
+alt="A &amp;lsquo;Glacier&amp;rsquo; Game Boy Advance - one of the colors available at launch in North America">
+&lt;/a>
+&lt;figcaption>A ‘Glacier’ Game Boy Advance - one of the colors available at launch in North America&lt;/figcaption>
+&lt;/figure>&lt;/p>
+&lt;div class="dialog amos">
+&lt;img src="./author.svg" class="dialog-head" />
+&lt;div class="dialog-text">
+&lt;p>The Game Boy Advance has a 16.8 MHz 32-bit ARM7TDMI processor - which implements the ARMv4T micro-architecture?&lt;/p>
+&lt;/div>
+&lt;/div>
+&lt;div class="dialog">
+&lt;img src="./bear.svg" class="dialog-head" />
+&lt;div class="dialog-text">
+&lt;p>行行行, 那这意味着什么呢?&lt;/p>
+&lt;/div>
+&lt;/div>
+&lt;div class="dialog amos">
+&lt;img src="./author.svg" class="dialog-head" />
+&lt;div class="dialog-text">
+&lt;p>它意味着我们回到了2001.&lt;/p>
+&lt;/div>
+&lt;/div>
+&lt;div class="dialog">
+&lt;img src="./bear.svg" class="dialog-head" />
+&lt;div class="dialog-text">
+&lt;p>行, 我很好奇 - 我们怎么在2020年给GBA编译?&lt;/p>
+&lt;/div>
+&lt;/div>
+&lt;div class="dialog amos">
+&lt;img src="./author.svg" class="dialog-head" />
+&lt;div class="dialog-text">
+&lt;p>It's simple! Just install devKitPro on your OS of choice, and, uh, read a bit lot of documentation, and you're good to go!&lt;/p>
+&lt;/div>
+&lt;/div>
+&lt;p>| &lt;a class="link" href="https://devkitpro.org/wiki/Getting_Started" target="_blank" rel="noopener"
+>devKitPro&lt;/a>&lt;/p>
+&lt;div class="dialog">
+&lt;img src="./bear.svg" class="dialog-head" />
+&lt;div class="dialog-text">
+&lt;p>我以前是不是看你尝试过一个AS-1100虚拟机？ 然后是SH4?&lt;/p>
+&lt;/div>
+&lt;/div>
+&lt;div class="dialog amos">
+&lt;img src="./author.svg" class="dialog-head" />
+&lt;div class="dialog-text">
+&lt;p>Yeah well, hindsight is 20/20(大概是事后诸葛亮的意思). Do you want to see something cool or not?&lt;/p>
+&lt;/div>
+&lt;/div>
+&lt;div class="dialog">
+&lt;img src="./bear.svg" class="dialog-head" />
+&lt;div class="dialog-text">
+&lt;p>继续吧继续吧!&lt;/p>
+&lt;/div>
+&lt;/div>
+&lt;p>我以前也没读过关于GBA开发的相关文档, 我只是找了个项目&lt;a class="link" href="https://vba-m.com/" target="_blank" rel="noopener"
+>VisualBoyAdvance&lt;/a>:&lt;/p>
+&lt;p>&lt;figure style="flex-grow: 137; flex-basis: 330px">
+&lt;a href="https://example.com/posts/translation/rust/peeking_inside_a_rust_enum/gba-hello.png" data-size="480x349">&lt;img src="https://example.com/posts/translation/rust/peeking_inside_a_rust_enum/gba-hello.png"
+srcset="https://example.com/posts/translation/rust/peeking_inside_a_rust_enum/gba-hello_hu374745a0a15a6dd857febbf559df6352_9948_480x0_resize_box_2.png 480w, https://example.com/posts/translation/rust/peeking_inside_a_rust_enum/gba-hello_hu374745a0a15a6dd857febbf559df6352_9948_1024x0_resize_box_2.png 1024w"
+width="480"
+height="349"
+loading="lazy"
+>
+&lt;/a>
+&lt;/figure>&lt;/p>
+&lt;p>这个项目的 &lt;code>C&lt;/code> 代码看起来如下:&lt;/p>
+&lt;div class="highlight">&lt;pre class="chroma">&lt;code class="language-c" data-lang="c"> &lt;span class="c1">// (cut)
+&lt;/span>&lt;span class="c1">&lt;/span>
+&lt;span class="c1">// clear screen
+&lt;/span>&lt;span class="c1">&lt;/span> &lt;span class="n">iprintf&lt;/span>&lt;span class="p">(&lt;/span>&lt;span class="s">&amp;#34;&lt;/span>&lt;span class="se">\x1b&lt;/span>&lt;span class="s">[2J&amp;#34;&lt;/span>&lt;span class="p">);&lt;/span>
+&lt;span class="c1">// print at coordinates 10,10
+&lt;/span>&lt;span class="c1">&lt;/span> &lt;span class="n">iprintf&lt;/span>&lt;span class="p">(&lt;/span>&lt;span class="s">&amp;#34;&lt;/span>&lt;span class="se">\x1b&lt;/span>&lt;span class="s">[10;10H&amp;#34;&lt;/span>&lt;span class="p">);&lt;/span>
+&lt;span class="n">iprintf&lt;/span>&lt;span class="p">(&lt;/span>&lt;span class="s">&amp;#34;Hello World!&amp;#34;&lt;/span>&lt;span class="p">);&lt;/span>
+&lt;span class="c1">// (cut)
+&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;p>So - 足够简单了!他有一些自己的 &lt;code>printf&lt;/code> 实现 - 除此之外, 这就只是 &lt;code>C&lt;/code>! 然后同样用 &lt;code>GCC&lt;/code> 编译.&lt;/p>
+&lt;p>所以让我们的代码跑起来并不是&lt;strong>很难&lt;/strong>.&lt;/p>
+&lt;p>以下是完整的代码 &lt;code>source/console.c&lt;/code>:&lt;/p>
+&lt;div class="highlight">&lt;pre class="chroma">&lt;code class="language-c" data-lang="c">&lt;span class="cp">#include&lt;/span> &lt;span class="cpf">&amp;lt;gba_console.h&amp;gt;&lt;/span>&lt;span class="cp">
+&lt;/span>&lt;span class="cp">#include&lt;/span> &lt;span class="cpf">&amp;lt;gba_video.h&amp;gt;&lt;/span>&lt;span class="cp">
+&lt;/span>&lt;span class="cp">#include&lt;/span> &lt;span class="cpf">&amp;lt;gba_interrupt.h&amp;gt;&lt;/span>&lt;span class="cp">
+&lt;/span>&lt;span class="cp">#include&lt;/span> &lt;span class="cpf">&amp;lt;gba_systemcalls.h&amp;gt;&lt;/span>&lt;span class="cp">
+&lt;/span>&lt;span class="cp">&lt;/span>
+&lt;span class="kt">int&lt;/span> &lt;span class="nf">main&lt;/span>&lt;span class="p">(&lt;/span>&lt;span class="kt">void&lt;/span>&lt;span class="p">)&lt;/span> &lt;span class="p">{&lt;/span>
+&lt;span class="n">irqInit&lt;/span>&lt;span class="p">();&lt;/span>
+&lt;span class="n">irqEnable&lt;/span>&lt;span class="p">(&lt;/span>&lt;span class="n">IRQ_VBLANK&lt;/span>&lt;span class="p">);&lt;/span>
+&lt;span class="n">consoleDemoInit&lt;/span>&lt;span class="p">();&lt;/span>
+&lt;span class="c1">// clear screen
+&lt;/span>&lt;span class="c1">&lt;/span> &lt;span class="n">iprintf&lt;/span>&lt;span class="p">(&lt;/span>&lt;span class="s">&amp;#34;&lt;/span>&lt;span class="se">\x1b&lt;/span>&lt;span class="s">[2J&amp;#34;&lt;/span>&lt;span class="p">);&lt;/span>
+&lt;span class="c1">// print at coordinates 10,10
+&lt;/span>&lt;span class="c1">&lt;/span> &lt;span class="n">iprintf&lt;/span>&lt;span class="p">(&lt;/span>&lt;span class="s">&amp;#34;&lt;/span>&lt;span class="se">\x1b&lt;/span>&lt;span class="s">[10;10H&amp;#34;&lt;/span>&lt;span class="p">);&lt;/span>
+&lt;span class="n">uint8_t&lt;/span> &lt;span class="n">arr&lt;/span>&lt;span class="p">[&lt;/span>&lt;span class="mi">8&lt;/span>&lt;span class="p">]&lt;/span> &lt;span class="o">=&lt;/span> &lt;span class="p">{&lt;/span>&lt;span class="mh">0xef&lt;/span>&lt;span class="p">,&lt;/span> &lt;span class="mh">0xcd&lt;/span>&lt;span class="p">,&lt;/span> &lt;span class="mh">0xab&lt;/span>&lt;span class="p">,&lt;/span> &lt;span class="mh">0x89&lt;/span>&lt;span class="p">,&lt;/span> &lt;span class="mh">0x67&lt;/span>&lt;span class="p">,&lt;/span> &lt;span class="mh">0x45&lt;/span>&lt;span class="p">,&lt;/span> &lt;span class="mh">0x23&lt;/span>&lt;span class="p">,&lt;/span> &lt;span class="mh">0x01&lt;/span>&lt;span class="p">};&lt;/span>
+&lt;span class="c1">// arrays are zero-indexed, so `1` is the second item
+&lt;/span>&lt;span class="c1">&lt;/span> &lt;span class="n">uint32_t&lt;/span> &lt;span class="o">*&lt;/span>&lt;span class="n">ptr&lt;/span> &lt;span class="o">=&lt;/span> &lt;span class="p">(&lt;/span>&lt;span class="n">uint32_t&lt;/span> &lt;span class="o">*&lt;/span>&lt;span class="p">)(&lt;/span>&lt;span class="o">&amp;amp;&lt;/span>&lt;span class="n">arr&lt;/span>&lt;span class="p">[&lt;/span>&lt;span class="mi">1&lt;/span>&lt;span class="p">]);&lt;/span>
+&lt;span class="n">iprintf&lt;/span>&lt;span class="p">(&lt;/span>&lt;span class="s">&amp;#34;0x%08x&amp;#34;&lt;/span>&lt;span class="p">,&lt;/span> &lt;span class="o">*&lt;/span>&lt;span class="n">ptr&lt;/span>&lt;span class="p">);&lt;/span>
+&lt;span class="k">while&lt;/span> &lt;span class="p">(&lt;/span>&lt;span class="mi">1&lt;/span>&lt;span class="p">)&lt;/span> &lt;span class="p">{&lt;/span>
+&lt;span class="n">VBlankIntrWait&lt;/span>&lt;span class="p">();&lt;/span>
+&lt;span class="p">}&lt;/span>
+&lt;span class="p">}&lt;/span>
+&lt;/code>&lt;/pre>&lt;/div></description></item><item><title>200行Rust代码解释绿色线程</title><link>https://example.com/posts/translation/rust/green_threads_explained_in_200_lines_of_rust/</link><pubDate>Wed, 18 Nov 2020 13:28:44 +0800</pubDate><guid>https://example.com/posts/translation/rust/green_threads_explained_in_200_lines_of_rust/</guid><description>&lt;img src="https://example.com/posts/translation/rust/green_threads_explained_in_200_lines_of_rust/cover.png" alt="Featured image of post 200行Rust代码解释绿色线程" />&lt;blockquote>
 &lt;p>本译文译自 &lt;a class="link" href="https://cfsamson.gitbook.io/green-threads-explained-in-200-lines-of-rust/" target="_blank" rel="noopener"
 >Green Threads Explained in 200 Lines of Rust&lt;/a>&lt;/p>
 &lt;/blockquote>
@@ -1649,7 +1837,7 @@ error: casting from &lt;span class="sb">`&lt;/span>*mut u8&lt;span class="sb">`&
 &lt;p>Here we go! 首先, 我们将直接干预控制 &lt;code>CPU&lt;/code>. 这并不是特别好移植的因为现实有很多种 &lt;code>CPU&lt;/code>, 主要思路是一样的, 一些实现细节可能会有些许不同.&lt;/p>
 &lt;p>我们在本文中会覆盖到的是使用地更加通用的架构: &lt;code>x86-64&lt;/code>&lt;/p>
 &lt;p>在这个架构中 &lt;code>CPU&lt;/code> 的特点是有一组16个寄存器.&lt;/p>
-&lt;p>&lt;img src="./register_usage.png" alt="register_usage" />&lt;/p>
+&lt;p>&lt;img src="https://example.com/register_usage.png" alt="register_usage" />&lt;/p>
 &lt;p>如果你对图片的其余部分有兴趣的话你可以在 &lt;a class="link" href="https://github.com/hjl-tools/x86-psABI/wiki/X86-psABI" target="_blank" rel="noopener"
 >这里&lt;/a> 找到它.&lt;/p>
 &lt;p>我们感兴趣的是那些被标记为 &lt;code>callee saved&lt;/code> 的寄存器.&lt;/p>
@@ -1814,7 +2002,7 @@ I LOVE WAKING UP ON A NEW STACK!
 &lt;p>我们不会在这里探讨堆和栈的不同, 因为有许多文章都有讨论包括 &lt;a class="link" href="https://doc.rust-lang.org/stable/book/ch04-01-what-is-ownership.html#the-stack-and-the-heap" target="_blank" rel="noopener"
 >The Rust Programming Language&lt;/a> 的其中一章.&lt;/p>
 &lt;h2 id="一个栈看起来长什么样子">一个栈看起来长什么样子&lt;/h2>
-&lt;p>&lt;img src="./simplified_view_of_a_stack.png" alt="simplified_view_of_a_stack" />&lt;/p>
+&lt;p>&lt;img src="https://example.com/simplified_view_of_a_stack.png" alt="simplified_view_of_a_stack" />&lt;/p>
 &lt;p>让我们从一个简化的栈视图开始. 一个64位 &lt;code>CPU&lt;/code> 每次读取8个字节, 尽管我们普通看到的栈是一长行的 &lt;code>u8&lt;/code>, 但我们传递指针的时候需要确保我们传递的是 &lt;code>0016&lt;/code>, &lt;code>0008&lt;/code> 或者 &lt;code>0000&lt;/code>.&lt;/p>
 &lt;p>栈是向下增长的, 所以我们从顶部开始向下进行.&lt;/p>
 &lt;p>当我们设置一个16字节对齐的栈指针, 我们需要确保把我们的栈指针放在16倍数的地址, 在上面的地址中, 唯一满足条件的地址是 &lt;code>0008&lt;/code> (记住栈是从顶部开始的).&lt;/p>
@@ -1898,7 +2086,7 @@ I LOVE WAKING UP ON A NEW STACK!
 &lt;p>&lt;code>Windows x64-86&lt;/code> 的栈设置与 &lt;code>x64-86 psABI&lt;/code> 的调用约定有一些不同. 我将在附录 &lt;a class="link" href="https://cfsamson.gitbook.io/green-threads-explained-in-200-lines-of-rust/supporting-windows" target="_blank" rel="noopener"
 >Windows支持&lt;/a> 中更多的讲关于 &lt;code>Windows&lt;/code> 的栈. 不过有件重要的事要说, 如果像我们这样只是用简单不带参数的函数来设置堆栈, 那么它们不会有太多的不同.&lt;/p>
 &lt;p>&lt;strong>psABI 栈布局长这样:&lt;/strong>&lt;/p>
-&lt;p>&lt;img src="./bilde.png" alt="Stack Frame with Base Pointer" />&lt;/p>
+&lt;p>&lt;img src="https://example.com/bilde.png" alt="Stack Frame with Base Pointer" />&lt;/p>
 &lt;p>如你所看到的 &lt;code>%rsp&lt;/code> 是我们的栈指针. 我们需要把栈指针放在从基地址开始16的倍数的地方. 返回的地址位于相邻的8个字节中, 其上还有一个存储内存参数的房间. 当我们想要做更复杂的事情的时候我们必须牢记这点.&lt;/p>
 &lt;p>你会注意到我们通常把函数地址写入到 &lt;code>stack_ptr + SSIZE - 16&lt;/code> 而没有进行说明. 顺便说一下 &lt;code>SSIZE&lt;/code> 是栈的字节大小.&lt;/p>
 &lt;p>这么说吧, 我们知道一个指针(在例子里是函数指针)的大小是8字节. 我们也知道我们需要把 &lt;code>rsp&lt;/code> 写入到16字节的边界中.&lt;/p>
@@ -2520,33 +2708,33 @@ THREAD 2 FINISHED.
 &lt;p>我跟同学A想合作写一个小工具库，然后选了了 &lt;code>Git&lt;/code> 作为版本控制系统, &lt;code>Github&lt;/code> 作为托管服务器.&lt;/p>
 &lt;p>第一步首先是建立一个 &lt;code>Git&lt;/code> 仓库, 哦不对, 是先下载 &lt;code>Git&lt;/code> 工具, &lt;code>Git&lt;/code> 是全平台的工具, 基本所有操作系统都支持. 我们直接百度找到官网从里面下载就可以了.&lt;/p>
 &lt;p>然后建立 &lt;code>Git&lt;/code> 仓库, 我们怎么建立仓库呢? 有两种方法, 一种是在&lt;code>Github&lt;/code>上创建一个新仓库.&lt;/p>
-&lt;p>&lt;img src="./image-20200926095123639.png" alt="image-20200926095123639" />&lt;/p>
+&lt;p>&lt;img src="https://example.com/image-20200926095123639.png" alt="image-20200926095123639" />&lt;/p>
 &lt;p>登录&lt;code>Github&lt;/code>后, 它长这样, 点击左边那个&lt;code>New&lt;/code>来创建一个新的仓库.&lt;/p>
-&lt;p>&lt;img src="./image-20200926095214192.png" alt="image-20200926095214192" />&lt;/p>
+&lt;p>&lt;img src="https://example.com/image-20200926095214192.png" alt="image-20200926095214192" />&lt;/p>
 &lt;p>如果想让 &lt;code>Github&lt;/code> 帮我们初始化仓库, 那么就选择Add a README file选项. README file一般是对当前仓库所做的事情的一个简介. 相当于使用说明书.&lt;/p>
 &lt;p>让&lt;code>Github&lt;/code>帮我们初始化, 就相当于运行了如下命令:&lt;/p>
 &lt;div class="highlight">&lt;pre class="chroma">&lt;code class="language-bash" data-lang="bash">git init
 git add README.md
 git commit -m &lt;span class="s2">&amp;#34;Initial commit&amp;#34;&lt;/span>
 git remote add origin git@github.com:tian-deng/Cooperation.git //先不管这行
-&lt;/code>&lt;/pre>&lt;/div>&lt;p>&lt;img src="./image-20200926095427092.png" alt="image-20200926095427092" />&lt;/p>
+&lt;/code>&lt;/pre>&lt;/div>&lt;p>&lt;img src="https://example.com/image-20200926095427092.png" alt="image-20200926095427092" />&lt;/p>
 &lt;p>这样就算完成了. 还有一种方法就是在本地用&lt;code>git init&lt;/code>命令创建, 然后回头&lt;code>push&lt;/code>到&lt;code>Github&lt;/code>托管服务器上就ok.&lt;/p>
 &lt;p>我们要合作写项目, 那肯定要上传点东西到&lt;code>Github&lt;/code>服务器, 服务器不能随便让别人直接上传到我们的项目对吧?服务器一般用的都是&lt;code>SSH&lt;/code>协议来验证用户的, 所以需要先添加&lt;code>SSH key&lt;/code>, 打开&lt;code>cmd&lt;/code>, 在本地用&lt;code>ssh-keygen&lt;/code>命令来创建公钥和密钥.一路回车就行&lt;/p>
-&lt;p>&lt;img src="./image-20200926100242413.png" alt="image-20200926100242413" />&lt;/p>
-&lt;p>&lt;img src="./image-20200926100315887.png" alt="image-20200926100315887" />&lt;/p>
+&lt;p>&lt;img src="https://example.com/image-20200926100242413.png" alt="image-20200926100242413" />&lt;/p>
+&lt;p>&lt;img src="https://example.com/image-20200926100315887.png" alt="image-20200926100315887" />&lt;/p>
 &lt;p>然后复制&lt;code>id_rsa.pub&lt;/code>的内容&lt;/p>
 &lt;p>回到我们的网页, 用户头像-&amp;gt;settings-&amp;gt;&lt;code>ssh and gpg keys&lt;/code>&lt;/p>
-&lt;p>&lt;img src="./image-20200926100611386.png" alt="image-20200926100611386" />&lt;/p>
-&lt;p>&lt;img src="./image-20200926100640055.png" alt="image-20200926100640055" />&lt;/p>
+&lt;p>&lt;img src="https://example.com/image-20200926100611386.png" alt="image-20200926100611386" />&lt;/p>
+&lt;p>&lt;img src="https://example.com/image-20200926100640055.png" alt="image-20200926100640055" />&lt;/p>
 &lt;p>在这里来添加我们的公钥.&lt;/p>
 &lt;p>然后就可以上传到我们的&lt;code>Github&lt;/code>仓库了.&lt;/p>
 &lt;p>现在, 一切前序工作都准备完成了, 我们来开始合作敲代码吧~&lt;/p>
 &lt;h1 id="合作">合作&lt;/h1>
 &lt;p>回到我们的&lt;code>Github&lt;/code>仓库, 点击&lt;code>Code&lt;/code>-&amp;gt;&lt;code>SSH&lt;/code>来用&lt;code>SSH&lt;/code>协议将我们的仓库拉到本地, 复制这串链接&lt;/p>
-&lt;p>&lt;img src="./image-20200926100908100.png" alt="image-20200926100908100" />&lt;/p>
-&lt;p>&lt;img src="./image-20200926100933948.png" alt="image-20200926100933948" />&lt;/p>
+&lt;p>&lt;img src="https://example.com/image-20200926100908100.png" alt="image-20200926100908100" />&lt;/p>
+&lt;p>&lt;img src="https://example.com/image-20200926100933948.png" alt="image-20200926100933948" />&lt;/p>
 &lt;p>这里我用两个文件夹来表示我跟&lt;code>david&lt;/code>. 首先&lt;code>bob&lt;/code>把代码从远程复制到本地&lt;/p>
-&lt;p>&lt;img src="./image-20200926101126473.png" alt="image-20200926101126473" />&lt;/p>
+&lt;p>&lt;img src="https://example.com/image-20200926101126473.png" alt="image-20200926101126473" />&lt;/p>
 &lt;p>&lt;code>git clone&lt;/code>命令相当于把代码拷贝了一份, 就跟你直接&lt;code>download&lt;/code>是一个效果.&lt;/p>
 &lt;p>同样的, &lt;code>david&lt;/code>也&lt;code>clone&lt;/code>了一份.&lt;/p>
 &lt;p>以下是&lt;code>bob&lt;/code>的操作:&lt;/p>
@@ -2569,7 +2757,7 @@ git remote add origin git@github.com:tian-deng/Cooperation.git //先不管这行
 &lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;/li>
 &lt;/ol>
 &lt;p>现在回到命令行工具, 我们看看仓库的创建.&lt;/p>
-&lt;p>&lt;img src="./image-20200926102612601.png" alt="image-20200926102612601" />&lt;/p>
+&lt;p>&lt;img src="https://example.com/image-20200926102612601.png" alt="image-20200926102612601" />&lt;/p>
 &lt;p>相信大部分人英语都是比我好的, 翻译过来就是&lt;/p>
 &lt;blockquote>
 &lt;p>当前在主分支上&lt;/p>
@@ -2584,46 +2772,46 @@ git remote add origin git@github.com:tian-deng/Cooperation.git //先不管这行
 &lt;/code>&lt;/pre>&lt;/div>&lt;p>这个命令就是用来在本地和远程服务器的仓库之间建立联系的. 这样 &lt;code>Git&lt;/code> &lt;code>push&lt;/code> 或者说 &lt;code>上传&lt;/code> 代码的时候就知道上传到哪个地方了, 解决了上面一开始的问题.&lt;/p>
 &lt;p>此时查看 &lt;code>git log&lt;/code>, 可以发现 &lt;code>origin/master&lt;/code> 和 &lt;code>origin/HEAD&lt;/code> 也存在, 意思是远程的分支和远程的最新提交在哪个地方.&lt;/p>
 &lt;p>我们可以使用 &lt;code>git remote get-url&lt;/code>来查看某个远程服务器别名的实际地址.&lt;/p>
-&lt;p>&lt;img src="./image-20200926103442795.png" alt="image-20200926103442795" />&lt;/p>
+&lt;p>&lt;img src="https://example.com/image-20200926103442795.png" alt="image-20200926103442795" />&lt;/p>
 &lt;p>好了继续解释 &lt;code>git status&lt;/code> 的信息.&lt;/p>
 &lt;p>接下来是 &lt;code>untracked files&lt;/code>. 未追踪的文件就是说是我们在工作区新添加的文件, 工作区就是我们目前文件夹中的所有内容. 在他的状态还是未追踪的时候, 我们对这个 &lt;code>Git&lt;/code> 仓库进行的大部分操作和命令, 都不会影响到未追踪文件, 包括但不限于&lt;code>git reset&lt;/code>, &lt;code>git checkout&lt;/code>, &lt;code>git commit&lt;/code>, &lt;code>git push&lt;/code>. 这些操作都不会对未追踪文件有任何的影响.&lt;/p>
 &lt;p>未追踪文件就是个&lt;strong>局外人&lt;/strong>, 但我们的&lt;code>src&lt;/code>文件夹显然不是局外人, 所以我们使用&lt;code>git add&lt;/code>命令来让它加入到我们的圈子, 加入到我们的&lt;code>Git&lt;/code>仓库中.&lt;/p>
-&lt;p>&lt;img src="./image-20200926104117353.png" alt="image-20200926104117353" />&lt;/p>
+&lt;p>&lt;img src="https://example.com/image-20200926104117353.png" alt="image-20200926104117353" />&lt;/p>
 &lt;p>好了, 它不是一个局外人了. 它已经融入我们的圈子, 并且随时随地被我们监控着, 影响着.&lt;/p>
 &lt;p>现在, 文件从未追踪状态进入到了暂存区, 进入到暂存区开始, 它的一言一行都会被我们观察到了. 我们现在改变&lt;code>utils.h&lt;/code>的内容.&lt;/p>
-&lt;p>&lt;img src="./image-20200926104813394.png" alt="image-20200926104813394" />&lt;/p>
+&lt;p>&lt;img src="https://example.com/image-20200926104813394.png" alt="image-20200926104813394" />&lt;/p>
 &lt;p>如图, 增加了&lt;code>search&lt;/code>签名. 然后再看看状态.&lt;/p>
-&lt;p>&lt;img src="./image-20200926104854953.png" alt="image-20200926104854953" />&lt;/p>
+&lt;p>&lt;img src="https://example.com/image-20200926104854953.png" alt="image-20200926104854953" />&lt;/p>
 &lt;p>我们改变文件也被追踪到了? 那么现在我想看看我改变了什么.&lt;/p>
 &lt;p>使用&lt;code>git diff&lt;/code>命令&lt;/p>
-&lt;p>&lt;img src="./image-20200926104951468.png" alt="image-20200926104951468" />&lt;/p>
+&lt;p>&lt;img src="https://example.com/image-20200926104951468.png" alt="image-20200926104951468" />&lt;/p>
 &lt;p>显示我们增加了 &lt;code>search&lt;/code> 函数的签名.&lt;/p>
 &lt;p>&lt;code>git diff&lt;/code>不加任何参数默认对比的是暂存区与工作区之间的区别(不包括未追踪文件这个&lt;strong>局外人&lt;/strong>).&lt;/p>
 &lt;p>这就是为什么会有暂存区, 暂存区极大的拓展了&lt;code>Git&lt;/code>对文件追踪的能力, 它可以知道我们改变了什么, 删除了什么, 移动了什么, 而不需要在提交后才能与历史版本进行对比, 它可以追踪我们每次暂存区的变化, 相比较对版本库的&lt;code>diff&lt;/code>, 对暂存区的&lt;code>diff&lt;/code>属于一种更细粒度, 更精细的对比.&lt;/p>
 &lt;p>如果我们想对比暂存区与版本库的区别呢?&lt;/p>
 &lt;p>&lt;code>git diff --cached&lt;/code> 或者 &lt;code>git diff --staged&lt;/code>&lt;/p>
-&lt;p>&lt;img src="./image-20200926105631978.png" alt="image-20200926105631978" />&lt;/p>
+&lt;p>&lt;img src="https://example.com/image-20200926105631978.png" alt="image-20200926105631978" />&lt;/p>
 &lt;p>是不是这里没有我们工作区的修改? 因为我们对工作区的修改还没添加到暂存区.&lt;/p>
 &lt;p>现在我们先使用&lt;code>git commit&lt;/code>进行提交.&lt;/p>
-&lt;p>&lt;img src="./image-20200926105947500.png" alt="image-20200926105947500" />&lt;/p>
+&lt;p>&lt;img src="https://example.com/image-20200926105947500.png" alt="image-20200926105947500" />&lt;/p>
 &lt;p>使用 &lt;code>git log&lt;/code> 看到的是版本库的记录.&lt;/p>
 &lt;p>我们可以看到除了&lt;code>Github&lt;/code>帮我们初始化的提交以外, 又多了一笔新的提交, 同时, 也体现出了远程服务器上的代码还处在第一个提交的状态.&lt;/p>
 &lt;p>然后我们看看仓库的状态.&lt;/p>
-&lt;p>&lt;img src="./image-20200926110127409.png" alt="image-20200926110127409" />&lt;/p>
+&lt;p>&lt;img src="https://example.com/image-20200926110127409.png" alt="image-20200926110127409" />&lt;/p>
 &lt;p>可以看到, 提示我们领先了远程服务器一个提交, 提示我们使用&lt;code>git push&lt;/code>命令来上传代码. 同时还有一个工作区的修改没有添加到暂存区. 我们将其也一并提交了吧~&lt;/p>
-&lt;p>&lt;img src="./image-20200926110258011.png" alt="image-20200926110258011" />&lt;/p>
+&lt;p>&lt;img src="https://example.com/image-20200926110258011.png" alt="image-20200926110258011" />&lt;/p>
 &lt;p>现在我们领先了两笔提交了~&lt;/p>
 &lt;p>然后我们使用&lt;code>git push origin master&lt;/code>将我们的代码上传到&lt;code>origin&lt;/code>服务器的&lt;code>master&lt;/code>分支上.&lt;/p>
-&lt;p>&lt;img src="./image-20200926110420008.png" alt="image-20200926110420008" />&lt;/p>
+&lt;p>&lt;img src="https://example.com/image-20200926110420008.png" alt="image-20200926110420008" />&lt;/p>
 &lt;p>这样就上传完成了~然后我们看看我们的&lt;code>Github&lt;/code>仓库.&lt;/p>
-&lt;p>&lt;img src="./image-20200926110617000.png" alt="image-20200926110617000" />&lt;/p>
+&lt;p>&lt;img src="https://example.com/image-20200926110617000.png" alt="image-20200926110617000" />&lt;/p>
 &lt;p>可以看到&lt;code>4min&lt;/code>前有更新, 然后有了3笔提交.&lt;/p>
 &lt;p>到这里就告一段落了~&lt;/p>
 &lt;p>总之, 我们&lt;code>push&lt;/code>或&lt;code>upload&lt;/code>到远程服务器上的只有我们&lt;code>commit&lt;/code>后的部分, 也就是说只有当前分支版本库中的东西会被上传到远程服务器中, 暂存区, 工作区都是不会被上传的.&lt;/p>
 &lt;h3 id="处理冲突">处理冲突&lt;/h3>
 &lt;p>这时我突然发现我两个函数签名写错了好吧?但我又不想重新用提交来修复我这两个签名, 那么应该怎么做?&lt;/p>
 &lt;p>&lt;code>git reset HEAD^^&lt;/code> 来回退两个提交, 这就相当于同时撤销了我的&lt;code>commit&lt;/code>操作和&lt;code>add&lt;/code>操作, 但是不修改我们目前工作区的文件内容.&lt;/p>
-&lt;p>&lt;img src="./image-20200926160030593.png" alt="image-20200926160030593" />&lt;/p>
+&lt;p>&lt;img src="https://example.com/image-20200926160030593.png" alt="image-20200926160030593" />&lt;/p>
 &lt;p>可以看到我们回到了第一笔提交. 但是我们工作区的文件没有被回退, 在这个基础上修复一下函数签名.&lt;/p>
 &lt;div class="highlight">&lt;pre class="chroma">&lt;code class="language-c" data-lang="c">&lt;span class="cp">#ifndef UTILS
 &lt;/span>&lt;span class="cp">#define UTILS
@@ -2631,23 +2819,23 @@ git remote add origin git@github.com:tian-deng/Cooperation.git //先不管这行
 &lt;span class="kt">void&lt;/span> &lt;span class="nf">search&lt;/span>&lt;span class="p">(&lt;/span>&lt;span class="kt">int&lt;/span> &lt;span class="n">arrays&lt;/span>&lt;span class="p">[],&lt;/span> &lt;span class="kt">int&lt;/span> &lt;span class="n">length&lt;/span>&lt;span class="p">);&lt;/span>
 &lt;span class="cp">#endif
 &lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;p>然后重新 &lt;code>add commit&lt;/code>, 把之前的两笔合并到一起吧.&lt;/p>
-&lt;p>&lt;img src="./image-20200926160412401.png" alt="image-20200926160412401" />&lt;/p>
+&lt;p>&lt;img src="https://example.com/image-20200926160412401.png" alt="image-20200926160412401" />&lt;/p>
 &lt;p>然后我们上传代码.&lt;/p>
-&lt;p>&lt;img src="./image-20200926160442209.png" alt="image-20200926160442209" />&lt;/p>
+&lt;p>&lt;img src="https://example.com/image-20200926160442209.png" alt="image-20200926160442209" />&lt;/p>
 &lt;p>提示我们远程分支要比我们本地的分支领先(本地两个提交, 远程有三个, 因为我们把两笔提交合并到一起了), 提示我们要用 &lt;code>git pull&lt;/code> 更新代码.&lt;/p>
-&lt;p>&lt;img src="./image-20200926160637984.png" alt="image-20200926160637984" />&lt;/p>
+&lt;p>&lt;img src="https://example.com/image-20200926160637984.png" alt="image-20200926160637984" />&lt;/p>
 &lt;p>提示我们有冲突, 需要我们处理好冲突再提交.&lt;/p>
 &lt;p>那么我们再打开我们的&lt;code>utils.h&lt;/code>看看.&lt;/p>
-&lt;p>&lt;img src="./image-20200926160746919.png" alt="image-20200926160746919" />&lt;/p>
+&lt;p>&lt;img src="https://example.com/image-20200926160746919.png" alt="image-20200926160746919" />&lt;/p>
 &lt;p>发现多了几行提示? &lt;code>&amp;lt;&amp;lt;&amp;lt;&lt;/code>到&lt;code>===&lt;/code>的部分表示我们本地的代码, &lt;code>===&lt;/code>到&lt;code>&amp;gt;&amp;gt;&amp;gt;&lt;/code>的部分表示我们要&lt;code>merge&lt;/code>的代码, 我们只需要保留正确的就可以了. 同时也需要删掉&lt;code>Git&lt;/code>给我们的那些提示部分(&lt;code>&amp;lt;&amp;lt;&amp;lt;&lt;/code>行,&lt;code>===&lt;/code>行和&lt;code>&amp;gt;&amp;gt;&amp;gt;&lt;/code>这三行也需要删掉).&lt;/p>
-&lt;p>&lt;img src="./image-20200926161012895.png" alt="image-20200926161012895" />&lt;/p>
+&lt;p>&lt;img src="https://example.com/image-20200926161012895.png" alt="image-20200926161012895" />&lt;/p>
 &lt;p>处理完冲突后我们重新&lt;code>add commit&lt;/code>, 然后&lt;code>git log&lt;/code>看看.&lt;/p>
-&lt;p>&lt;img src="./image-20200926161110874.png" alt="image-20200926161110874" />&lt;/p>
+&lt;p>&lt;img src="https://example.com/image-20200926161110874.png" alt="image-20200926161110874" />&lt;/p>
 &lt;p>我们本来只是想让提交变少一点, 现在是不是多此一举啊.&lt;/p>
 &lt;p>有解决方法么? 有, 就是在&lt;code>git push&lt;/code>的时候添加&lt;code>--force&lt;/code>参数, 这样就完全是用本地的版本库去覆盖服务器的版本库. 这在我们自己小范围几个人做项目的时候没问题, 但是如果人多了起来, 突然发现远程版本库怎么回退了? 那中间如果夹杂了其他人的提交怎么办?他们的工作是不是也浪费掉了?&lt;/p>
 &lt;p>所以一般是不会允许&lt;code>--force&lt;/code>操作的, 也就是说一般是不允许回退到服务器之前的版本中的, 回退服务器中的版本是需要一定权限的. 如果自己在代码注释里骂了老板骂了公司, 没上传就晴天, 如果上传了, 就期待着老板是自己亲戚吧~&lt;/p>
 &lt;p>自己的回退一般在&lt;code>gerrit&lt;/code>里代码审查是无法通过的. 所以我们就带着我们的错误记录一起上传到服务器吧~&lt;/p>
-&lt;p>&lt;img src="./image-20200926162110736.png" alt="image-20200926162110736" />&lt;/p>
+&lt;p>&lt;img src="https://example.com/image-20200926162110736.png" alt="image-20200926162110736" />&lt;/p>
 &lt;p>好了, 现在&lt;code>bob&lt;/code>把&lt;code>sort&lt;/code>函数的实现交给&lt;code>david&lt;/code>去做了, 此时&lt;code>david&lt;/code>更新了代码, 快排如火如荼的进行着&amp;hellip;&amp;hellip;&lt;/p>
 &lt;p>然后&lt;code>bob&lt;/code>开始写&lt;code>search&lt;/code>二分查找的实现(此时&lt;code>david&lt;/code>在查快排是什么).&lt;/p>
 &lt;p>但是二分查找法是建立在数组有序的情况下的, 所以&lt;code>bob&lt;/code>就先简单实现了一个冒泡算法来应付一下排序.&lt;/p>
@@ -2685,7 +2873,7 @@ git remote add origin git@github.com:tian-deng/Cooperation.git //先不管这行
 &lt;span class="p">}&lt;/span>
 &lt;/code>&lt;/pre>&lt;/div>&lt;p>随后他 &lt;code>add commit push&lt;/code> 三连, &lt;code>bob&lt;/code>解放了&amp;hellip;&lt;/p>
 &lt;p>等等&amp;hellip;&lt;code>bob&lt;/code> &lt;code>push&lt;/code>上传代码出问题了&lt;/p>
-&lt;p>&lt;img src="./image-20200926174746192.png" alt="image-20200926174746192" />&lt;/p>
+&lt;p>&lt;img src="https://example.com/image-20200926174746192.png" alt="image-20200926174746192" />&lt;/p>
 &lt;p>接下来是 &lt;code>david&lt;/code> 在 &lt;code>bob&lt;/code> 编写代码的同时所做的操作.&lt;/p>
 &lt;h2 id="david">&lt;code>david&lt;/code>&lt;/h2>
 &lt;p>&lt;code>david&lt;/code>明显就比&lt;code>bob&lt;/code>厉害多了, 他修改代码前先创建了一个&lt;code>work&lt;/code>分支.&lt;/p>
@@ -2693,12 +2881,12 @@ git remote add origin git@github.com:tian-deng/Cooperation.git //先不管这行
 &lt;p>&lt;code>git checkout -b work&lt;/code>是这两条命令的结合版.&lt;/p>
 &lt;h3 id="对比代码">对比代码&lt;/h3>
 &lt;p>创建好分支后他好奇的看了看&lt;code>git log&lt;/code>&lt;/p>
-&lt;p>&lt;img src="./image-20200926170205823.png" alt="image-20200926170205823" />&lt;/p>
+&lt;p>&lt;img src="https://example.com/image-20200926170205823.png" alt="image-20200926170205823" />&lt;/p>
 &lt;p>怎么写个接口还能有这么多提交的? &lt;code>bob&lt;/code>是&lt;code>sb&lt;/code>吗?&lt;/p>
 &lt;p>然后他想看看为什么, 于是输入了如下命令.&lt;/p>
-&lt;p>&lt;img src="./image-20200926170312748.png" alt="image-20200926170312748" />&lt;/p>
+&lt;p>&lt;img src="https://example.com/image-20200926170312748.png" alt="image-20200926170312748" />&lt;/p>
 &lt;p>不禁默默的在头文件加了个注释.&lt;/p>
-&lt;p>&lt;img src="./image-20200926170459181.png" alt="image-20200926170459181" />&lt;/p>
+&lt;p>&lt;img src="https://example.com/image-20200926170459181.png" alt="image-20200926170459181" />&lt;/p>
 &lt;p>然后开始了他的代码之旅&amp;hellip;&amp;hellip;&lt;/p>
 &lt;div class="highlight">&lt;pre class="chroma">&lt;code class="language-c" data-lang="c">&lt;span class="cp">#include&lt;/span> &lt;span class="cpf">&amp;#34;utils.h&amp;#34;&lt;/span>&lt;span class="cp">
 &lt;/span>&lt;span class="cp">&lt;/span>&lt;span class="kt">void&lt;/span> &lt;span class="nf">swap&lt;/span>&lt;span class="p">(&lt;/span>&lt;span class="kt">int&lt;/span> &lt;span class="o">*&lt;/span>&lt;span class="n">p&lt;/span>&lt;span class="p">,&lt;/span> &lt;span class="kt">int&lt;/span> &lt;span class="o">*&lt;/span>&lt;span class="n">q&lt;/span>&lt;span class="p">)&lt;/span> &lt;span class="p">{&lt;/span>
@@ -2731,10 +2919,10 @@ git remote add origin git@github.com:tian-deng/Cooperation.git //先不管这行
 &lt;/code>&lt;/pre>&lt;/div>&lt;p>搞定, 写完提交~&lt;/p>
 &lt;h3 id="图形化log分析分支信息">图形化&lt;code>log&lt;/code>分析分支信息&lt;/h3>
 &lt;p>然后&lt;code>david&lt;/code>切换到主分支, 开始同步到最新的代码.&lt;/p>
-&lt;p>&lt;img src="./image-20200926172043377.png" alt="image-20200926172043377" />&lt;/p>
+&lt;p>&lt;img src="https://example.com/image-20200926172043377.png" alt="image-20200926172043377" />&lt;/p>
 &lt;p>怎么回事, 一般来说同步代码后远程(&lt;code>origin/master&lt;/code>和&lt;code>origin/HEAD&lt;/code>)应该是最新的提交, 怎么不是最新的呢?&lt;/p>
 &lt;p>我们用更清楚的&lt;code>git log&lt;/code>看看情况好吧, 看看&lt;code>origin/master&lt;/code>到底是怎么回事.&lt;/p>
-&lt;p>&lt;img src="./image-20200926172629611.png" alt="image-20200926172629611" />&lt;/p>
+&lt;p>&lt;img src="https://example.com/image-20200926172629611.png" alt="image-20200926172629611" />&lt;/p>
 &lt;ul>
 &lt;li>&lt;code>--oneline&lt;/code> :: 每个提交用一行表示, 类似于&lt;code>--pretty=oneline&lt;/code>&lt;/li>
 &lt;li>&lt;code>--graph&lt;/code> :: 用图形化表示.&lt;/li>
@@ -2750,7 +2938,7 @@ git remote add origin git@github.com:tian-deng/Cooperation.git //先不管这行
 &lt;p>&lt;code>git reset c284bca --hard&lt;/code>&lt;/p>
 &lt;p>&lt;code>--hard&lt;/code>表示不仅回滚版本库与暂存库(相当于撤销了&lt;code>commit&lt;/code>和&lt;code>add&lt;/code>), 同时还对&lt;code>c284bca&lt;/code>版本库中的文件使用&lt;code>git checkout -- files.....&lt;/code>覆盖了工作区. 等于同时撤销了版本库, 暂存库, 工作区.&lt;/p>
 &lt;p>然后我们回退到&lt;code>origin/master&lt;/code>所在的分支看看.&lt;/p>
-&lt;p>&lt;img src="./image-20200926173516102.png" alt="image-20200926173516102" />&lt;/p>
+&lt;p>&lt;img src="https://example.com/image-20200926173516102.png" alt="image-20200926173516102" />&lt;/p>
 &lt;p>哦完美&amp;hellip;&amp;hellip;&lt;/p>
 &lt;h3 id="合并指定提交">合并指定提交&lt;/h3>
 &lt;p>&lt;code>david&lt;/code>怎么把他的工作成果合并到主分支呢? 难道要对比着重写吗?&lt;/p>
@@ -2760,30 +2948,30 @@ git remote add origin git@github.com:tian-deng/Cooperation.git //先不管这行
 &lt;p>可不可以只挑&lt;code>david&lt;/code>提交代码的那个合并过来?&lt;/p>
 &lt;p>使用&lt;code>git cherry-pick&lt;/code>可以指定要合并的提交, 然后只合并需要的部分就可以了.&lt;/p>
 &lt;p>然后我们使用&lt;code>git log work --oneline&lt;/code>就可以在不切换分支的情况下查看其他分支的&lt;code>log&lt;/code>了&lt;/p>
-&lt;p>&lt;img src="./image-20200926173915727.png" alt="image-20200926173915727" />&lt;/p>
+&lt;p>&lt;img src="https://example.com/image-20200926173915727.png" alt="image-20200926173915727" />&lt;/p>
 &lt;p>&lt;code>git cherry-pick 3434562&lt;/code>&lt;/p>
-&lt;p>&lt;img src="./image-20200926174018338.png" alt="image-20200926174018338" />&lt;/p>
+&lt;p>&lt;img src="https://example.com/image-20200926174018338.png" alt="image-20200926174018338" />&lt;/p>
 &lt;p>再看看&lt;code>log&lt;/code>&lt;/p>
-&lt;p>&lt;img src="./image-20200926174041619.png" alt="image-20200926174041619" />&lt;/p>
+&lt;p>&lt;img src="https://example.com/image-20200926174041619.png" alt="image-20200926174041619" />&lt;/p>
 &lt;p>完美好吧, 干净整齐.&lt;/p>
 &lt;p>突然想起来, 刚才好像在一个文件里骂过&lt;code>bob&lt;/code>, 怎么办呢.&lt;/p>
 &lt;p>&lt;code>git reset --soft HEAD^&lt;/code>软回退到提交前, 软回退是只撤销&lt;code>commit&lt;/code>, 不撤销&lt;code>add&lt;/code>, 也不会把版本库或者暂存库的文件覆盖到工作区中.&lt;/p>
-&lt;p>&lt;img src="./image-20200926175450629.png" alt="image-20200926175450629" />&lt;/p>
+&lt;p>&lt;img src="https://example.com/image-20200926175450629.png" alt="image-20200926175450629" />&lt;/p>
 &lt;p>可以看到我们的暂存区也没有被回退, 省去我们重新添加&lt;code>utils.c&lt;/code>文件了. 我们把那行骂&lt;code>bob&lt;/code>的话删掉. 然后&lt;code>add commit push&lt;/code>三连.&lt;/p>
 &lt;p>&lt;code>git push origin master&lt;/code>&lt;/p>
 &lt;p>工作&lt;code>over&lt;/code>&lt;/p>
 &lt;h2 id="bob-1">&lt;code>bob&lt;/code>&lt;/h2>
 &lt;h3 id="同步出错">同步出错&lt;/h3>
 &lt;p>回到&lt;code>bob&lt;/code>这里, 再看看错误原因.&lt;/p>
-&lt;p>&lt;img src="./image-20200926174818194.png" alt="image-20200926174818194" />&lt;/p>
+&lt;p>&lt;img src="https://example.com/image-20200926174818194.png" alt="image-20200926174818194" />&lt;/p>
 &lt;p>这里提示我们本地分支不是最新的版本, 需要先同步代码才可以. 因为&lt;code>david&lt;/code>在我们提交代码前就已经把他的快排写完上传到服务器上了, 那我们同步一下试试.&lt;/p>
-&lt;p>&lt;img src="./image-20200926174913005.png" alt="image-20200926174913005" />&lt;/p>
+&lt;p>&lt;img src="https://example.com/image-20200926174913005.png" alt="image-20200926174913005" />&lt;/p>
 &lt;p>怎么又有冲突啊, &lt;code>bob&lt;/code>崩溃了&amp;hellip;&lt;/p>
 &lt;p>再看看状态.&lt;/p>
-&lt;p>&lt;img src="./image-20200926175901016.png" alt="image-20200926175901016" />&lt;/p>
+&lt;p>&lt;img src="https://example.com/image-20200926175901016.png" alt="image-20200926175901016" />&lt;/p>
 &lt;p>我们又有个冲突的文件&lt;code>src/utils.c&lt;/code>, 这是因为&lt;code>david&lt;/code>和&lt;code>bob&lt;/code>都有修改文件, 合并的时候&lt;code>Git&lt;/code>不知道该保留哪些部分.&lt;/p>
 &lt;p>这里说明一下, &lt;code>git pull&lt;/code>相当于&lt;code>git fetch&lt;/code>与&lt;code>git merge origin/master&lt;/code>两个操作的结合版, 输入&lt;code>git branch --all&lt;/code>查看所有分支.&lt;/p>
-&lt;p>&lt;img src="./image-20200926180603738.png" alt="image-20200926180603738" />&lt;/p>
+&lt;p>&lt;img src="https://example.com/image-20200926180603738.png" alt="image-20200926180603738" />&lt;/p>
 &lt;p>可以看到包括远程的分支也在.&lt;/p>
 &lt;p>也就是说&lt;code>git pull&lt;/code>相当于把远程分支的代码拉下来, 然后再将它合并到当前的分支. 所以这里会提示你处理合并的冲突.&lt;/p>
 &lt;p>我们之前处理过冲突这种事情, 所以再次处理冲突问题应该是小菜一碟了. 但是处理冲突会产生&lt;code>commit&lt;/code>提交, 同时也会在&lt;code>git log --oneline --graph --all&lt;/code>出现一个表示分支合并的横线. 我们现在想主分支只有一条干净的直线, 不要有那些弯弯绕绕, 那应该怎么做呢?&lt;/p>
@@ -2791,9 +2979,9 @@ git remote add origin git@github.com:tian-deng/Cooperation.git //先不管这行
 &lt;p>我们先&lt;code>git merge --abort&lt;/code>撤销&lt;code>merge&lt;/code>操作.&lt;/p>
 &lt;p>然后使用嫁接&lt;code>git rebase&lt;/code>.&lt;/p>
 &lt;p>&lt;code>git rebase origin/master&lt;/code>&lt;/p>
-&lt;p>&lt;img src="./image-20200926180847711.png" alt="image-20200926180847711" />&lt;/p>
+&lt;p>&lt;img src="https://example.com/image-20200926180847711.png" alt="image-20200926180847711" />&lt;/p>
 &lt;p>同样提示我们有冲突, 那这跟&lt;code>git merge&lt;/code>有什么区别吗?我们先继续向下进行.&lt;/p>
-&lt;p>&lt;img src="./image-20200926181024548.png" alt="image-20200926181024548" />&lt;/p>
+&lt;p>&lt;img src="https://example.com/image-20200926181024548.png" alt="image-20200926181024548" />&lt;/p>
 &lt;p>然后我们保留&lt;code>david&lt;/code>更加高效的排序算法和&lt;code>bob&lt;/code>的二分查找算法, 文件最终为这样&lt;/p>
 &lt;div class="highlight">&lt;pre class="chroma">&lt;code class="language-c" data-lang="c">&lt;span class="cp">#include&lt;/span> &lt;span class="cpf">&amp;#34;utils.h&amp;#34;&lt;/span>&lt;span class="cp">
 &lt;/span>&lt;span class="cp">&lt;/span>&lt;span class="kt">void&lt;/span> &lt;span class="nf">swap&lt;/span>&lt;span class="p">(&lt;/span>&lt;span class="kt">int&lt;/span> &lt;span class="o">*&lt;/span>&lt;span class="n">p&lt;/span>&lt;span class="p">,&lt;/span> &lt;span class="kt">int&lt;/span> &lt;span class="o">*&lt;/span>&lt;span class="n">q&lt;/span>&lt;span class="p">)&lt;/span> &lt;span class="p">{&lt;/span>
@@ -2839,7 +3027,7 @@ git remote add origin git@github.com:tian-deng/Cooperation.git //先不管这行
 &lt;span class="p">}&lt;/span>
 &lt;/code>&lt;/pre>&lt;/div>&lt;p>完美~&lt;/p>
 &lt;p>搞定后首先&lt;code>git add&lt;/code>, 然后&lt;code>git rebase --continue&lt;/code>, 再来看看&lt;code>git log&lt;/code>.&lt;/p>
-&lt;p>&lt;img src="./image-20200926181512804.png" alt="image-20200926181512804" />&lt;/p>
+&lt;p>&lt;img src="https://example.com/image-20200926181512804.png" alt="image-20200926181512804" />&lt;/p>
 &lt;p>是不是很干净的一条直线?并且也没有多出来任何提交~&lt;/p>
 &lt;h3 id="忽略文件">忽略文件&lt;/h3>
 &lt;p>我们现在想写个函数测试一下我们的成果.&lt;/p>
@@ -2862,16 +3050,16 @@ git remote add origin git@github.com:tian-deng/Cooperation.git //先不管这行
 &lt;span class="kt">int&lt;/span> &lt;span class="n">index&lt;/span> &lt;span class="o">=&lt;/span> &lt;span class="n">search&lt;/span>&lt;span class="p">(&lt;/span>&lt;span class="n">a&lt;/span>&lt;span class="p">,&lt;/span> &lt;span class="mi">13&lt;/span>&lt;span class="p">,&lt;/span> &lt;span class="n">target&lt;/span>&lt;span class="p">);&lt;/span>
 &lt;span class="n">printf&lt;/span>&lt;span class="p">(&lt;/span>&lt;span class="s">&amp;#34;num %d&amp;#39;s index is: %d.&lt;/span>&lt;span class="se">\n&lt;/span>&lt;span class="s">&amp;#34;&lt;/span>&lt;span class="p">,&lt;/span> &lt;span class="n">target&lt;/span>&lt;span class="p">,&lt;/span> &lt;span class="n">index&lt;/span> &lt;span class="o">+&lt;/span> &lt;span class="mi">1&lt;/span>&lt;span class="p">);&lt;/span>
 &lt;span class="p">}&lt;/span>
-&lt;/code>&lt;/pre>&lt;/div>&lt;p>&lt;img src="./image-20200926184939631.png" alt="image-20200926184939631" />&lt;/p>
+&lt;/code>&lt;/pre>&lt;/div>&lt;p>&lt;img src="https://example.com/image-20200926184939631.png" alt="image-20200926184939631" />&lt;/p>
 &lt;p>完美~&lt;/p>
 &lt;p>工作结束~&lt;/p>
 &lt;p>但我们需要上传我们的&lt;code>main&lt;/code>函数和编译好的二进制文件到别人那里吗?并不需要吧. 但每次&lt;code>git status&lt;/code>里不停的说存在未跟踪文件, 就很烦. 怎么办呢~&lt;/p>
 &lt;p>我们可以使用&lt;code>.gitignore&lt;/code>文件来忽略掉我们不需要的东西, 甚至&lt;code>.gitignore&lt;/code>文件本身.&lt;/p>
 &lt;p>在仓库目录创建&lt;code>.gitignore&lt;/code>文件&lt;/p>
-&lt;p>&lt;img src="./image-20200926185819487.png" alt="image-20200926185819487" />&lt;/p>
+&lt;p>&lt;img src="https://example.com/image-20200926185819487.png" alt="image-20200926185819487" />&lt;/p>
 &lt;p>内容如图, 目前工作结果如图.&lt;/p>
 &lt;p>工作完成~&lt;/p>
-&lt;p>&lt;img src="./image-20200926185937771.png" alt="image-20200926185937771" />&lt;/p>
+&lt;p>&lt;img src="https://example.com/image-20200926185937771.png" alt="image-20200926185937771" />&lt;/p>
 &lt;p>&lt;code>Github&lt;/code>的最终成果.&lt;a class="link" href="https://github.com/tian-deng/Cooperation/commits/master" target="_blank" rel="noopener"
 >仓库地址&lt;/a>&lt;/p>
 &lt;p>到这里就告一段落了~你已经学会了&lt;code>Git&lt;/code>的最常用的一些操作了!!!&lt;/p>
