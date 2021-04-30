@@ -2213,3 +2213,226 @@ $ cargo run -q
 
 ## 我们想要什么? 对齐! 我们为什么要它? Well...
 
+回到 `C` 发明的年代, 那个时候有些处理器不怎么支持没有对齐过的内存访问.
+
+对于这些处理器, 没有对齐的内存访问可能会导致[抛出一个处理器错误](https://www.kernel.org/doc/Documentation/unaligned-memory-access.txt): 异常处理器或许能够正常访问一个没有对齐的内存, 但是会浪费较多的性能, 或者是干脆没法访问未对齐的内存, 然后程序运行就被 abort 了.
+
+在另一些处理器架构里, 像是英特尔的 "Core 2" 系列, 通常会用一些性能损耗来支持未对齐的内存.
+
+我本来想在这里放上一些 microbenchmarks, 但是它们有时候会互相矛盾 - 基准测试有很多影响因素. 有些基准测试显示有 10% 的性能降低, 有些会降低 50%, 显然有很多会影响到关于访问未对齐内存的性能测试.
+
+但是请记住, 即使处理器开始对未对齐内存做了一级支持, 但是出于性能原因仍然要避免使用未对齐内存.
+
+我通常把最好的东西留到最后说 但是:
+
+一些架构可能不会抛出处理器异常, 而是静默地执行一些不同的读操作.
+
+![An example ARMv4t chip: the sound processor chip for the SEGA NAOMI arcade system.](armv4t.jpg)
+
+<div class="dialog">
+    <img src="./bear.svg" class="dialog-head" />
+    <div class="dialog-text">
+        <p>等等, 它会执行不同的读操作?</p>
+    </div>
+</div>
+
+<div class="dialog amos">
+    <img src="./author.svg" class="dialog-head" />
+    <div class="dialog-text">
+        <p>是的.</p>
+    </div>
+</div>
+
+<div class="dialog">
+    <img src="./bear.svg" class="dialog-head" />
+    <div class="dialog-text">
+        <p>听起来很恐怖, 真的会发生吗? 你可以证实它吗?</p>
+    </div>
+</div>
+
+<div class="dialog amos">
+    <img src="./author.svg" class="dialog-head" />
+    <div class="dialog-text">
+        <p>我会的.</p>
+    </div>
+</div>
+
+## 很久很久, 在ARMv5以前...
+
+我们已经在这篇文章里读了一些关于未对齐内存的内容.
+
+所以展示上面所说的不同的读操作会相对比较容易.
+
+首先你需要一些数据 - 我们只用了 8 个不同的字节值, 这很容易理解后面将会发生什么.
+
+```c
+	uint8_t arr[8] = { 0xef, 0xcd, 0xab, 0x89, 0x67, 0x45, 0x23, 0x01 };
+```
+
+然后我们去读一个没有对齐的地址. 举个例子, 我们尝试从数组的第二个元素开始读取一个 `uint32_t`.
+
+```c
+#include <stdint.h>
+#include <stdio.h>
+
+int main() {
+    uint8_t arr[8] = {0xef, 0xcd, 0xab, 0x89, 0x67, 0x45, 0x23, 0x01};
+    // arrays are zero-indexed, so `1` is the second item
+    uint32_t *ptr = (uint32_t *)(&arr[1]);
+    printf("0x%08x\n", *ptr);
+    return 0;
+}
+```
+
+猜猜会打印什么? 是 `0xcdab8967`? 错了!
+
+我2018年的i7处理器是一个小端处理器:
+```shell
+$ lscpu | grep -E '(Byte Order|Model name)'
+Byte Order:                      Little Endian
+Model name:                      Intel(R) Core(TM) i7-8750H CPU @ 2.20GHz
+```
+
+这意味着字节是从最低有效值存储到最高有效值.
+
+所以与其说是这样子的:
+
+<img src="./big-endian-unaligned-read.svg" />
+
+其实是这样子的:
+
+<img src="./little-endian-unaligned-read.svg" />
+
+```shell
+$ gcc -Wall main.c -o main && ./main
+0x6789abcd
+```
+
+这就是为什么我为我的数组选了这些好辨识的值的原因.
+
+<div class="dialog">
+    <img src="./bear.svg" class="dialog-head" />
+    <div class="dialog-text">
+        <p>好吧, 我仍然无法相信你 - 因为这些没有对齐的数据看起来工作的很好.</p>
+    </div>
+</div>
+
+<div class="dialog amos">
+    <img src="./author.svg" class="dialog-head" />
+    <div class="dialog-text">
+        <p>Yes, yes. 但是如果你在GBA上跑这些数据?</p>
+    </div>
+</div>
+
+![A 'Glacier' Game Boy Advance - one of the colors available at launch in North America](gba.jpg)
+
+<div class="dialog amos">
+    <img src="./author.svg" class="dialog-head" />
+    <div class="dialog-text">
+        <p>The Game Boy Advance has a 16.8 MHz 32-bit ARM7TDMI processor - which implements the ARMv4T micro-architecture?</p>
+    </div>
+</div>
+
+<div class="dialog">
+    <img src="./bear.svg" class="dialog-head" />
+    <div class="dialog-text">
+        <p>行行行, 那这意味着什么呢?</p>
+    </div>
+</div>
+
+<div class="dialog amos">
+    <img src="./author.svg" class="dialog-head" />
+    <div class="dialog-text">
+        <p>它意味着我们回到了2001.</p>
+    </div>
+</div>
+
+<div class="dialog">
+    <img src="./bear.svg" class="dialog-head" />
+    <div class="dialog-text">
+        <p>行, 我很好奇 - 我们怎么在2020年给GBA编译?</p>
+    </div>
+</div>
+
+<div class="dialog amos">
+    <img src="./author.svg" class="dialog-head" />
+    <div class="dialog-text">
+        <p>It's simple! Just install devKitPro on your OS of choice, and, uh, read a bit lot of documentation, and you're good to go!</p>
+    </div>
+</div>
+
+| [devKitPro](https://devkitpro.org/wiki/Getting_Started)
+
+<div class="dialog">
+    <img src="./bear.svg" class="dialog-head" />
+    <div class="dialog-text">
+        <p>我以前是不是看你尝试过一个AS-1100虚拟机？ 然后是SH4?</p>
+    </div>
+</div>
+
+<div class="dialog amos">
+    <img src="./author.svg" class="dialog-head" />
+    <div class="dialog-text">
+        <p>Yeah well, hindsight is 20/20(大概是事后诸葛亮的意思). Do you want to see something cool or not?</p>
+    </div>
+</div>
+
+<div class="dialog">
+    <img src="./bear.svg" class="dialog-head" />
+    <div class="dialog-text">
+        <p>继续吧继续吧!</p>
+    </div>
+</div>
+
+我以前也没读过关于GBA开发的相关文档, 我只是找了个项目[VisualBoyAdvance](https://vba-m.com/):
+
+![](gba-hello.png)
+
+这个项目的 `C` 代码看起来如下:
+
+```c
+    // (cut)
+
+    // clear screen
+    iprintf("\x1b[2J");
+    // print at coordinates 10,10
+    iprintf("\x1b[10;10H");
+
+    iprintf("Hello World!");
+
+    // (cut)
+```
+
+So - 足够简单了!他有一些自己的 `printf` 实现 - 除此之外, 这就只是 `C`! 然后同样用 `GCC` 编译.
+
+所以让我们的代码跑起来并不是**很难**.
+
+以下是完整的代码 `source/console.c`:
+
+```c
+#include <gba_console.h>
+#include <gba_video.h>
+#include <gba_interrupt.h>
+#include <gba_systemcalls.h>
+
+int main(void) {
+    irqInit();
+    irqEnable(IRQ_VBLANK);
+
+    consoleDemoInit();
+
+    // clear screen
+    iprintf("\x1b[2J");
+    // print at coordinates 10,10
+    iprintf("\x1b[10;10H");
+
+    uint8_t arr[8] = {0xef, 0xcd, 0xab, 0x89, 0x67, 0x45, 0x23, 0x01};
+    // arrays are zero-indexed, so `1` is the second item
+    uint32_t *ptr = (uint32_t *)(&arr[1]);
+    iprintf("0x%08x", *ptr);
+
+    while (1) {
+        VBlankIntrWait();
+    }
+}
+```
