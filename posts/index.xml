@@ -8,14 +8,7 @@
 谁适合阅读这篇文章 我们深陷在一个兔子坑中, 如果它听起来很可怕, 那么这篇文章可能不适合你, 像曾经一样去做点轻松愉悦的事情吧~
 如果你还是很好奇事情是如何工作的, 那么继续读下去. 你可能听说过 Go 的 goroutines, 或者 Ruby 和 Julia 中等价的那些, 你可能知道它们怎么使用但是又想知道它们是如何工作的, 请继续读下去.
 另外, 如果你是以下这类人的话那也可能比较有趣:
-你是 Rust 初学者并且想学习更多的特性. 你已经在 Rust社区 中了解讨论过 async/await, Pin, 和为什么需要生成器. 我们将试着把那些都整合在这篇文章中. 或许你想了解 Rust 内联汇编的基础知识.</description></item><item><title>逆变与协变</title><link>https://example.com/posts/programminglanguage/covariance_and_contravariance/</link><pubDate>Wed, 18 Nov 2020 13:28:44 +0800</pubDate><guid>https://example.com/posts/programminglanguage/covariance_and_contravariance/</guid><description>逆变和协变看了忘忘了看, 这次学C#顺带查阅各处总结了下&amp;hellip;
-协变
-协变是指能够使用比原始指定的类型派生程度更大的类型.
-例如Dog与Cat继承自Animal, 那么从Dog-&amp;gt;Animal就称为协变, 那么协变有什么作用呢?
-// Animal.cs public abstract class Animal { } public class Dog : Animal { } // Main.cs public static void Main() { Dog dog = new Dog(); Animal animal = dog; List&amp;lt;Dog&amp;gt; dogs = new List&amp;lt;Dog&amp;gt;(); List&amp;lt;Animal&amp;gt; animals = dogs; // error } Dog继承自Animal, 所以Dog可以隐式的转化为Animal, 但是List与List之间没有继承关系, 所以无法隐式转换, 如果想要隐式转换需要如下代码:
-List&amp;lt;Animal&amp;gt; animals = dogs.Select(d =&amp;gt; (Animal)d).ToList(); 将小狗列表中的小狗挨个显式转换为Animal.
-所以C#提供了协变的语法糖, 也就是out, 意思是指该泛型可以作为输出返回. 也就是说可以用如下代码:
-// Main.cs public static void Main() { Dog dog = new Dog(); Animal animal = dog; IEnumerable&amp;lt;Dog&amp;gt; dogs = new List&amp;lt;Dog&amp;gt;(); IEnumerable&amp;lt;Animal&amp;gt; animals = dogs; } // IEnumerable public interface IEnumerable&amp;lt;out T&amp;gt;: IEnumerable 因为T只能作为结果返回, 所以T不会被修改, 编译器可以帮我们进行强制转换.</description></item><item><title>Git操作指北</title><link>https://example.com/posts/tools/git/basic_git/</link><pubDate>Sat, 26 Sep 2020 21:34:18 +0800</pubDate><guid>https://example.com/posts/tools/git/basic_git/</guid><description>TODO: 对本版博文不是很满意, 后续重新更新~
+你是 Rust 初学者并且想学习更多的特性. 你已经在 Rust社区 中了解讨论过 async/await, Pin, 和为什么需要生成器. 我们将试着把那些都整合在这篇文章中. 或许你想了解 Rust 内联汇编的基础知识.</description></item><item><title>Git操作指北</title><link>https://example.com/posts/tools/git/basic_git/</link><pubDate>Sat, 26 Sep 2020 21:34:18 +0800</pubDate><guid>https://example.com/posts/tools/git/basic_git/</guid><description>TODO: 对本版博文不是很满意, 后续重新更新~
 建立仓库 我跟同学A想合作写一个小工具库，然后选了了 Git 作为版本控制系统, Github 作为托管服务器.
 第一步首先是建立一个 Git 仓库, 哦不对, 是先下载 Git 工具, Git 是全平台的工具, 基本所有操作系统都支持. 我们直接百度找到官网从里面下载就可以了.
 然后建立 Git 仓库, 我们怎么建立仓库呢? 有两种方法, 一种是在Github上创建一个新仓库.
@@ -35,4 +28,11 @@ int a[5]; a[6] = 6; printf(&amp;#34;%d&amp;#34;, a[6]); 这段代码能正确输
 当然现今大部分的高级语言对指针越界都会有很明确的编译错误, 所以仅这点来看并不能体现出 Rust 的特点, 只不过是有了现代语言该有的东西——内存越界提示.
 那么有什么可以体现出 Rust 独有特性的地方呢?
 参考这一段结构体.
-typedef struct { struct Node *next; int val; }Node; typedef struct { Node *head; Node *tail; int size; }LinkedList; struct { void (*push)(struct LinkedList *self, Node val); Node *(*peek)(struct LinkedList *self); Node *(*pop)(struct LinkedList *self); }StackMethod; 这是一个简单的数据结构栈, 在栈方法中定义了三个函数指针, 不需要关注 push 方法, 来看看 peek 方法.</description></item></channel></rss>
+typedef struct { struct Node *next; int val; }Node; typedef struct { Node *head; Node *tail; int size; }LinkedList; struct { void (*push)(struct LinkedList *self, Node val); Node *(*peek)(struct LinkedList *self); Node *(*pop)(struct LinkedList *self); }StackMethod; 这是一个简单的数据结构栈, 在栈方法中定义了三个函数指针, 不需要关注 push 方法, 来看看 peek 方法.</description></item><item><title>逆变与协变</title><link>https://example.com/posts/programminglanguage/covariance_and_contravariance/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://example.com/posts/programminglanguage/covariance_and_contravariance/</guid><description>逆变和协变看了忘忘了看, 这次学C#顺带查阅各处总结了下&amp;hellip;
+协变
+协变是指能够使用比原始指定的类型派生程度更大的类型.
+例如Dog与Cat继承自Animal, 那么从Dog-&amp;gt;Animal就称为协变, 那么协变有什么作用呢?
+// Animal.cs public abstract class Animal { } public class Dog : Animal { } // Main.cs public static void Main() { Dog dog = new Dog(); Animal animal = dog; List&amp;lt;Dog&amp;gt; dogs = new List&amp;lt;Dog&amp;gt;(); List&amp;lt;Animal&amp;gt; animals = dogs; // error } Dog继承自Animal, 所以Dog可以隐式的转化为Animal, 但是List与List之间没有继承关系, 所以无法隐式转换, 如果想要隐式转换需要如下代码:
+List&amp;lt;Animal&amp;gt; animals = dogs.Select(d =&amp;gt; (Animal)d).ToList(); 将小狗列表中的小狗挨个显式转换为Animal.
+所以C#提供了协变的语法糖, 也就是out, 意思是指该泛型可以作为输出返回. 也就是说可以用如下代码:
+// Main.cs public static void Main() { Dog dog = new Dog(); Animal animal = dog; IEnumerable&amp;lt;Dog&amp;gt; dogs = new List&amp;lt;Dog&amp;gt;(); IEnumerable&amp;lt;Animal&amp;gt; animals = dogs; } // IEnumerable public interface IEnumerable&amp;lt;out T&amp;gt;: IEnumerable 因为T只能作为结果返回, 所以T不会被修改, 编译器可以帮我们进行强制转换.</description></item></channel></rss>
