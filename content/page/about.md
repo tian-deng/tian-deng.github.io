@@ -5,7 +5,7 @@ date = "2020-11-19"
 aliases = ["about-me", "contact"]
 author = "tiandeng"
 license = "CC BY-NC-ND"
-lastmod = "2020-11-19T21:14:00+08:00"
+lastmod = "2021-05-19T23:43:00+08:00"
 +++
 
 大学荒废摸鱼了四年, 乱七八糟什么都学了点...
@@ -46,6 +46,12 @@ PS: Sort
 如果对 `Rust` 有兴趣的或者有可以指教我的东西, 可以mail或者QQ一起探讨~
 
 如果觉得文章对你有帮助的话, 可以点个小星星~或者请我喝杯可乐我也不会拒绝的~
+
+`peeking_inside_a_rust_enum` 这篇文章真的翻了好久了...
+
+自从度过试用期开始带项目加班后就没怎么看过了...
+
+希望不要烂尾了...慢慢看吧.
 
 >mail: ragdoll_kitten@outlook.com
 >
