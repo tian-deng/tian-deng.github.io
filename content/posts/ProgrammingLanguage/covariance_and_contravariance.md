@@ -1,8 +1,7 @@
 ---
 title: 逆变与协变
-date: 2021-5-1T00:50:44+08:00
+date: 2021-05-01T00:50:44+08:00
 slug: covariance_and_contravariance
-# image: cover.png
 categories:
     - Concept
     - ProgrammingLanguage
